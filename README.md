@@ -1,5 +1,5 @@
 **项目说明** 
-- 本项目基于renren-fastJava开发平台开发，内核基于Jmeter-Api和Jmeter脚本实现在线性能压测。
+- 本项目基于renren-fast Java开发平台开发，内核基于Jmeter-Api和Jmeter脚本实现在线性能压测。
 <br> 
  
 
@@ -76,17 +76,3 @@ renren-fast
 - Swagger路径：http://localhost:8080/renren-fast/swagger/index.html
 
 <br> 
-
-**接口文档效果图：**
-![输入图片说明](http://cdn.renren.io/img/6e8d7575fb8240d49b949dc0f02547bc "在这里输入图片标题")
-<br> <br> <br> 
-
-**演示效果图：**
-![输入图片说明](http://cdn.renren.io/img/4f15a5513e4e4a00a07294e87c548982 "在这里输入图片标题")
-![输入图片说明](http://cdn.renren.io/img/9b0c60dfe7ee48fb87bb933e31ebf36f "在这里输入图片标题")
-![输入图片说明](http://cdn.renren.io/img/f59b6f61c36f49e1851a5bf3e91a1e5b "在这里输入图片标题")
-![输入图片说明](http://cdn.renren.io/img/c3fe6c2146dc450f95b5b85d0ad0325f "在这里输入图片标题")
-![输入图片说明](http://cdn.renren.io/img/069045e6c6d24d88b6c2827a1b625da4 "在这里输入图片标题")
-![输入图片说明](http://cdn.renren.io/img/5d4d6c1acd5c4455930dc5dc7d88ad82 "在这里输入图片标题")
-![输入图片说明](http://cdn.renren.io/img/35dfe497ea7642028c7d6115a5a1c5e8 "在这里输入图片标题")
-
