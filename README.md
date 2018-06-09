@@ -1,5 +1,5 @@
 **项目说明** 
-- renren-fast是一个轻量级的Java快速开发平台，能快速开发项目并交付【接私活利器】
+- 本项目基于renren-fastJava开发平台开发，内核基于Jmeter-Api和Jmeter脚本实现在线性能压测。
 <br> 
  
 
@@ -16,6 +16,8 @@
 - 引入云存储服务，已支持：七牛云、阿里云、腾讯云等
 - 引入swagger文档支持，方便编写API接口文档
 - 引入路由机制，刷新页面会停留在当前页
+- 引入最新版本Jmeter-Api，支持分布式压测，测试报告生成及在线查看下载。
+- 引入Echarts，支持在线观测性能压测结果。
 <br> 
 
 **项目结构** 
@@ -35,7 +37,8 @@ renren-fast
 │  ├─api API接口模块(APP调用)
 │  ├─job 定时任务模块
 │  ├─oss 文件服务模块
-│  └─sys 权限模块
+│  ├─sys 权限模块
+│  └─test 测试模块
 │ 
 ├─RenrenApplication 项目启动类
 │  
@@ -45,16 +48,6 @@ renren-fast
 │  └─views  项目静态页面
 
 ```
-<br> 
-
-**如何交流、反馈、参与贡献？** 
-- 开发文档：http://www.renren.io/open/renren-fast/
-- Git仓库：http://git.oschina.net/babaio/renren-fast
-- 其他项目：http://www.renren.io/open/
-- [编程入门教程](http://www.renren.io)：http://www.renren.io   
-- 官方QQ群：324780204、145799952
-- 如需关注项目最新动态，请Watch、Star项目，同时也是对项目最好的支持
-<br> 
 
 
 **技术选型：** 
@@ -66,6 +59,9 @@ renren-fast
 - 数据库连接池：Druid 1.0
 - 日志管理：SLF4J 1.7、Log4j
 - 页面交互：Vue2.x 
+- 前端监控：ECharts 3.8
+- 压测内核：Apache JMeter 4.0
+- 脚本调用内核：Apache Commons Exec 1.3
 <br> 
 
 
@@ -79,10 +75,6 @@ renren-fast
 - 账号密码：admin/admin
 - Swagger路径：http://localhost:8080/renren-fast/swagger/index.html
 
-
- **项目演示**
-- 演示地址：http://demo.open.renren.io/renren-fast
-- 账号密码：admin/admin
 <br> 
 
 **接口文档效果图：**
