@@ -1,0 +1,187 @@
+$(function () {
+    $("#jqGrid").jqGrid({
+        url: baseURL + 'test/stressReports/list',
+        datatype: "json",
+        colModel: [
+            {label: '结果文件ID', name: 'reportId', width: 40, key: true},
+            {
+                label: '报告名称', name: 'originName', width: 80, formatter: function (value, options, row) {
+                if (row.status === 2) {
+                    var reportDir = row.reportName.substring(0, row.reportName.lastIndexOf("."));
+                    return "<a href='" + baseURL + "testReport/" + reportDir + "/index.html'>" + value + "</a>";
+                } else {
+                    return value;
+                }
+            }
+            },
+            {label: '测试用例ID', name: 'caseId', width: 40},
+            {label: '测试脚本ID', name: 'fileId', width: 40},
+            {
+                label: '结果文件大小', name: 'fileSize', width: 50, formatter: function (value, options, row) {
+                return conver(value);
+            }
+            },
+            {label: '添加时间', name: 'addTime', width: 60},
+            {
+                label: '状态', name: 'status', width: 40, formatter: function (value, options, row) {
+                if (value === 0) {
+                    return '<span class="label label-info">创建成功</span>';
+                } else if (value === 1) {
+                    return '<span class="label label-warning">正在执行</span>';
+                } else if (value === 2) {
+                    return '<span class="label label-success">执行成功</span>';
+                } else if (value === 3) {
+                    return '<span class="label label-danger">出现异常</span>';
+                }
+            }
+            },
+            {
+                label: '执行操作', name: '', width: 80, formatter: function (value, options, row) {
+                var createReportBtn = "<a href='#' class='btn btn-primary' onclick='createReport(" + row.reportId + ")' ><i class='fa fa-plus'></i>&nbsp;生成报告</a>";
+                var downloadReportBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressReports/downloadReport/" + row.reportId + "' class='btn btn-primary' onclick='return checkStatus(" + row.status + ")'><i class='fa fa-download'></i>&nbsp;下载</a>";
+                return createReportBtn + downloadReportBtn;
+            }
+            }
+            // 当前不做更新，页面复杂性价比不高。
+            // { label: '更新时间', name: 'updateTime', width: 80 }
+        ],
+        viewrecords: true,
+        height: 385,
+        rowNum: 10,
+        rowList: [10, 30, 50, 100, 200],
+        rownumbers: true,
+        rownumWidth: 25,
+        autowidth: true,
+        multiselect: true,
+        pager: "#jqGridPager",
+        jsonReader: {
+            root: "page.list",
+            page: "page.currPage",
+            total: "page.totalPage",
+            records: "page.totalCount"
+        },
+        prmNames: {
+            page: "page",
+            rows: "limit",
+            order: "order"
+        },
+        gridComplete: function () {
+            //隐藏grid底部滚动条
+            $("#jqGrid").closest(".ui-jqgrid-bdiv").css({"overflow-x": "hidden"});
+        }
+    });
+});
+
+var vm = new Vue({
+    el: '#rrapp',
+    data: {
+        q: {
+            caseId: null
+        }
+    },
+    methods: {
+        query: function () {
+            $("#jqGrid").jqGrid('setGridParam', {
+                postData: {'caseId': vm.q.caseId},
+                page: 1
+            }).trigger("reloadGrid");
+        },
+        // showError: function(logId) {
+        // 	// 目前没有展示文件内容信息的需要。
+        // 	$.get(baseURL + "test/stressFile/info/"+fileId, function(r){
+        // 		// parent.layer.open({
+        // 		//   title:'失败信息',
+        // 		//   closeBtn:0,
+        // 		//   content: r.log.error
+        // 		// });
+        // 	});
+        // },
+        del: function () {
+            var reportIds = getSelectedRows();
+            if (reportIds == null) {
+                return;
+            }
+
+            confirm('确定要删除选中的记录？', function () {
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "test/stressReports/delete",
+                    contentType: "application/json",
+                    data: JSON.stringify(reportIds),
+                    success: function (r) {
+                        if (r.code == 0) {
+                            alert('操作成功', function () {
+                                vm.reload();
+                            });
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            });
+        },
+        back: function () {
+            history.go(-1);
+        },
+        reload: function (event) {
+            vm.showList = true;
+            var page = $("#jqGrid").jqGrid('getGridParam', 'page');
+            $("#jqGrid").jqGrid('setGridParam', {
+                postData: {'caseId': vm.q.caseId},
+                page: page
+            }).trigger("reloadGrid");
+        }
+    }
+});
+
+function createReport(reportIds) {
+    if (!reportIds) {
+        return;
+    }
+    confirm('文件越大生成报告时间越长,请耐心等待!', function () {
+        $.ajax({
+            type: "POST",
+            url: baseURL + "test/stressReports/createReport",
+            contentType: "application/json",
+            data: JSON.stringify(numberToArray(reportIds)),
+            success: function (r) {
+                if (r.code == 0) {
+                    vm.reload();
+                    alert('后台正在异步生成!', function () {
+                    });
+                } else {
+                    alert(r.msg);
+                }
+            }
+        });
+    });
+}
+
+function checkStatus(status) {
+    if (status != 2) {
+        alert('没有测试报告！');
+        return false;
+    }
+    return true;
+}
+
+function conver(limit) {
+    var size = "";
+    if (limit < 0.1 * 1024) { //如果小于0.1KB转化成B
+        size = limit.toFixed(2) + "B";
+    } else if (limit < 0.1 * 1024 * 1024) {//如果小于0.1MB转化成KB
+        size = (limit / 1024).toFixed(2) + "KB";
+    } else if (limit < 0.1 * 1024 * 1024 * 1024) { //如果小于0.1GB转化成MB
+        size = (limit / (1024 * 1024)).toFixed(2) + "MB";
+    } else { //其他转化成GB
+        size = (limit / (1024 * 1024 * 1024)).toFixed(2) + "GB";
+    }
+    var sizestr = size + "";
+
+    var len = sizestr.indexOf("\.");
+    var dec = sizestr.substr(len + 1, 2);
+    if (dec == "00") {//当小数点后为00时 去掉小数部分
+        return sizestr.substring(0, len) + sizestr.substr(len + 3, 2);
+    }
+    return sizestr;
+}

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.test.dao.StressTestSlaveDao">
+
+    <select id="queryObject" resultType="io.renren.modules.test.entity.StressTestSlaveEntity" >
+        select * from test_stress_slave where slave_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="io.renren.modules.test.entity.StressTestSlaveEntity" >
+        select * from test_stress_slave
+        <where>
+            <if test="slaveName != null and slaveName.trim() != ''">
+                slave_name like concat('%', #{slaveName}, '%')
+            </if>
+        </where>
+        <if test="offset != null and limit != null ">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(1) from test_stress_slave
+        <where>
+            <if test="slaveName != null and slaveName.trim() != ''">
+                slave_name like concat('%', #{slaveName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="io.renren.modules.test.entity.StressTestSlaveEntity" useGeneratedKeys="true" keyProperty="slaveId">
+        insert into test_stress_slave
+        (
+        `slave_name`,
+        `ip`,
+        `port`,
+        `home_dir`,
+        `add_by`
+        )
+        values
+        (
+        #{slaveName},
+        #{ip},
+        #{port},
+        #{homeDir},
+        #{addBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="io.renren.modules.test.entity.StressTestSlaveEntity">
+        update test_stress_slave
+        <set>
+            <if test="slaveName != null">`slave_name` = #{slaveName}, </if>
+            <if test="ip != null">`ip` = #{ip}, </if>
+            <if test="port != null">`port` = #{port}, </if>
+            <if test="homeDir != null">`home_dir` = #{home_dir}, </if>
+            <if test="status != null">`status` = #{status}, </if>
+            <if test="updateBy != null">`update_by` = #{updateBy}, </if>
+        </set>
+        where slave_id = #{slaveId}
+    </update>
+
+    <!-- 批量更新状态 -->
+    <update id="updateBatch">
+        update test_stress_slave set status = #{status} where slave_id in
+        <foreach item="slaveId" collection="list"  open="(" separator="," close=")">
+            #{slaveId}
+        </foreach>
+    </update>
+
+    <delete id="deleteBatch">
+        delete from test_stress_slave where slave_id in
+        <foreach item="slaveId" collection="array" open="(" separator="," close=")">
+            #{slaveId}
+        </foreach>
+    </delete>
+
+</mapper>

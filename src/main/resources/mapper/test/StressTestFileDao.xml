@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.test.dao.StressTestFileDao">
+
+    <select id="queryObject" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+        select * from test_stress_case_file where file_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+        select * from test_stress_case_file
+        <where>
+            <if test="caseId != null and caseId.trim() != ''">
+                case_id = #{caseId}
+            </if>
+        </where>
+        <if test="offset != null and limit != null ">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(1) from test_stress_case_file
+        <where>
+            <if test="caseId != null and caseId.trim() != ''">
+                case_id = #{caseId}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteBatchByCaseIds">
+        delete from test_stress_case_file where case_id in
+        <foreach item="caseIds" collection="array" open="(" separator="," close=")">
+            #{caseIds}
+        </foreach>
+    </delete>
+
+    <insert id="save" parameterType="io.renren.modules.test.entity.StressTestFileEntity" useGeneratedKeys="true"
+            keyProperty="fileId">
+        insert into test_stress_case_file
+        (
+        `case_id`,
+        `origin_name`,
+        `file_name`,
+        `add_by`
+        )
+        values
+        (
+        #{caseId},
+        #{originName},
+        #{fileName},
+        #{addBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="io.renren.modules.test.entity.StressTestFileEntity">
+        update test_stress_case_file
+        <set>
+            <if test="caseId != null">`case_id` = #{caseId},</if>
+            <if test="originName != null">`origin_name` = #{originName},</if>
+            <if test="fileName != null">`file_name` = #{fileName},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
+            <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
+            <if test="weblogStatus != null">`weblog_status` = #{weblogStatus},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy}</if>
+        </set>
+        where file_id = #{fileId}
+    </update>
+
+    <!--&lt;!&ndash; 批量更新xx &ndash;&gt;-->
+    <!--<update id="updateBatch">-->
+    <!--update test_stress_case set status = #{status} where case_id in-->
+    <!--<foreach item="caseId" collection="list"  open="(" separator="," close=")">-->
+    <!--#{caseId}-->
+    <!--</foreach>-->
+    <!--</update>-->
+
+    <delete id="deleteBatch">
+        delete from test_stress_case_file where file_id in
+        <foreach item="fileIds" collection="array" open="(" separator="," close=")">
+            #{fileIds}
+        </foreach>
+    </delete>
+
+</mapper>
