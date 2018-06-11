@@ -49,19 +49,19 @@
             <div class="form-group">
                 <div class="col-sm-2 control-label">测试报告</div>
                 <label class="radio-inline">
-                    <input type="radio" name="reportStatus" value="1" v-model="stressTestFile.reportStatus"/> 禁用
+                    <input type="radio" name="reportStatus" value="1" v-model="stressTestFile.reportStatus"/> 不需要测试报告
                 </label>
                 <label class="radio-inline">
-                    <input type="radio" name="reportStatus" value="0" v-model="stressTestFile.reportStatus"/> 正常
+                    <input type="radio" name="reportStatus" value="0" v-model="stressTestFile.reportStatus"/> 保存测试报告原始文件
                 </label>
             </div>
             <div class="form-group">
                 <div class="col-sm-2 control-label">前端监控</div>
                 <label class="radio-inline">
-                    <input type="radio" name="webchartStatus" value="1" v-model="stressTestFile.webchartStatus"/> 禁用
+                    <input type="radio" name="webchartStatus" value="1" v-model="stressTestFile.webchartStatus"/> 不需要前端监控
                 </label>
                 <label class="radio-inline">
-                    <input type="radio" name="webchartStatus" value="0" v-model="stressTestFile.webchartStatus"/> 正常
+                    <input type="radio" name="webchartStatus" value="0" v-model="stressTestFile.webchartStatus"/> 需要前端监控
                 </label>
             </div>
             <div class="form-group">

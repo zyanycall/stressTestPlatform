@@ -24,7 +24,7 @@
     <div v-show="showList">
         <div class="grid-btn" style="height:34px;">
             <div class="form-group col-sm-2">
-                <input type="text" class="form-control" v-model="q.caseName" @keyup.enter="query" placeholder="用例名称">
+                <input type="text" class="form-control" v-model="q.slaveName" @keyup.enter="query" placeholder="节点名称">
             </div>
             <a class="btn btn-default" @click="query">查询</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="add"><i class="fa fa-plus"></i>&nbsp;新增</a>
@@ -55,6 +55,21 @@
                 <div class="col-sm-10">
                     <input type="text" class="form-control" v-model="stressTestSlave.port" placeholder="端口号"/>
                 </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">Jmeter路径</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" v-model="stressTestSlave.homeDir" placeholder="Jmeter安装路径"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">状态</div>
+                <label class="radio-inline">
+                    <input type="radio" name="status" value="0" v-model="stressTestSlave.status"/> 禁用
+                </label>
+                <label class="radio-inline">
+                    <input type="radio" name="status" value="1" v-model="stressTestSlave.status" checked="true"/> 正常
+                </label>
             </div>
             <!--未来能远程启动再使用-->
             <!--<div class="form-group">-->

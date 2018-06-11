@@ -1,15 +1,22 @@
 $(function () {
     $("#jqGrid").jqGrid({
-        url: baseURL + 'test/stress/list',
+        url: baseURL + 'test/stressSlave/list',
         datatype: "json",
         colModel: [
-            {label: '用例ID', name: 'caseId', width: 50, key: true},
-            {label: '名称', name: 'caseName', width: 120},
-            {label: '项目', name: 'project', width: 80},
-            {label: '模块', name: 'module', width: 80},
-            {label: '操作人', name: 'operator', width: 80},
-            // { label: 'cron表达式 ', name: 'cronExpression', width: 100 },
-            { label: '备注', name: 'remark', width: 200 }
+            {label: '节点ID', name: 'slaveId', width: 50, key: true},
+            {label: '名称', name: 'slaveName', width: 120},
+            {label: 'IP地址', name: 'ip', width: 80},
+            {label: '端口', name: 'port', width: 50},
+            {
+                label: '状态', name: 'status', width: 40, formatter: function (value, options, row) {
+                if (value === 0) {
+                    return '<span class="label label-danger">禁用</span>';
+                } else if (value === 1) {
+                    return '<span class="label label-success">启用</span>';
+                }
+            }
+            },
+            {label: '安装路径', name: 'homeDir', width: 120}
         ],
         viewrecords: true,
         height: 385,
@@ -36,77 +43,41 @@ $(function () {
             $("#jqGrid").closest(".ui-jqgrid-bdiv").css({"overflow-x": "hidden"});
         }
     });
-
-
-    new AjaxUpload('#upload', {
-        action: baseURL + 'test/stress/upload?token=' + token,
-        name: 'file',
-        autoSubmit: true,
-        responseType: "json",
-        onSubmit: function (file, extension) {
-            var caseId = getSelectedRow();
-            if (caseId == null) {
-                return false;
-            }
-            if (!(extension && /^(txt|jmx)$/.test(extension.toLowerCase()))) {
-                alert('只支持jmx、txt格式的用例相关文件！');
-                return false;
-            }
-
-            this.setData({caseIds: caseId})
-        },
-        // onChange: function(file, ext){
-            // debugger
-            // if(!(ext && (/^(jmx)$/.test(ext))){
-            //     alert("只支持jmx格式的文件！");
-            //     return false
-            // }
-        // },
-        onComplete: function (file, r) {
-            if (r.code == 0) {
-                // alert(r.url);
-                alert('操作成功', function () {
-                    vm.reload();
-                });
-            } else {
-                alert(r.msg);
-            }
-        }
-    });
-
 });
 
 var vm = new Vue({
     el: '#rrapp',
     data: {
         q: {
-            caseName: null
+            slaveName: null
         },
         showList: true,
         title: null,
-        stressCase: {}
+        stressTestSlave: {}
     },
     methods: {
         query: function () {
-            if (vm.q.caseName != null) {
+            if (vm.q.slaveName != null) {
                 vm.reload();
             }
         },
         add: function () {
             vm.showList = false;
             vm.title = "新增";
-            vm.stressCase = {};
+            vm.stressTestSlave = {
+                status: 1
+            };
         },
         update: function () {
-            var caseId = getSelectedRow();
-            if (caseId == null) {
+            var slaveId = getSelectedRow();
+            if (slaveId == null) {
                 return;
             }
 
-            $.get(baseURL + "test/stress/info/" + caseId, function (r) {
+            $.get(baseURL + "test/stressSlave/info/" + slaveId, function (r) {
                 vm.showList = false;
                 vm.title = "修改";
-                vm.stressCase = r.stressCase;
+                vm.stressTestSlave = r.stressTestSlave;
             });
         },
         saveOrUpdate: function () {
@@ -114,12 +85,12 @@ var vm = new Vue({
                 return;
             }
 
-            var url = vm.stressCase.caseId == null ? "test/stress/save" : "test/stress/update";
+            var url = vm.stressTestSlave.slaveId == null ? "test/stressSlave/save" : "test/stressSlave/update";
             $.ajax({
                 type: "POST",
                 url: baseURL + url,
                 contentType: "application/json",
-                data: JSON.stringify(vm.stressCase),
+                data: JSON.stringify(vm.stressTestSlave),
                 success: function (r) {
                     if (r.code === 0) {
                         // alert('操作成功', function(){
@@ -132,17 +103,17 @@ var vm = new Vue({
             });
         },
         del: function () {
-            var caseIds = getSelectedRows();
-            if (caseIds == null) {
+            var slaveIds = getSelectedRows();
+            if (slaveIds == null) {
                 return;
             }
 
             confirm('确定要删除选中的记录？', function () {
                 $.ajax({
                     type: "POST",
-                    url: baseURL + "test/stress/delete",
+                    url: baseURL + "test/stressSlave/delete",
                     contentType: "application/json",
-                    data: JSON.stringify(caseIds),
+                    data: JSON.stringify(slaveIds),
                     success: function (r) {
                         if (r.code == 0) {
                             alert('操作成功', function () {
@@ -159,40 +130,31 @@ var vm = new Vue({
             vm.showList = true;
             var page = $("#jqGrid").jqGrid('getGridParam', 'page');
             $("#jqGrid").jqGrid('setGridParam', {
-                postData: {'caseName': vm.q.caseName},
+                postData: {'slaveName': vm.q.slaveName},
                 page: page
             }).trigger("reloadGrid");
         },
         validator: function () {
-            if (isBlank(vm.stressCase.caseName)) {
-                alert("用例名称不能为空");
+            if (isBlank(vm.stressTestSlave.slaveName)) {
+                alert("节点名称不能为空");
                 return true;
             }
 
-            if (isBlank(vm.stressCase.project)) {
-                alert("项目名称不能为空");
+            if (isBlank(vm.stressTestSlave.ip)) {
+                alert("节点IP不能为空");
                 return true;
             }
 
-            if (isBlank(vm.stressCase.module)) {
-                alert("模块名称不能为空");
+            if (isBlank(vm.stressTestSlave.port)) {
+                alert("节点端口不能为空");
                 return true;
             }
 
-            if (isBlank(vm.stressCase.operator)) {
-                alert("操作人不能为空");
+            if (isBlank(vm.stressTestSlave.homeDir)) {
+                alert("节点Jmeter安装路径不能为空");
                 return true;
             }
         }
-        // upload: function () {
-        //     debugger
-        //
-        //     var caseId = getSelectedRow();
-        //     if (caseId == null) {
-        //         return;
-        //     }
-        //     ajaxUpload.submit();
-        // }
     }
 });
 

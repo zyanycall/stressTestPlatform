@@ -53,7 +53,7 @@
             <if test="slaveName != null">`slave_name` = #{slaveName}, </if>
             <if test="ip != null">`ip` = #{ip}, </if>
             <if test="port != null">`port` = #{port}, </if>
-            <if test="homeDir != null">`home_dir` = #{home_dir}, </if>
+            <if test="homeDir != null">`home_dir` = #{homeDir}, </if>
             <if test="status != null">`status` = #{status}, </if>
             <if test="updateBy != null">`update_by` = #{updateBy}, </if>
         </set>
