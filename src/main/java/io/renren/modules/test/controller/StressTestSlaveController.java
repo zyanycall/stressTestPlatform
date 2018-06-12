@@ -44,7 +44,7 @@ public class StressTestSlaveController {
     }
 
     /**
-     * 性能测试用例信息
+     * 性能测试分布式节点信息
      */
     @RequestMapping("/info/{slaveId}")
     @RequiresPermissions("test:stress:slaveInfo")
@@ -55,9 +55,9 @@ public class StressTestSlaveController {
     }
 
     /**
-     * 保存性能测试用例
+     * 保存性能测试分布式节点
      */
-    @SysLog("保存性能测试用例")
+    @SysLog("保存性能测试分布式节点信息")
     @RequestMapping("/save")
     @RequiresPermissions("test:stress:slaveSave")
     public R save(@RequestBody StressTestSlaveEntity stressTestSlave) {
@@ -69,9 +69,9 @@ public class StressTestSlaveController {
     }
 
     /**
-     * 修改性能测试用例
+     * 修改性能测试分布式节点信息
      */
-    @SysLog("修改性能测试用例")
+    @SysLog("修改性能测试分布式节点信息")
     @RequestMapping("/update")
     @RequiresPermissions("test:stress:slaveUpdate")
     public R update(@RequestBody StressTestSlaveEntity stressTestSlave) {
@@ -83,9 +83,9 @@ public class StressTestSlaveController {
     }
 
     /**
-     * 删除性能测试用例
+     * 删除性能测试分布式节点
      */
-    @SysLog("删除性能测试用例")
+    @SysLog("删除性能测试分布式节点")
     @RequestMapping("/delete")
     @RequiresPermissions("test:stress:slaveDelete")
     public R delete(@RequestBody Long[] slaveIds) {
@@ -94,4 +94,16 @@ public class StressTestSlaveController {
         return R.ok();
     }
 
+
+    /**
+     * 切换性能测试分布式节点状态
+     */
+    @SysLog("切换性能测试分布式节点状态")
+    @RequestMapping("/batchUpdateStatus")
+    @RequiresPermissions("test:stress:slaveStatusUpdate")
+    public R batchUpdateStatus(@RequestParam(value = "slaveIds[]") List<Long> slaveIds,
+                               @RequestParam(value = "status") Integer status) {
+        stressTestSlaveService.updateBatch(slaveIds, status);
+        return R.ok();
+    }
 }

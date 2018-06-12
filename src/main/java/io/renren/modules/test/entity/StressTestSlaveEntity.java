@@ -2,6 +2,8 @@ package io.renren.modules.test.entity;
 
 import org.hibernate.validator.constraints.NotBlank;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -27,12 +29,14 @@ public class StressTestSlaveEntity implements Serializable {
      * IP地址
      */
     @NotBlank(message="IP地址不能为空")
+    @Pattern(regexp = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
     private String ip;
 
     /**
      * 端口号
      */
     @NotBlank(message="端口号不能为空")
+    @Min(value = 0)
     private String port;
 
     /**

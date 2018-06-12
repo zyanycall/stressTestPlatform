@@ -65,7 +65,10 @@ var vm = new Vue({
             vm.showList = false;
             vm.title = "新增";
             vm.stressTestSlave = {
-                status: 1
+                status: 0,
+                ip: "127.0.0.1",
+                port: 1099,
+                homeDir: "/home/jmeter-4.0"
             };
         },
         update: function () {
@@ -126,6 +129,29 @@ var vm = new Vue({
                 });
             });
         },
+        batchUpdateStatus: function (value) {
+            var slaveIds = getSelectedRows();
+            if (slaveIds == null) {
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: baseURL + "test/stressSlave/batchUpdateStatus",
+                // contentType: "application/json",
+                // data: JSON.stringify(postData),
+                data: {"slaveIds": slaveIds, "status": value},
+                success: function (r) {
+                    if (r.code == 0) {
+                        alert('操作成功', function () {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
         reload: function (event) {
             vm.showList = true;
             var page = $("#jqGrid").jqGrid('getGridParam', 'page');
@@ -152,6 +178,16 @@ var vm = new Vue({
 
             if (isBlank(vm.stressTestSlave.homeDir)) {
                 alert("节点Jmeter安装路径不能为空");
+                return true;
+            }
+
+            if (!isValidIP(vm.stressTestSlave.ip)) {
+                alert("IP格式不合法!");
+                return true;
+            }
+
+            if (!isDigits(vm.stressTestSlave.port)) {
+                alert("端口号不合法!");
                 return true;
             }
         }

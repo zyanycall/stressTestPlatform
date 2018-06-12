@@ -42,8 +42,7 @@ public interface StressTestSlaveService {
 	void deleteBatch(Long[] slaveIds);
 	
 	/**
-	 * 批量更新
+	 * 批量更新状态
 	 */
-	int updateBatch(Long[] slaveIds, int status);
-	
+	int updateBatch(List<Long> slaveIds, int status);
 }

@@ -51,9 +51,9 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
     }
 
     @Override
-    public int updateBatch(Long[] caseIds, int status) {
+    public int updateBatch(List<Long> slaveIds, int status) {
         Map<String, Object> map = new HashMap<>();
-        map.put("list", caseIds);
+        map.put("list", slaveIds);
         map.put("status", status);
         return stressTestSlaveDao.updateBatch(map);
     }
