@@ -4,11 +4,14 @@ import io.renren.common.exception.RRException;
 import io.renren.modules.test.dao.StressTestDao;
 import io.renren.modules.test.dao.StressTestFileDao;
 import io.renren.modules.test.dao.StressTestReportsDao;
+import io.renren.modules.test.dao.StressTestSlaveDao;
 import io.renren.modules.test.entity.StressTestEntity;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.entity.StressTestReportsEntity;
+import io.renren.modules.test.entity.StressTestSlaveEntity;
 import io.renren.modules.test.handler.FileExecuteResultHandler;
 import io.renren.modules.test.handler.FileResultHandler;
+import io.renren.modules.test.handler.FileStopResultHandler;
 import io.renren.modules.test.jmeter.JmeterResultCollector;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
 import io.renren.modules.test.service.StressTestFileService;
@@ -17,10 +20,13 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jmeter.JMeter;
+import org.apache.jmeter.engine.DistributedRunner;
 import org.apache.jmeter.engine.JMeterEngine;
 import org.apache.jmeter.engine.JMeterEngineException;
 import org.apache.jmeter.engine.StandardJMeterEngine;
+import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.services.FileServer;
 import org.apache.jmeter.util.JMeterUtils;
@@ -44,6 +50,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     @Autowired
     private StressTestReportsDao stressTestReportsDao;
+
+    @Autowired
+    private StressTestSlaveDao stressTestSlaveDao;
 
     @Autowired
     private StressTestDao stressTestDao;
@@ -232,8 +241,16 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         // -t 设置JMX脚本路径
         cmdLine.addArgument("-t");
         cmdLine.addArgument("${jmxFile}");
+
+        String slaveStr = getSlaveIPPort();
+        if (StringUtils.isNotEmpty(slaveStr)) {
+            cmdLine.addArgument("-R");
+            cmdLine.addArgument(slaveStr);
+        }
+
         cmdLine.addArgument("-l");
         cmdLine.addArgument("${csvFile}");
+
         // 指定需要执行的JMX脚本
         cmdLine.setSubstitutionMap(map);
 
@@ -294,16 +311,38 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             JmeterResultCollector resultCollector = new JmeterResultCollector(stressTestFile);
             resultCollector.setFilename(csvFile.getPath());
 
+            String slaveStr = getSlaveIPPort();
+            if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
+                java.util.StringTokenizer st = new java.util.StringTokenizer(slaveStr, ",");//$NON-NLS-1$
+                List<String> hosts = new LinkedList<>();
+                while (st.hasMoreElements()) {
+                    hosts.add((String) st.nextElement());
+                }
 
-            // JMeterEngine 本身就是线程，启动即为异步执行，resultCollector会监听保存csv文件。
-            JMeterEngine engine = new StandardJMeterEngine();
 
-            // 都会添加收集观察监听程序。
-            // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
-            jmxTree.add(jmxTree.getArray()[0], resultCollector);
-            engine.configure(jmxTree);
-            engine.runTest();
-            engines.add(engine);
+                Summariser summariser = new Summariser("JmeterTest");
+
+                jmxTree.add(jmxTree.getArray()[0], summariser);
+
+                DistributedRunner distributedRunner=new DistributedRunner();
+                distributedRunner.setStdout(System.out); // NOSONAR
+                distributedRunner.setStdErr(System.err); // NOSONAR
+                distributedRunner.init(hosts, jmxTree);
+                engines.addAll(distributedRunner.getEngines());
+                distributedRunner.start();
+            } else {//本机运行
+
+                // 都会添加收集观察监听程序。
+                // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
+                jmxTree.add(jmxTree.getArray()[0], resultCollector);
+
+                // JMeterEngine 本身就是线程，启动即为异步执行，resultCollector会监听保存csv文件。
+                JMeterEngine engine = new StandardJMeterEngine();
+                engine.configure(jmxTree);
+                engine.runTest();
+                engines.add(engine);
+            }
+
         } catch (IOException e) {
             throw new RRException("本地执行启动脚本文件异常！", e);
         } catch (JMeterEngineException e) {
@@ -335,7 +374,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 // 设置成功输入及错误输出，用于追查问题，打印日志。
                 executor.setStreamHandler(streamHandler);
                 // 自定义的钩子程序
-                FileResultHandler resultHandler = new FileResultHandler(outputStream, errorStream);
+                FileResultHandler resultHandler = new FileStopResultHandler(this, outputStream, errorStream);
                 // 执行脚本命令
                 executor.execute(cmdLine, resultHandler);
             } catch (Exception e) {
@@ -346,14 +385,14 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             // 本机停止脚本，可以做到针对某个脚本jmx文件做停止。
             // 这里是全部停止
             Map<Long, JmeterRunEntity> jMeterEntity4file = StressTestUtils.jMeterEntity4file;
-            if (!jMeterEntity4file.isEmpty()){
+            if (!jMeterEntity4file.isEmpty()) {
                 jMeterEntity4file.forEach((fileId, jmeterRunEntity) -> {
                     StressTestFileEntity stressTestFile = jmeterRunEntity.getStressTestFile();
                     StressTestReportsEntity stressTestReports = jmeterRunEntity.getStressTestReports();
 
                     // 只处理了成功的情况，失败的情况当前捕获不到。
                     stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
-                    if (stressTestReports != null) {
+                    if (stressTestReports != null && stressTestReports.getFile().exists()) {
                         stressTestReports.setFileSize(FileUtils.sizeOf(stressTestReports.getFile()));
                     }
                     update(stressTestFile, stressTestReports);
@@ -394,6 +433,23 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             throw new RRException("保存文件异常失败", e);
         }
     }
+
+    public String getSlaveIPPort() {
+        Map query = new HashMap<>();
+        query.put("status", StressTestUtils.ENABLE);
+        List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(query);
+
+        StringBuilder sb = new StringBuilder();
+        stressTestSlaveList.forEach(slave -> {
+            if (sb.length() != 0) {
+                sb.append(",");
+            }
+            sb.append(slave.getIp()).append(":").append(slave.getPort());
+        });
+
+        return sb.toString();
+    }
+
 
     public static void main(String[] args) {
     }

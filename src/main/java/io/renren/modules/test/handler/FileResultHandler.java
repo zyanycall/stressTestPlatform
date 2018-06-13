@@ -13,7 +13,7 @@ import java.io.UnsupportedEncodingException;
  * 集成父类方式实现
  * Created by zyanycall@gmail.com on 15:40.
  */
-public class FileResultHandler  extends DefaultExecuteResultHandler {
+public class FileResultHandler extends DefaultExecuteResultHandler {
     Logger logger = LoggerFactory.getLogger(getClass());
 
     // 命令正常输出
@@ -36,7 +36,7 @@ public class FileResultHandler  extends DefaultExecuteResultHandler {
     public void onProcessComplete(final int exitValue) {
         super.onProcessComplete(exitValue);
         try {
-            logger.error(outputStream.toString("utf-8"));
+            logger.error(outputStream.toString("GBK"));
         } catch (UnsupportedEncodingException e) {
             logger.error("打印执行结果内容失败", e);
         }
@@ -51,7 +51,7 @@ public class FileResultHandler  extends DefaultExecuteResultHandler {
         super.onProcessFailed(e);
         logger.error("启动Jmeter执行脚本失败", e);
         try {
-            logger.error(errorStream.toString("utf-8"));
+            logger.error(errorStream.toString("GBK"));
         } catch (UnsupportedEncodingException e1) {
             logger.error("打印执行结果内容失败", e1);
         }

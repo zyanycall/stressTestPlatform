@@ -60,6 +60,7 @@ test:
         # 存放用例的总目录，里面会细分文件存放用例及用例文件
         casePath: D:\E\stressTestCases
         # 如果配置了Jmeter脚本启动，则额外开启Jmeter进程运行测试用例脚本及分布式程序。
+        # 分布式程序可以取消ssl校验。
         # 同时仅支持Jmeter+InfluxDB+Grafana的实时监控。
         # 如果没有配置Jmeter脚本启动，则使用web本身自带的Jmeter功能。
         # 支持自带的ECharts实时监控。

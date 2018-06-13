@@ -13,6 +13,9 @@
             <if test="slaveName != null and slaveName.trim() != ''">
                 slave_name like concat('%', #{slaveName}, '%')
             </if>
+            <if test="status != null">
+                `status` = #{status}
+            </if>
         </where>
         <if test="offset != null and limit != null ">
             limit #{offset}, #{limit}

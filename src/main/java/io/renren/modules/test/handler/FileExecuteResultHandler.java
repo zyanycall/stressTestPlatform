@@ -39,7 +39,7 @@ public class FileExecuteResultHandler extends FileResultHandler {
     @Override
     public void onProcessComplete(final int exitValue) {
         stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
-        if (stressTestReports != null) {
+        if (stressTestReports != null && stressTestReports.getFile().exists()) {
             stressTestReports.setFileSize(FileUtils.sizeOf(stressTestReports.getFile()));
         }
         stressTestFileService.update(stressTestFile, stressTestReports);
@@ -53,8 +53,10 @@ public class FileExecuteResultHandler extends FileResultHandler {
      */
     @Override
     public void onProcessFailed(final ExecuteException e) {
-        stressTestFile.setStatus(StressTestUtils.RUN_ERROR);
-        stressTestFileService.update(stressTestFile);
+        if (stressTestFile != null) {
+            stressTestFile.setStatus(StressTestUtils.RUN_ERROR);
+            stressTestFileService.update(stressTestFile);
+        }
         super.onProcessFailed(e);
     }
 }

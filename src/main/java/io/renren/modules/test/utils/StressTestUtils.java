@@ -48,6 +48,10 @@ public class StressTestUtils {
     public static final Integer JUST_WEB_RIGHT_LOG = 2;
     public static final Integer ALL_WEB_LOG = 3;
 
+    //0：禁用  1：启用
+    public static final Integer DISABLE = 0;
+    public static final Integer ENABLE = 1;
+
     /**
      * 针对每一个fileId，存储一份
      * 用于存储每一个用例的计算结果集合。
