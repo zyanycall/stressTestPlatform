@@ -3,6 +3,7 @@ package io.renren.modules.test.service;
 import io.renren.modules.test.entity.StressTestEntity;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.entity.StressTestReportsEntity;
+import io.renren.modules.test.jmeter.JmeterStatEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -77,6 +78,8 @@ public interface StressTestFileService {
      * 立即停止运行
      */
     void stopAllNow();
+
+    JmeterStatEntity getJmeterStatEntity(Long fileId);
 
 
 //    /**

@@ -14,6 +14,7 @@ import io.renren.modules.test.handler.FileResultHandler;
 import io.renren.modules.test.handler.FileStopResultHandler;
 import io.renren.modules.test.jmeter.JmeterResultCollector;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
+import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.service.StressTestFileService;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.commons.exec.CommandLine;
@@ -26,7 +27,6 @@ import org.apache.jmeter.engine.DistributedRunner;
 import org.apache.jmeter.engine.JMeterEngine;
 import org.apache.jmeter.engine.JMeterEngineException;
 import org.apache.jmeter.engine.StandardJMeterEngine;
-import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.services.FileServer;
 import org.apache.jmeter.util.JMeterUtils;
@@ -175,62 +175,73 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     @Override
     public void run(Long[] fileIds) {
         Arrays.asList(fileIds).stream().forEach(fileId -> {
-            StressTestFileEntity stressTestFile = queryObject(fileId);
-            if (stressTestFile.getStatus() == 1) {
-                throw new RRException("脚本正在运行");
-            }
-
-            String casePath = stressTestUtils.getCasePath();
-            String fileName = stressTestFile.getFileName();
-            String filePath = casePath + File.separator + fileName;
-
-            // 测试结果文件路径
-            // jmx用例文件夹对应的相对路径名如20180504172207568\case20180504172207607
-            String jmxDir = fileName.substring(0, fileName.lastIndexOf("."));
-            // csv文件的名称，如case20180504172207607_4444.csv
-            String csvName = jmxDir.substring(jmxDir.lastIndexOf(File.separator) + 1) + StressTestUtils.getSuffix4() + ".csv";
-            // csv文件的真实路径，如D:\E\stressTestCases\20180504172207568\case20180504172207607\case20180504172207607_4444.csv
-            String csvPath = casePath + File.separator + jmxDir + File.separator + csvName;
-            String fileOriginName = stressTestFile.getOriginName();
-            String reportOirginName = fileOriginName.substring(0, fileOriginName.lastIndexOf(".")) + "_" + StressTestUtils.getSuffix4();
-
-            File csvFile = new File(csvPath);
-            File jmxFile = new File(filePath);
-
-            StressTestReportsEntity stressTestReports = null;
-            if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())) {
-                stressTestReports = new StressTestReportsEntity();
-                //保存测试报告stressTestReportsDao
-                stressTestReports.setCaseId(stressTestFile.getCaseId());
-                stressTestReports.setFileId(fileId);
-                stressTestReports.setOriginName(reportOirginName);
-                stressTestReports.setReportName(jmxDir + File.separator + csvName);
-                stressTestReports.setFile(csvFile);
-            }
-
-            Map map = new HashMap();
-            map.put("jmxFile", jmxFile);
-            map.put("csvFile", csvFile);
-
-            //保存文件的执行状态，用于前台提示及后端查看排序
-            stressTestFile.setStatus(StressTestUtils.RUNNING);
-            update(stressTestFile);
-            if (stressTestReports != null) {
-                stressTestReportsDao.save(stressTestReports);
-            }
-
-            if (stressTestUtils.isUseJmeterScript()) {
-                excuteJmeterRunByScript(stressTestFile, stressTestReports, map);
-            } else {
-                excuteJmeterRunLocal(stressTestFile, stressTestReports, map);
-            }
+            runSingle(fileId);
         });
+    }
+
+
+    /**
+     * 脚本的启动都是新的线程，其中的SQL是不和启动是同一个事务的。
+     * 同理，也不会回滚这一事务。
+     */
+    @Transactional
+    public void runSingle(Long fileId){
+        StressTestFileEntity stressTestFile = queryObject(fileId);
+        if (stressTestFile.getStatus() == 1) {
+            throw new RRException("脚本正在运行");
+        }
+
+        String casePath = stressTestUtils.getCasePath();
+        String fileName = stressTestFile.getFileName();
+        String filePath = casePath + File.separator + fileName;
+
+        // 测试结果文件路径
+        // jmx用例文件夹对应的相对路径名如20180504172207568\case20180504172207607
+        String jmxDir = fileName.substring(0, fileName.lastIndexOf("."));
+        // csv文件的名称，如case20180504172207607_4444.csv
+        String csvName = jmxDir.substring(jmxDir.lastIndexOf(File.separator) + 1) + StressTestUtils.getSuffix4() + ".csv";
+        // csv文件的真实路径，如D:\E\stressTestCases\20180504172207568\case20180504172207607\case20180504172207607_4444.csv
+        String csvPath = casePath + File.separator + jmxDir + File.separator + csvName;
+        String fileOriginName = stressTestFile.getOriginName();
+        String reportOirginName = fileOriginName.substring(0, fileOriginName.lastIndexOf(".")) + "_" + StressTestUtils.getSuffix4();
+
+        File csvFile = new File(csvPath);
+        File jmxFile = new File(filePath);
+
+        StressTestReportsEntity stressTestReports = null;
+        if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())) {
+            stressTestReports = new StressTestReportsEntity();
+            //保存测试报告stressTestReportsDao
+            stressTestReports.setCaseId(stressTestFile.getCaseId());
+            stressTestReports.setFileId(fileId);
+            stressTestReports.setOriginName(reportOirginName);
+            stressTestReports.setReportName(jmxDir + File.separator + csvName);
+            stressTestReports.setFile(csvFile);
+        }
+
+        Map map = new HashMap();
+        map.put("jmxFile", jmxFile);
+        map.put("csvFile", csvFile);
+
+        if (stressTestUtils.isUseJmeterScript()) {
+            excuteJmeterRunByScript(stressTestFile, stressTestReports, map);
+        } else {
+            excuteJmeterRunLocal(stressTestFile, stressTestReports, map);
+        }
+
+        //保存文件的执行状态，用于前台提示及后端查看排序。
+        //脚本基本执行无异常，才会保存状态入库。
+        stressTestFile.setStatus(StressTestUtils.RUNNING);
+        update(stressTestFile);
+
+        if (stressTestReports != null) {
+            stressTestReportsDao.save(stressTestReports);
+        }
     }
 
     /**
      * 执行Jmeter的脚本文件，采用Apache的commons-exec来执行。
      */
-    @Transactional
     public void excuteJmeterRunByScript(StressTestFileEntity stressTestFile,
                                         StressTestReportsEntity stressTestReports, Map map) {
         String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
@@ -248,8 +259,10 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             cmdLine.addArgument(slaveStr);
         }
 
-        cmdLine.addArgument("-l");
-        cmdLine.addArgument("${csvFile}");
+        if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())) {
+            cmdLine.addArgument("-l");
+            cmdLine.addArgument("${csvFile}");
+        }
 
         // 指定需要执行的JMX脚本
         cmdLine.setSubstitutionMap(map);
@@ -284,7 +297,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     /**
      * 本地执行Jmeter的脚本文件，采用Apache-Jmeter-Api来执行。
      */
-    @Transactional
     public void excuteJmeterRunLocal(StressTestFileEntity stressTestFile, StressTestReportsEntity stressTestReports, Map map) {
         File jmxFile = (File) map.get("jmxFile");
         File csvFile = (File) map.get("csvFile");
@@ -307,23 +319,22 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             HashTree jmxTree = SaveService.loadTree(jmxFile);
             JMeter.convertSubTree(jmxTree);
 
-            // 使用自定义的Collector，用于前端绘图的数据收集和日志收集等。
-            JmeterResultCollector resultCollector = new JmeterResultCollector(stressTestFile);
-            resultCollector.setFilename(csvFile.getPath());
-
             String slaveStr = getSlaveIPPort();
+            // slaveStr用来做脚本是否是分布式执行的判断，不入库。
+            stressTestFile.setSlaveStr(slaveStr);
+            // 都会添加收集观察监听程序。
+            // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
+            // 使用自定义的Collector，用于前端绘图的数据收集和日志收集等。
+            JmeterResultCollector jmeterResultCollector = new JmeterResultCollector(stressTestFile);
+            jmeterResultCollector.setFilename(csvFile.getPath());
+            jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
+
             if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
                 java.util.StringTokenizer st = new java.util.StringTokenizer(slaveStr, ",");//$NON-NLS-1$
                 List<String> hosts = new LinkedList<>();
                 while (st.hasMoreElements()) {
                     hosts.add((String) st.nextElement());
                 }
-
-
-                Summariser summariser = new Summariser("JmeterTest");
-
-                jmxTree.add(jmxTree.getArray()[0], summariser);
-
                 DistributedRunner distributedRunner=new DistributedRunner();
                 distributedRunner.setStdout(System.out); // NOSONAR
                 distributedRunner.setStdErr(System.err); // NOSONAR
@@ -331,11 +342,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 engines.addAll(distributedRunner.getEngines());
                 distributedRunner.start();
             } else {//本机运行
-
-                // 都会添加收集观察监听程序。
-                // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
-                jmxTree.add(jmxTree.getArray()[0], resultCollector);
-
                 // JMeterEngine 本身就是线程，启动即为异步执行，resultCollector会监听保存csv文件。
                 JMeterEngine engine = new StandardJMeterEngine();
                 engine.configure(jmxTree);
@@ -347,6 +353,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             throw new RRException("本地执行启动脚本文件异常！", e);
         } catch (JMeterEngineException e) {
             throw new RRException("本地执行启动脚本Jmeter程序异常！", e);
+        } catch (RuntimeException e){
+            throw new RRException(e.getMessage(), e);
         }
     }
 
@@ -419,6 +427,14 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     @Override
     public void stopAllNow() {
+    }
+
+    @Override
+    public JmeterStatEntity getJmeterStatEntity(Long fileId) {
+        if (StringUtils.isNotEmpty(getSlaveIPPort())) {
+            return new JmeterStatEntity(0L);
+        }
+        return new JmeterStatEntity(fileId);
     }
 
     /**

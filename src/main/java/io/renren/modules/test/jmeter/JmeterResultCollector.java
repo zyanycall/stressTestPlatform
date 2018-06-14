@@ -2,6 +2,7 @@ package io.renren.modules.test.jmeter;
 
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.utils.StressTestUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.samplers.SampleEvent;
 import org.apache.jmeter.samplers.SampleResult;
@@ -29,7 +30,15 @@ public class JmeterResultCollector extends ResultCollector {
     public JmeterResultCollector(StressTestFileEntity stressTestFile) {
         samplingStatCalculatorMap = new HashMap<>();
         this.stressTestFile = stressTestFile;
-        StressTestUtils.samplingStatCalculator4File.put(stressTestFile.getFileId(), samplingStatCalculatorMap);
+        if (StringUtils.isNotEmpty(stressTestFile.getSlaveStr())) {//分布式压测
+            StressTestUtils.jMeterStatuses.put("slave_need_report", stressTestFile.getReportStatus().toString());
+            StressTestUtils.jMeterStatuses.put("slave_need_chart", stressTestFile.getWebchartStatus().toString());
+            //对于分布式，不再按照脚本文件来区分前端监控，分布式压测不支持master同时压测多个脚本文件的前端区分监控。
+            StressTestUtils.samplingStatCalculator4File.put(0L, samplingStatCalculatorMap);
+        } else {
+            StressTestUtils.samplingStatCalculator4File.put(stressTestFile.getFileId(), samplingStatCalculatorMap);
+        }
+
     }
 
     /**
@@ -41,27 +50,50 @@ public class JmeterResultCollector extends ResultCollector {
      */
     @Override
     public void sampleOccurred(SampleEvent sampleEvent) {
-        // 使用父类默认的保存csv/xml结果的方法。未来可能会优化，保存到性能更高的地方。
-        // csv最终的实现是来一个结果，使用PrintWriter写一行(有锁)，保证时序性。
-        // 本质是将信息保存到操作系统的文件内存里，默认是不实时刷新操作系统的文件buffer（Jmeter源码写的）。
-        // 保证时序性+性能交给操作系统，性能应该还OK。毕竟造成的压力和实时锁相比不是一个数量级的。
-        if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())) {
-            super.sampleOccurred(sampleEvent);
-        }
-
-        if (StressTestUtils.NEED_WEB_CHART.equals(stressTestFile.getWebchartStatus())) {
-            //获取到请求的label，注意不是jmx脚本文件的label，是其中的请求的label，可能包含汉字。
-            SampleResult sampleResult = sampleEvent.getResult();
-            String label = sampleResult.getSampleLabel();
-
-            // label不会很多。
-            if (samplingStatCalculatorMap.get(label) == null) {
-                samplingStatCalculatorMap.put(label, new SamplingStatCalculator(label));
+        if (stressTestFile != null){ //单节点压测
+            // 使用父类默认的保存csv/xml结果的方法。未来可能会优化，保存到性能更高的地方。
+            // csv最终的实现是来一个结果，使用PrintWriter写一行(有锁)，保证时序性。
+            // 本质是将信息保存到操作系统的文件内存里，默认是不实时刷新操作系统的文件buffer（Jmeter源码写的）。
+            // 保证时序性+性能交给操作系统，性能应该还OK。毕竟造成的压力和实时锁相比不是一个数量级的。
+            if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())) {
+                super.sampleOccurred(sampleEvent);
             }
-            SamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
 
-            // 这个计算的过程会消耗CPU，一切为了前端绘图。
-            samplingStatCalculator.addSample(sampleResult);
+            if (StressTestUtils.NEED_WEB_CHART.equals(stressTestFile.getWebchartStatus())) {
+                //获取到请求的label，注意不是jmx脚本文件的label，是其中的请求的label，可能包含汉字。
+                SampleResult sampleResult = sampleEvent.getResult();
+                String label = sampleResult.getSampleLabel();
+
+                // label不会很多。
+                if (samplingStatCalculatorMap.get(label) == null) {
+                    samplingStatCalculatorMap.put(label, new SamplingStatCalculator(label));
+                }
+                SamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
+
+                // 这个计算的过程会消耗CPU，一切为了前端绘图。
+                samplingStatCalculator.addSample(sampleResult);
+            }
+        } else {//分布式压测
+            if (StressTestUtils.NEED_REPORT.toString().
+                    equals(StressTestUtils.jMeterStatuses.get("slave_need_report"))) {
+                super.sampleOccurred(sampleEvent);
+            }
+            if (StressTestUtils.NEED_WEB_CHART.toString().
+                    equals(StressTestUtils.jMeterStatuses.get("slave_need_chart"))) {
+                //获取到请求的label，注意不是jmx脚本文件的label，是其中的请求的label，可能包含汉字。
+                SampleResult sampleResult = sampleEvent.getResult();
+                String label = sampleResult.getSampleLabel();
+
+                // label不会很多。
+                samplingStatCalculatorMap = StressTestUtils.samplingStatCalculator4File.get(0L);
+                if (samplingStatCalculatorMap.get(label) == null) {
+                    samplingStatCalculatorMap.put(label, new SamplingStatCalculator(label));
+                }
+                SamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
+
+                // 这个计算的过程会消耗CPU，一切为了前端绘图。
+                samplingStatCalculator.addSample(sampleResult);
+            }
         }
     }
 }

@@ -119,8 +119,8 @@ public class StressTestFileController {
      */
     @RequestMapping("/statInfo/{fileId}")
     public R statInfo(@PathVariable("fileId") Long fileId){
-        // 频率不是特别高，controller层仍然是new一个对象。
-        JmeterStatEntity jmeterStatEntity = new JmeterStatEntity(fileId);
+        // 频率不是特别高，可以是new一个对象。
+        JmeterStatEntity jmeterStatEntity = stressTestFileService.getJmeterStatEntity(fileId);
         return R.ok().put("statInfo", jmeterStatEntity);
     }
 }

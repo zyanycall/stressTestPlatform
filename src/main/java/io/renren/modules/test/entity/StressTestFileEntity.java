@@ -79,6 +79,12 @@ public class StressTestFileEntity implements Serializable {
      */
     private Date updateTime;
 
+    /**
+     * 分布式节点的字符串，可以用来判断是否使用分布式。
+     * 不入库。
+     */
+    private String slaveStr;
+
     public Long getFileId() {
         return fileId;
     }
@@ -173,5 +179,13 @@ public class StressTestFileEntity implements Serializable {
 
     public void setWeblogStatus(Integer weblogStatus) {
         this.weblogStatus = weblogStatus;
+    }
+
+    public String getSlaveStr() {
+        return slaveStr;
+    }
+
+    public void setSlaveStr(String slaveStr) {
+        this.slaveStr = slaveStr;
     }
 }
