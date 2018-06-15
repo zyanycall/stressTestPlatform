@@ -35,9 +35,20 @@ public class StressTestSlaveEntity implements Serializable {
     /**
      * 端口号
      */
-    @NotBlank(message="端口号不能为空")
+    @NotBlank(message="Jmeter端口号不能为空")
     @Min(value = 0)
-    private String port;
+    private String JmeterPort;
+
+    /**
+     * 端口号
+     */
+    @NotBlank(message="ssh端口号不能为空")
+    @Min(value = 0)
+    private String sshPort;
+
+    private String userName;
+
+    private String passwd;
 
     /**
      * 子节点的Jmeter路径
@@ -85,12 +96,20 @@ public class StressTestSlaveEntity implements Serializable {
         this.ip = ip;
     }
 
-    public String getPort() {
-        return port;
+    public String getJmeterPort() {
+        return JmeterPort;
     }
 
-    public void setPort(String port) {
-        this.port = port;
+    public void setJmeterPort(String jmeterPort) {
+        JmeterPort = jmeterPort;
+    }
+
+    public String getSshPort() {
+        return sshPort;
+    }
+
+    public void setSshPort(String sshPort) {
+        this.sshPort = sshPort;
     }
 
     public Integer getStatus() {
@@ -147,5 +166,21 @@ public class StressTestSlaveEntity implements Serializable {
 
     public void setHomeDir(String homeDir) {
         this.homeDir = homeDir;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPasswd() {
+        return passwd;
+    }
+
+    public void setPasswd(String passwd) {
+        this.passwd = passwd;
     }
 }

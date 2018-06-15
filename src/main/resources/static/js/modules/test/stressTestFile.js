@@ -19,6 +19,9 @@ $(function () {
             // { label: '更新时间', name: 'updateTime', width: 80 }
             {
                 label: 'Chart监控', name: 'webchartStatus', width: 40, formatter: function (value, options, row) {
+                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                    return '';
+                }
                 if (value === 0) {
                     return '<span class="label label-success">启用</span>';
                 } else if (value === 1) {
@@ -28,6 +31,9 @@ $(function () {
             },
             {
                 label: '测试报告', name: 'reportStatus', width: 40, formatter: function (value, options, row) {
+                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                    return '';
+                }
                 if (value === 0) {
                     return '<span class="label label-success">启用</span>';
                 } else if (value === 1) {
@@ -49,14 +55,16 @@ $(function () {
             }
             },
             {
-                label: '执行操作', name: '', width: 50, formatter: function (value, options, row) {
-                if (row.originName.endsWith("txt")) {
-                    return '';
+                label: '执行操作', name: '', width: 60, formatter: function (value, options, row) {
+                var btn = '';
+                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                    btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
+                } else {
+                    btn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步并启动</a>";
                 }
-                var runOnceBtn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;启动</a>";
                 // var stopBtn = "<a href='#' class='btn btn-primary' onclick='stop(" + row.fileId + ")' ><i class='fa fa-stop'></i>&nbsp;停止</a>";
                 // var stopNowBtn = "<a href='#' class='btn btn-primary' onclick='stopNow(" + row.fileId + ")' ><i class='fa fa-times-circle'></i>&nbsp;强制停止</a>";
-                return runOnceBtn;
+                return btn;
             }
             }
         ],
@@ -226,10 +234,31 @@ function runOnce(fileIds) {
     if (!fileIds) {
         return;
     }
-    confirm('要立即执行？', function () {
+    $.ajax({
+        type: "POST",
+        url: baseURL + "test/stressFile/runOnce",
+        contentType: "application/json",
+        data: JSON.stringify(numberToArray(fileIds)),
+        success: function (r) {
+            if (r.code == 0) {
+                vm.reload();
+                alert('操作成功', function () {
+                });
+            } else {
+                alert(r.msg);
+            }
+        }
+    });
+}
+
+function synchronizeFile(fileIds) {
+    if (!fileIds) {
+        return;
+    }
+    confirm('确定向所有"启用的"分布式节点机推送该文件？文件越大同步时间越长', function () {
         $.ajax({
             type: "POST",
-            url: baseURL + "test/stressFile/runOnce",
+            url: baseURL + "test/stressFile/synchronizeFile",
             contentType: "application/json",
             data: JSON.stringify(numberToArray(fileIds)),
             success: function (r) {
@@ -293,7 +322,7 @@ function ShowRunning(fileId) {
 }
 
 
-function getOption(map, legendData, dataObj, areaStyle){
+function getOption(map, legendData, dataObj, areaStyle) {
     for (var runLabel in map) {
         var runValue = map[runLabel];
         if (legendData.indexOf(runLabel) == -1) {

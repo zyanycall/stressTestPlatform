@@ -16,11 +16,14 @@ import io.renren.modules.test.jmeter.JmeterResultCollector;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.service.StressTestFileService;
+import io.renren.modules.test.utils.SSH2Utils;
 import io.renren.modules.test.utils.StressTestUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jmeter.JMeter;
 import org.apache.jmeter.engine.DistributedRunner;
@@ -36,10 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 @Service("stressTestFileService")
@@ -185,7 +185,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 同理，也不会回滚这一事务。
      */
     @Transactional
-    public void runSingle(Long fileId){
+    public void runSingle(Long fileId) {
         StressTestFileEntity stressTestFile = queryObject(fileId);
         if (stressTestFile.getStatus() == 1) {
             throw new RRException("脚本正在运行");
@@ -335,7 +335,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 while (st.hasMoreElements()) {
                     hosts.add((String) st.nextElement());
                 }
-                DistributedRunner distributedRunner=new DistributedRunner();
+                DistributedRunner distributedRunner = new DistributedRunner();
                 distributedRunner.setStdout(System.out); // NOSONAR
                 distributedRunner.setStdErr(System.err); // NOSONAR
                 distributedRunner.init(hosts, jmxTree);
@@ -353,7 +353,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             throw new RRException("本地执行启动脚本文件异常！", e);
         } catch (JMeterEngineException e) {
             throw new RRException("本地执行启动脚本Jmeter程序异常！", e);
-        } catch (RuntimeException e){
+        } catch (RuntimeException e) {
             throw new RRException(e.getMessage(), e);
         }
     }
@@ -437,6 +437,66 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         return new JmeterStatEntity(fileId);
     }
 
+    @Override
+    public void synchronizeFile(Long[] fileIds) {
+        //当前是向所有的分布式节点推送这个，阻塞操作+轮询，并非多线程，因为本地同步网卡会是瓶颈。
+        Map query = new HashMap<>();
+        query.put("status", StressTestUtils.ENABLE);
+        List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(query);
+        //使用for循环传统写法
+        //采用了先给同一个节点机传送多个文件的方式，因为数据库的连接消耗优于节点机的链接消耗
+        for (StressTestSlaveEntity slave : stressTestSlaveList) {
+            SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
+                    slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
+            try {
+                ssh2Util.initialSession();
+
+                for (Long fileId : fileIds) {
+                    putFileToSlave(slave, ssh2Util, fileId);
+                }
+            } catch (Exception e) {
+                throw new RRException(slave.getSlaveName() + "节点机远程链接初始化时失败！请核对节点机信息路径", e);
+            } finally {
+                try {
+                    ssh2Util.close();
+                } catch (Exception e) {
+                    throw new RRException(slave.getSlaveName() + "节点机远程链接关闭时失败！", e);
+                }
+            }
+        }
+    }
+
+    /**
+     * 将文件上传到节点机目录上。
+     */
+    private void putFileToSlave(StressTestSlaveEntity slave, SSH2Utils ssh2Util, Long fileId) {
+        StressTestFileEntity stressTestFile = queryObject(fileId);
+        String casePath = stressTestUtils.getCasePath();
+        String fileNameSave = stressTestFile.getFileName();
+        String filePath = casePath + File.separator + fileNameSave;
+        String fileSaveMD5 = "";
+        try {
+            fileSaveMD5 = getMd5ByFile(filePath);
+        } catch (IOException e) {
+            throw new RRException(stressTestFile.getOriginName() + "生成MD5失败！", e);
+        }
+
+        String caseFileHome = slave.getHomeDir() + "/bin/stressTestCases";
+        String fileNameUpload = stressTestFile.getOriginName();
+        try {
+            String MD5 = ssh2Util.runCommand("md5sum " + caseFileHome + File.separator +
+                    fileNameUpload + "|cut -d ' ' -f1");
+            if (fileSaveMD5.equals(MD5)) {//说明目标服务器已经存在相同文件不再重复上传
+                return;
+            }
+
+            //上传文件
+            ssh2Util.putFile(filePath, caseFileHome);
+        } catch (Exception e) {
+            throw new RRException(stressTestFile.getOriginName() + "上传及校验MD5时失败！", e);
+        }
+    }
+
     /**
      * 保存文件
      */
@@ -460,13 +520,14 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             if (sb.length() != 0) {
                 sb.append(",");
             }
-            sb.append(slave.getIp()).append(":").append(slave.getPort());
+            sb.append(slave.getIp()).append(":").append(slave.getJmeterPort());
         });
 
         return sb.toString();
     }
 
-
-    public static void main(String[] args) {
+    public String getMd5ByFile(String filePath) throws IOException {
+        FileInputStream fis = new FileInputStream(filePath);
+        return DigestUtils.md5Hex(IOUtils.toByteArray(fis));
     }
 }

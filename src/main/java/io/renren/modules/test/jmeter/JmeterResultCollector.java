@@ -20,6 +20,14 @@ public class JmeterResultCollector extends ResultCollector {
 
     protected static final long serialVersionUID = 240L;
 
+    /**
+     * 分布式压测时脚本文件共用同一个标识位来标识是否需要测试结果文件或者前端监控。
+     * 所以如果多个脚本文件同时压测这些标识会出现问题。
+     * 因为RMI回调时本地stressTestFile为null。
+     */
+    public static final String SLAVE_NEED_REPORT = "slave_need_report";
+    public static final String SLAVE_NEED_CHART = "slave_need_chart";
+
     StressTestFileEntity stressTestFile;
 
     Map<String, SamplingStatCalculator> samplingStatCalculatorMap;
@@ -31,8 +39,8 @@ public class JmeterResultCollector extends ResultCollector {
         samplingStatCalculatorMap = new HashMap<>();
         this.stressTestFile = stressTestFile;
         if (StringUtils.isNotEmpty(stressTestFile.getSlaveStr())) {//分布式压测
-            StressTestUtils.jMeterStatuses.put("slave_need_report", stressTestFile.getReportStatus().toString());
-            StressTestUtils.jMeterStatuses.put("slave_need_chart", stressTestFile.getWebchartStatus().toString());
+            StressTestUtils.jMeterStatuses.put(SLAVE_NEED_REPORT, stressTestFile.getReportStatus().toString());
+            StressTestUtils.jMeterStatuses.put(SLAVE_NEED_CHART, stressTestFile.getWebchartStatus().toString());
             //对于分布式，不再按照脚本文件来区分前端监控，分布式压测不支持master同时压测多个脚本文件的前端区分监控。
             StressTestUtils.samplingStatCalculator4File.put(0L, samplingStatCalculatorMap);
         } else {
@@ -75,11 +83,11 @@ public class JmeterResultCollector extends ResultCollector {
             }
         } else {//分布式压测
             if (StressTestUtils.NEED_REPORT.toString().
-                    equals(StressTestUtils.jMeterStatuses.get("slave_need_report"))) {
+                    equals(StressTestUtils.jMeterStatuses.get(SLAVE_NEED_REPORT))) {
                 super.sampleOccurred(sampleEvent);
             }
             if (StressTestUtils.NEED_WEB_CHART.toString().
-                    equals(StressTestUtils.jMeterStatuses.get("slave_need_chart"))) {
+                    equals(StressTestUtils.jMeterStatuses.get(SLAVE_NEED_CHART))) {
                 //获取到请求的label，注意不是jmx脚本文件的label，是其中的请求的label，可能包含汉字。
                 SampleResult sampleResult = sampleEvent.getResult();
                 String label = sampleResult.getSampleLabel();

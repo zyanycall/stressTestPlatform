@@ -53,15 +53,33 @@
                 </div>
             </div>
             <div class="form-group">
-                <div class="col-sm-2 control-label">端口号</div>
+                <div class="col-sm-2 control-label">Jmeter端口号</div>
                 <div class="col-sm-10">
-                    <input type="text" class="form-control" v-model="stressTestSlave.port" placeholder="端口号"/>
+                    <input type="text" class="form-control" v-model="stressTestSlave.jmeterPort" placeholder="Jmeter端口号"/>
                 </div>
             </div>
             <div class="form-group">
                 <div class="col-sm-2 control-label">Jmeter路径</div>
                 <div class="col-sm-10">
                     <input type="text" class="form-control" v-model="stressTestSlave.homeDir" placeholder="Jmeter安装路径"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">用户名</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" v-model="stressTestSlave.userName" placeholder="节点机用户名"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">密码</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" v-model="stressTestSlave.passwd" placeholder="节点机密码"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">SSH端口号</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" v-model="stressTestSlave.sshPort" placeholder="SSH端口号"/>
                 </div>
             </div>
             <div class="form-group">

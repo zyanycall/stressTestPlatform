@@ -3,10 +3,13 @@ $(function () {
         url: baseURL + 'test/stressSlave/list',
         datatype: "json",
         colModel: [
-            {label: '节点ID', name: 'slaveId', width: 50, key: true},
-            {label: '名称', name: 'slaveName', width: 120},
-            {label: 'IP地址', name: 'ip', width: 80},
-            {label: '端口', name: 'port', width: 50},
+            {label: '节点ID', name: 'slaveId', width: 30, key: true},
+            {label: '名称', name: 'slaveName', width: 80},
+            {label: 'IP地址', name: 'ip', width: 50},
+            {label: 'Jmeter端口', name: 'jmeterPort', width: 50},
+            {label: '用户名', name: 'userName', width: 50},
+            {label: '密码', name: 'passwd', width: 50},
+            {label: 'ssh端口', name: 'sshPort', width: 50},
             {
                 label: '状态', name: 'status', width: 40, formatter: function (value, options, row) {
                 if (value === 0) {
@@ -67,8 +70,9 @@ var vm = new Vue({
             vm.stressTestSlave = {
                 status: 0,
                 ip: "127.0.0.1",
-                port: 1099,
-                homeDir: "/home/jmeter-4.0"
+                jmeterPort: 1099,
+                sshPort: 22,
+                homeDir: "/home/apache-jmeter-4.0"
             };
         },
         update: function () {
@@ -171,7 +175,7 @@ var vm = new Vue({
                 return true;
             }
 
-            if (isBlank(vm.stressTestSlave.port)) {
+            if (isBlank(vm.stressTestSlave.jmeterPort)) {
                 alert("节点端口不能为空");
                 return true;
             }
@@ -186,7 +190,17 @@ var vm = new Vue({
                 return true;
             }
 
-            if (!isDigits(vm.stressTestSlave.port)) {
+            if (!isDigits(vm.stressTestSlave.jmeterPort)) {
+                alert("端口号不合法!");
+                return true;
+            }
+
+            if (isBlank(vm.stressTestSlave.sshPort)) {
+                alert("节点端口不能为空");
+                return true;
+            }
+
+            if (!isDigits(vm.stressTestSlave.sshPort)) {
                 alert("端口号不合法!");
                 return true;
             }

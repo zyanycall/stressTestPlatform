@@ -79,7 +79,15 @@ public interface StressTestFileService {
      */
     void stopAllNow();
 
+    /**
+     * 获取轮询监控结果
+     */
     JmeterStatEntity getJmeterStatEntity(Long fileId);
+
+    /**
+     * 同步参数化文件到节点机
+     */
+    void synchronizeFile(Long[] fileIds);
 
 
 //    /**

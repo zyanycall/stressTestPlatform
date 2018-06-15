@@ -123,4 +123,15 @@ public class StressTestFileController {
         JmeterStatEntity jmeterStatEntity = stressTestFileService.getJmeterStatEntity(fileId);
         return R.ok().put("statInfo", jmeterStatEntity);
     }
+
+    /**
+     * 将参数化文件同步到指定分布式slave节点机的指定目录下。
+     */
+    @SysLog("将参数化文件同步到指定分布式slave节点机的指定目录")
+    @RequestMapping("/synchronizeFile")
+    @RequiresPermissions("test:stress:synchronizeFile")
+    public R synchronizeFile(@RequestBody Long[] fileIds) {
+        stressTestFileService.synchronizeFile(fileIds);
+        return R.ok();
+    }
 }

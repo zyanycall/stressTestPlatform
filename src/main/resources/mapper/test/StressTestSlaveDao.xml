@@ -36,7 +36,10 @@
         (
         `slave_name`,
         `ip`,
-        `port`,
+        `jmeter_port`,
+        `user_name`,
+        `passwd`,
+        `ssh_port`,
         `home_dir`,
         `add_by`
         )
@@ -44,7 +47,10 @@
         (
         #{slaveName},
         #{ip},
-        #{port},
+        #{jmeterPort},
+        #{userName},
+        #{passwd},
+        #{sshPort},
         #{homeDir},
         #{addBy}
         )
@@ -55,7 +61,10 @@
         <set>
             <if test="slaveName != null">`slave_name` = #{slaveName}, </if>
             <if test="ip != null">`ip` = #{ip}, </if>
-            <if test="port != null">`port` = #{port}, </if>
+            <if test="jmeterPort != null">`jmeter_port` = #{jmeterPort}, </if>
+            <if test="userName != null">`user_name` = #{userName}, </if>
+            <if test="passwd != null">`passwd` = #{passwd}, </if>
+            <if test="sshPort != null">`ssh_port` = #{sshPort}, </if>
             <if test="homeDir != null">`home_dir` = #{homeDir}, </if>
             <if test="status != null">`status` = #{status}, </if>
             <if test="updateBy != null">`update_by` = #{updateBy}, </if>

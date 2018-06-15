@@ -135,3 +135,8 @@ function isDigits(value) {
     var reg = /^(\d{1,5})$/
     return reg.test(value);
 }
+
+//返回字符串后缀名
+function getExtension(file){
+    return (-1 !== file.indexOf('.')) ? file.replace(/.*[.]/, '') : '';
+}
