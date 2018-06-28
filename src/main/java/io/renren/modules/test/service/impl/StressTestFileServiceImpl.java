@@ -481,6 +481,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             throw new RRException(stressTestFile.getOriginName() + "生成MD5失败！", e);
         }
 
+        // 避免跨系统的问题，远端由于都时linux服务器，则文件分隔符统一为/，不然同步文件会报错。
         String caseFileHome = slave.getHomeDir() + "/bin/stressTestCases";
         String fileNameUpload = stressTestFile.getOriginName();
         try {
