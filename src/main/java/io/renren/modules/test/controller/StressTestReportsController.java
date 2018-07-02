@@ -57,11 +57,22 @@ public class StressTestReportsController {
     /**
      * 删除指定测试报告及文件
      */
-    @SysLog("删除性能测试用例")
+    @SysLog("删除性能测试报告")
     @RequestMapping("/delete")
     @RequiresPermissions("test:stress:reportDelete")
     public R delete(@RequestBody Long[] reportIds) {
         stressTestReportsService.deleteBatch(reportIds);
+        return R.ok();
+    }
+
+    /**
+     * 删除指定测试报告的测试结果文件，目的是避免占用空间太大
+     */
+    @SysLog("删除性能测试报告结果文件")
+    @RequestMapping("/deleteCsv")
+    @RequiresPermissions("test:stress:reportDeleteCsv")
+    public R deleteCsv(@RequestBody Long[] reportIds) {
+        stressTestReportsService.deleteBatchCsv(reportIds);
         return R.ok();
     }
 

@@ -6,7 +6,7 @@ $(function () {
             {label: '文件ID', name: 'fileId', width: 30, key: true},
             {label: '用例ID', name: 'caseId', width: 30},
             {
-                label: '文件名称', name: 'originName', width: 160, formatter: function (value, options, row) {
+                label: '文件名称', name: 'originName', width: 120, formatter: function (value, options, row) {
                 if (row.status === 1) {
                     return "<a href='javascript:void(0);' onclick='" +
                         "ShowRunning(" + row.fileId + ")'>" + value + "</a>";
@@ -55,7 +55,7 @@ $(function () {
             }
             },
             {
-                label: '执行操作', name: '', width: 60, formatter: function (value, options, row) {
+                label: '执行操作', name: '', width: 100, formatter: function (value, options, row) {
                 var btn = '';
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                     btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
@@ -64,7 +64,8 @@ $(function () {
                 }
                 // var stopBtn = "<a href='#' class='btn btn-primary' onclick='stop(" + row.fileId + ")' ><i class='fa fa-stop'></i>&nbsp;停止</a>";
                 // var stopNowBtn = "<a href='#' class='btn btn-primary' onclick='stopNow(" + row.fileId + ")' ><i class='fa fa-times-circle'></i>&nbsp;强制停止</a>";
-                return btn;
+                var downloadFileBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressFile/downloadFile/" + row.fileId + "' class='btn btn-primary'><i class='fa fa-download'></i>&nbsp;下载</a>";
+                return btn + downloadFileBtn;
             }
             }
         ],

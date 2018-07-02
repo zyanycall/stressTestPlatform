@@ -479,6 +479,13 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         }
     }
 
+    @Override
+    public String getFilePath(StressTestFileEntity stressTestFile) {
+        String casePath = stressTestUtils.getCasePath();
+        String FilePath = casePath + File.separator + stressTestFile.getFileName();
+        return FilePath;
+    }
+
     /**
      * 将文件上传到节点机目录上。
      */

@@ -98,6 +98,19 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
     }
 
     @Override
+    public void deleteBatchCsv(Long[] reportIds) {
+        Arrays.asList(reportIds).stream().forEach(reportId -> {
+            StressTestReportsEntity stressTestReport = queryObject(reportId);
+            deleteReportCSV(stressTestReport);
+
+            // 更新数据库，目的是不允许生成测试报告
+            // 删除了CSV文件，同时报告没有生成过，那这个压测其实已经废了。
+            stressTestReport.setFileSize(0L);
+            update(stressTestReport);
+        });
+    }
+
+    @Override
     public void createReport(Long[] reportIds) {
         for (Long reportId : reportIds) {
             excuteJmeterCreateReport(reportId);
@@ -213,7 +226,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
 
         //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
         if (stressTestReport.getFileSize() == 0L || stressTestReport.getFileSize() == null) {
-            throw new RRException("找不到测试结果文件，请确认压测已经结束！");
+            throw new RRException("找不到测试结果文件，无法生成测试报告！");
         }
 
         String casePath = stressTestUtils.getCasePath();

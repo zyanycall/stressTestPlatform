@@ -89,6 +89,8 @@ public interface StressTestFileService {
      */
     void synchronizeFile(Long[] fileIds);
 
+    String getFilePath(StressTestFileEntity stressTestFile);
+
 
 //    /**
 //     * 批量更新性能测试用例信息

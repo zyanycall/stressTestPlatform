@@ -87,8 +87,9 @@ public class ShiroConfig {
         // 配置退出过滤器,其中的具体的退出代码Shiro已经替我们实现了
 //        filterMap.put("/logout", "logout");
 
-        filterMap.put("/test/stressFile/statInfo/*?*", "anon");
         filterMap.put("/test/stressReports/downloadReport/*?*", "anon");
+        filterMap.put("/test/stressFile/downloadFile/*?*", "anon");
+        filterMap.put("/test/stressFile/statInfo/*?*", "anon");
         filterMap.put("/testReport/**", "anon");
         filterMap.put("/webjars/**", "anon");
         filterMap.put("/druid/**", "anon");

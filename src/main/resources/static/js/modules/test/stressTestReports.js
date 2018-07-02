@@ -120,6 +120,30 @@ var vm = new Vue({
                 });
             });
         },
+        delCsv: function () {
+            var reportIds = getSelectedRows();
+            if (reportIds == null) {
+                return;
+            }
+
+            confirm('建议生成报告后再删除结果文件，确定删除？', function () {
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "test/stressReports/deleteCsv",
+                    contentType: "application/json",
+                    data: JSON.stringify(reportIds),
+                    success: function (r) {
+                        if (r.code == 0) {
+                            alert('操作成功', function () {
+                                vm.reload();
+                            });
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            });
+        },
         back: function () {
             history.go(-1);
         },

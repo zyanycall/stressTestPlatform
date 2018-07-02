@@ -10,8 +10,14 @@ import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.service.StressTestFileService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -133,5 +139,29 @@ public class StressTestFileController {
     public R synchronizeFile(@RequestBody Long[] fileIds) {
         stressTestFileService.synchronizeFile(fileIds);
         return R.ok();
+    }
+
+    /**
+     * 下载文件
+     */
+    @RequestMapping("/downloadFile/{fileId}")
+    @RequiresPermissions("test:stress:fileDownLoad")
+    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable("fileId") Long fileId) throws IOException {
+        StressTestFileEntity stressTestFile = stressTestFileService.queryObject(fileId);
+        FileSystemResource fileResource = new FileSystemResource(stressTestFileService.getFilePath(stressTestFile));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache,no-store,must-revalidate");
+        headers.add("Content-Disposition",
+                "attachment;filename=" + stressTestFile.getOriginName());
+        headers.add("Pragma", "no-cache");
+        headers.add("Expires", "0");
+        headers.setContentType(MediaType.parseMediaType("application/octet-stream"));
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentLength(fileResource.contentLength())
+                .body(new InputStreamResource(fileResource.getInputStream()));
     }
 }

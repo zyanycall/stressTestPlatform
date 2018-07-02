@@ -43,6 +43,11 @@ public interface StressTestReportsService {
     void deleteBatch(Long[] reportIds);
 
     /**
+     * 批量删除测试报告的来源CSV文件
+     */
+    void deleteBatchCsv(Long[] reportIds);
+
+    /**
      * 生成测试报告
      */
     void createReport(Long[] reportIds);
