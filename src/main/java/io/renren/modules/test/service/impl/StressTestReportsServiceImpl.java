@@ -10,6 +10,8 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,8 @@ import java.util.zip.ZipOutputStream;
 
 @Service("stressTestReportsService")
 public class StressTestReportsServiceImpl implements StressTestReportsService {
+
+    Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private StressTestReportsDao stressTestReportsDao;
@@ -72,7 +76,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             try {
                 FileUtils.forceDelete(new File(reportPath));
             } catch (FileNotFoundException e) {
-                //doNothing
+                logger.error("要删除的测试报告文件夹找不到(删除成功)  " + e.getMessage());
             } catch (IOException e) {
                 throw new RRException("删除测试报告文件夹异常失败", e);
             }
@@ -84,8 +88,8 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
                 if (FileUtils.sizeOf(jmxDirFile) == 0L) {
                     FileUtils.forceDelete(jmxDirFile);
                 }
-            } catch (IllegalArgumentException | FileNotFoundException e) {
-                //doNothing
+            } catch (FileNotFoundException | IllegalArgumentException e) {
+                logger.error("要删除的测试报告上级文件夹找不到(删除成功)  " + e.getMessage());
             } catch (IOException e) {
                 throw new RRException("删除测试报告上级文件夹异常失败", e);
             }
@@ -111,7 +115,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         try {
             FileUtils.forceDelete(new File(csvPath));
         } catch (FileNotFoundException e) {
-            //doNothing
+            logger.error("要删除的测试报告来源文件找不到(删除成功)  " + e.getMessage());
         } catch (IOException e) {
             throw new RRException("删除测试报告来源文件异常失败", e);
         }
@@ -131,7 +135,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         try {
             FileUtils.forceDelete(new File(reportZipPath));
         } catch (FileNotFoundException e) {
-            //doNothing
+            logger.error("要删除的测试报告zip文件找不到(删除成功)  " + e.getMessage());
         } catch (IOException e) {
             throw new RRException("删除测试报告zip文件异常失败", e);
         }

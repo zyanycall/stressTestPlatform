@@ -2,10 +2,7 @@ package io.renren.modules.test.utils;
 
 import com.jcraft.jsch.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
 /**
  * Created by zyanycall@gmail.com on 2018/6/15.
@@ -41,7 +38,7 @@ public class SSH2Utils {
         this.port = port;
     }
 
-    public void initialSession() throws Exception {
+    public Session initialSession() throws JSchException {
         if (session == null) {
             JSch jsch = new JSch();
             session = jsch.getSession(user, host, port);
@@ -72,16 +69,17 @@ public class SSH2Utils {
 
             });
             session.setPassword(password);
+            session.setTimeout(30000);
             session.connect();
         }
+        return session;
     }
 
     /**
      * 关闭连接
      *
-     * @throws Exception
      */
-    public void close() throws Exception {
+    public void close() {
         if (session != null && session.isConnected()) {
             session.disconnect();
             session = null;
@@ -100,7 +98,7 @@ public class SSH2Utils {
      * @throws Exception
      */
     public void putFile(String localPath, String localFile, String remotePath)
-            throws Exception {
+            throws JSchException, SftpException {
         Channel channelSftp = session.openChannel("sftp");
         channelSftp.connect();
         ChannelSftp c = (ChannelSftp) channelSftp;
@@ -142,7 +140,7 @@ public class SSH2Utils {
      * @throws Exception
      */
     public void putFile(String filePath, String remotePath)
-            throws Exception {
+            throws SftpException, JSchException {
 //        this.initialSession();
         String localFile = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
         String localPath =  filePath.substring(0, filePath.lastIndexOf(File.separator));
@@ -154,13 +152,13 @@ public class SSH2Utils {
      * 远程执行命令，返回显示结果。
      * @param command 命令
      */
-    public String runCommand(String command) throws Exception {
+    public String runCommand(String command) throws JSchException, IOException {
         // CommonUtil.printLogging("[" + command + "] begin", host, user);
 //        this.initialSession();
         InputStream in = null;
-        InputStream err = null;
+//        InputStream err = null;
         BufferedReader inReader = null;
-        BufferedReader errReader = null;
+//        BufferedReader errReader = null;
         int time = 0;
         String s = null;
         boolean run = false;
@@ -170,25 +168,29 @@ public class SSH2Utils {
         ((ChannelExec) channel).setCommand(command);
         channel.setInputStream(null);
         ((ChannelExec) channel).setErrStream(null);
-        err = ((ChannelExec) channel).getErrStream();
+//        err = ((ChannelExec) channel).getErrStream();
         in = channel.getInputStream();
         channel.connect();
         inReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-        errReader = new BufferedReader(new InputStreamReader(err, "UTF-8"));
+//        errReader = new BufferedReader(new InputStreamReader(err, "UTF-8"));
 
-        while (true) {
-            s = errReader.readLine();
-            if (s != null) {
-                sb.append("error:" + s).append("\n");
-            } else {
-                run = true;
-                break;
-            }
-        }
+//        while (true) {
+//            s = errReader.readLine();
+//            if (s != null) {
+//                sb.append("error:" + s).append("\n");
+//                run = true;
+//                break;
+//            } else {
+//                run = true;
+//                break;
+//            }
+//        }
         while (true) {
             s = inReader.readLine();
             if (s != null) {
-                sb.append("info:" + s).append("\n");
+                sb.append(s);
+                run = true;
+                break;
             } else {
                 run = true;
                 break;
@@ -214,10 +216,8 @@ public class SSH2Utils {
         }
 
         inReader.close();
-        errReader.close();
+//        errReader.close();
         channel.disconnect();
-//        session.disconnect();
-//        System.out.println(sb.toString());
         return sb.toString();
     }
 

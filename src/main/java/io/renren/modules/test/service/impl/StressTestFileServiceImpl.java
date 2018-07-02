@@ -1,5 +1,7 @@
 package io.renren.modules.test.service.impl;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
 import io.renren.common.exception.RRException;
 import io.renren.modules.test.dao.StressTestDao;
 import io.renren.modules.test.dao.StressTestFileDao;
@@ -34,16 +36,22 @@ import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.services.FileServer;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.*;
 
 @Service("stressTestFileService")
 public class StressTestFileServiceImpl implements StressTestFileService {
+
+    Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private StressTestFileDao stressTestFileDao;
@@ -90,10 +98,16 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     @Override
     @Transactional
-    public void save(MultipartFile multipartFile, String filePath, StressTestEntity stressCase, StressTestFileEntity stressCaseFile) {
+    public void save(MultipartFile multipartFile, String filePath, StressTestEntity stressCase, StressTestFileEntity stressTestFile) {
         // 保存文件放这里,是因为有事务.
         // 保存数据放在最前,因为当前文件重名校验是根据数据库异常得到
-        save(stressCaseFile);
+        try {
+            String fileMd5 = DigestUtils.md5Hex(multipartFile.getBytes());
+            stressTestFile.setFileMd5(fileMd5);
+        } catch (IOException e) {
+            throw new RRException("获取上传文件的MD5失败！", e);
+        }
+        save(stressTestFile);
         // 肯定存在已有的用例信息
         stressTestDao.update(stressCase);
         saveFile(multipartFile, filePath);
@@ -119,6 +133,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     @Override
     @Transactional
     public void update(MultipartFile multipartFile, String filePath, StressTestEntity stressCase, StressTestFileEntity stressTestFile) {
+        try {
+            String fileMd5 = DigestUtils.md5Hex(multipartFile.getBytes());
+            stressTestFile.setFileMd5(fileMd5);
+        } catch (IOException e) {
+            throw new RRException("获取上传文件的MD5失败！", e);
+        }
         update(stressTestFile);
         stressTestDao.update(stressCase);
         saveFile(multipartFile, filePath);
@@ -141,7 +161,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             try {
                 FileUtils.forceDelete(new File(FilePath));
             } catch (FileNotFoundException e) {
-                //doNothing
+                logger.error("要删除的文件找不到(删除成功)  " + e.getMessage());
             } catch (IOException e) {
                 throw new RRException("删除文件异常失败", e);
             }
@@ -149,8 +169,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 if (FileUtils.sizeOf(jmxDirFile) == 0L) {
                     FileUtils.forceDelete(jmxDirFile);
                 }
-            } catch (IllegalArgumentException | FileNotFoundException e) {
-                //doNothing
+            } catch (FileNotFoundException | IllegalArgumentException e) {
+                logger.error("要删除的jmx文件夹找不到(删除成功)  " + e.getMessage());
             } catch (IOException e) {
                 throw new RRException("删除jmx文件夹异常失败", e);
             }
@@ -160,13 +180,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     }
 
     /**
-     * JmeterApi调用无法使用到分布式的特性，并且相比脚本本身驱动少了很多校验及参数输入的部分，
-     * 少了结果文件的类型及位置，少了分布式相关内容，是非常弱的JmeterApi调用。
-     * 本身Api调用就会加载Jmeter所依赖的lib文件，会增加系统体积。
-     * 后续Api调用要复写JMeter的相关代码（Mavan中引用核心的Jmeter包）。
-     * 同时和当前系统使用同一个classLoader，会执行在同一个进程中。
-     * 另开一个进程直接调用Jmeter的脚本来实现，节省空间及跨平台。
-     * <p>
      * 没有事务，不允许回滚
      * 因为是遍历执行，每一个执行可以是一个事务。
      * <p>
@@ -454,7 +467,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 for (Long fileId : fileIds) {
                     putFileToSlave(slave, ssh2Util, fileId);
                 }
-            } catch (Exception e) {
+            } catch (JSchException e) {
                 throw new RRException(slave.getSlaveName() + "节点机远程链接初始化时失败！请核对节点机信息路径", e);
             } finally {
                 try {
@@ -493,8 +506,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
             //上传文件
             ssh2Util.putFile(filePath, caseFileHome);
-        } catch (Exception e) {
-            throw new RRException(stressTestFile.getOriginName() + "上传及校验MD5时失败！", e);
+        } catch (JSchException e) {
+            throw new RRException(stressTestFile.getOriginName() + "校验节点机文件MD5时失败！", e);
+        } catch (IOException e) {
+            throw new RRException(stressTestFile.getOriginName() + "IO传输失败！", e);
+        } catch (SftpException e) {
+            throw new RRException(stressTestFile.getOriginName() + "上传到节点机文件时失败！", e);
         }
     }
 
@@ -511,20 +528,28 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         }
     }
 
+    /**
+     * 获取上传文件的md5
+     *
+     */
+    public String getMd5(MultipartFile file) throws IOException {
+        return DigestUtils.md5Hex(file.getBytes());
+    }
+
     public String getSlaveIPPort() {
         Map query = new HashMap<>();
         query.put("status", StressTestUtils.ENABLE);
         List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(query);
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         stressTestSlaveList.forEach(slave -> {
-            if (sb.length() != 0) {
-                sb.append(",");
+            if (stringBuilder.length() != 0) {
+                stringBuilder.append(",");
             }
-            sb.append(slave.getIp()).append(":").append(slave.getJmeterPort());
+            stringBuilder.append(slave.getIp()).append(":").append(slave.getJmeterPort());
         });
 
-        return sb.toString();
+        return stringBuilder.toString();
     }
 
     public String getMd5ByFile(String filePath) throws IOException {

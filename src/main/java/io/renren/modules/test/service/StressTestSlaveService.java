@@ -44,5 +44,5 @@ public interface StressTestSlaveService {
 	/**
 	 * 批量更新状态
 	 */
-	int updateBatch(List<Long> slaveIds, int status);
+	void updateBatchStatus(List<Long> slaveIds, Integer status);
 }

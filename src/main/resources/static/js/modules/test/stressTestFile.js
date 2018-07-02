@@ -60,7 +60,7 @@ $(function () {
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                     btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
                 } else {
-                    btn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步并启动</a>";
+                    btn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;启动</a>";
                 }
                 // var stopBtn = "<a href='#' class='btn btn-primary' onclick='stop(" + row.fileId + ")' ><i class='fa fa-stop'></i>&nbsp;停止</a>";
                 // var stopNowBtn = "<a href='#' class='btn btn-primary' onclick='stopNow(" + row.fileId + ")' ><i class='fa fa-times-circle'></i>&nbsp;强制停止</a>";
@@ -285,6 +285,8 @@ var networkReceiveDataObj = {};
 var networkReceiveLegendData = [];
 var successPercentageDataObj = {};
 var successPercentageLegendData = [];
+var threadCountsDataObj = {};
+var threadCountsLegendData = [];
 var xAxisData = [];
 var fileIdData;
 
@@ -297,6 +299,7 @@ function startInterval(fileId) {
             var networkSentMap = r.statInfo.networkSentMap;
             var networkReceiveMap = r.statInfo.networkReceiveMap;
             var successPercentageMap = r.statInfo.successPercentageMap;
+            var threadCountsMap = r.statInfo.threadCountsMap;
             xAxisData.push(new Date().toLocaleTimeString());
 
             var responseTimesEChartOption = getOption(responseTimeMap, responseTimeLegendData, responseTimeDataObj, null);
@@ -304,12 +307,14 @@ function startInterval(fileId) {
             var networkSentMapOption = getOption(networkSentMap, networkSentLegendData, networkSentDataObj, 'sent');
             var networkReceiveMapOption = getOption(networkReceiveMap, networkReceiveLegendData, networkReceiveDataObj, 'received');
             var successPercentageMapOption = getOption(successPercentageMap, successPercentageLegendData, successPercentageDataObj, 'successPercentage');
+            var threadCountsMapOption = getOption(threadCountsMap, threadCountsLegendData, threadCountsDataObj, null);
 
             responseTimesEChart.setOption(responseTimesEChartOption);
             throughputEChart.setOption(getThroughputMapOption);
             networkSentEChart.setOption(networkSentMapOption);
             networkReceivedEChart.setOption(networkReceiveMapOption);
             successPercentageEChart.setOption(successPercentageMapOption);
+            threadCountsEChart.setOption(threadCountsMapOption);
         });
     }, 2000);
 }
@@ -372,6 +377,7 @@ var throughputEChart = echarts.init(document.getElementById('throughputChart'), 
 var networkSentEChart = echarts.init(document.getElementById('networkSentChart'), 'shine');
 var networkReceivedEChart = echarts.init(document.getElementById('networkReceivedChart'), 'shine');
 var successPercentageEChart = echarts.init(document.getElementById('successPercentageChart'), 'shine');
+var threadCountsEChart = echarts.init(document.getElementById('threadCountsChart'), 'shine');
 
 //用于使chart自适应高度和宽度
 window.onresize = function () {
@@ -381,6 +387,7 @@ window.onresize = function () {
     networkSentEChart.resize();
     networkReceivedEChart.resize();
     successPercentageEChart.resize();
+    threadCountsEChart.resize();
 };
 
 function setEChartSize() {
@@ -390,6 +397,7 @@ function setEChartSize() {
     $("#networkSentChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
     $("#networkReceivedChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
     $("#successPercentageChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
+    $("#threadCountsChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
 }
 
 // 指定图表的配置项和数据
@@ -461,3 +469,4 @@ throughputEChart.setOption(option);
 networkSentEChart.setOption(option);
 networkReceivedEChart.setOption(option);
 successPercentageEChart.setOption(option);
+threadCountsEChart.setOption(option);

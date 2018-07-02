@@ -42,6 +42,7 @@
         `case_id`,
         `origin_name`,
         `file_name`,
+        `file_md5`,
         `add_by`
         )
         values
@@ -49,6 +50,7 @@
         #{caseId},
         #{originName},
         #{fileName},
+        #{fileMd5},
         #{addBy}
         )
     </insert>
@@ -59,6 +61,7 @@
             <if test="caseId != null">`case_id` = #{caseId},</if>
             <if test="originName != null">`origin_name` = #{originName},</if>
             <if test="fileName != null">`file_name` = #{fileName},</if>
+            <if test="fileMd5 != null">`file_md5` = #{fileMd5},</if>
             <if test="status != null">`status` = #{status},</if>
             <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
             <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>

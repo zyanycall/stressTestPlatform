@@ -6,12 +6,12 @@ $(function () {
             {label: '节点ID', name: 'slaveId', width: 30, key: true},
             {label: '名称', name: 'slaveName', width: 80},
             {label: 'IP地址', name: 'ip', width: 50},
-            {label: 'Jmeter端口', name: 'jmeterPort', width: 50},
-            {label: '用户名', name: 'userName', width: 50},
+            {label: 'Jmeter端口', name: 'jmeterPort', width: 40},
+            {label: '用户名', name: 'userName', width: 30},
             {label: '密码', name: 'passwd', width: 50},
-            {label: 'ssh端口', name: 'sshPort', width: 50},
+            {label: 'ssh端口', name: 'sshPort', width: 30},
             {
-                label: '状态', name: 'status', width: 40, formatter: function (value, options, row) {
+                label: '状态', name: 'status', width: 30, formatter: function (value, options, row) {
                 if (value === 0) {
                     return '<span class="label label-danger">禁用</span>';
                 } else if (value === 1) {
@@ -207,4 +207,3 @@ var vm = new Vue({
         }
     }
 });
-

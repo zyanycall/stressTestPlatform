@@ -1,6 +1,7 @@
 package io.renren.modules.test.jmeter;
 
 import io.renren.modules.test.utils.StressTestUtils;
+import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.visualizers.SamplingStatCalculator;
 
 import java.util.HashMap;
@@ -41,6 +42,11 @@ public class JmeterStatEntity {
      * 正确率相关的监控数据。
      */
     private Map<String, String> successPercentageMap = new HashMap<>();
+
+    /**
+     * 虚拟用户数相关的监控数据，没有根据label/slave的名称区分。
+     */
+    private Map<String, String> threadCountsMap = new HashMap<>();
 
     public JmeterStatEntity(Long fileId) {
         this.fileId = fileId;
@@ -130,15 +136,27 @@ public class JmeterStatEntity {
                 SamplingStatCalculator calculator = statMap.get(key);
                 long errorCount = calculator.getErrorCount();
                 double errorPercent = Double.parseDouble(String.format("%.2f", ((double) errorCount / (double) totalCount)));
-                successPercentageMap.put(key + "_errorPercent", String.valueOf(errorPercent));
+                successPercentageMap.put(key + "_ErrorPercent", String.valueOf(errorPercent));
                 successPercent = successPercent - errorPercent;
             }
         }
-        successPercentageMap.put("successPercent", String.format("%.2f", successPercent));
+        successPercentageMap.put("SuccessPercent", String.format("%.2f", successPercent));
         return successPercentageMap;
     }
 
     public void setSuccessPercentageMap(Map<String, String> successPercentageMap) {
         this.successPercentageMap = successPercentageMap;
+    }
+
+    public Map<String, String> getThreadCountsMap() {
+        JMeterContextService.ThreadCounts tc = JMeterContextService.getThreadCounts();
+        threadCountsMap.put("Active", String.valueOf(tc.activeThreads));
+        threadCountsMap.put("Started", String.valueOf(tc.startedThreads));
+        threadCountsMap.put("Finished", String.valueOf(tc.finishedThreads));
+        return threadCountsMap;
+    }
+
+    public void setThreadCountsMap(Map<String, String> threadCountsMap) {
+        this.threadCountsMap = threadCountsMap;
     }
 }

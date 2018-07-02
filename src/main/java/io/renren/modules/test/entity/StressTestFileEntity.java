@@ -36,6 +36,11 @@ public class StressTestFileEntity implements Serializable {
     private String fileName;
 
     /**
+     * 文件的MD5对于参数化文件有效主要用于节点的参数化文件校验
+     */
+    private String fileMd5;
+
+    /**
      * 任务状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常
      */
     private Integer status;
@@ -187,5 +192,13 @@ public class StressTestFileEntity implements Serializable {
 
     public void setSlaveStr(String slaveStr) {
         this.slaveStr = slaveStr;
+    }
+
+    public String getFileMd5() {
+        return fileMd5;
+    }
+
+    public void setFileMd5(String fileMd5) {
+        this.fileMd5 = fileMd5;
     }
 }
