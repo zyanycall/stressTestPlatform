@@ -20,7 +20,7 @@
         <java.version>1.8</java.version>
         <mybatis.spring.boot.version>1.3.0</mybatis.spring.boot.version>
         <mysql.version>5.1.38</mysql.version>
-        <druid.version>1.1.3</druid.version>
+        <druid.version>1.1.9</druid.version>
         <quartz.version>2.3.0</quartz.version>
         <commons.lang.version>2.6</commons.lang.version>
         <commons.fileupload.version>1.3.1</commons.fileupload.version>
@@ -176,18 +176,18 @@
             </exclusions>
         </dependency>
         <!--性能测试-->
-        <!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_core -->
-        <dependency>
-            <groupId>org.apache.jmeter</groupId>
-            <artifactId>ApacheJMeter_core</artifactId>
-            <version>4.0</version>
-        </dependency>
-        <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_http &ndash;&gt;-->
+		<!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_http &ndash;&gt;-->
         <dependency>
             <groupId>org.apache.jmeter</groupId>
             <artifactId>ApacheJMeter_http</artifactId>
-            <version>4.0</version>
-        </dependency>
+			<version>4.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-slf4j-impl</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-exec -->
         <dependency>
             <groupId>org.apache.commons</groupId>
