@@ -354,6 +354,16 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 distributedRunner.init(hosts, jmxTree);
                 engines.addAll(distributedRunner.getEngines());
                 distributedRunner.start();
+
+                // 如果配置了，则将本机节点也增加进去
+                // 当前只有本地运行的方式支持本机master节点的添加
+                if (checkSlaveLocal()) {
+                    // JMeterEngine 本身就是线程，启动即为异步执行，resultCollector会监听保存csv文件。
+                    JMeterEngine engine = new StandardJMeterEngine();
+                    engine.configure(jmxTree);
+                    engine.runTest();
+                    engines.add(engine);
+                }
             } else {//本机运行
                 // JMeterEngine 本身就是线程，启动即为异步执行，resultCollector会监听保存csv文件。
                 JMeterEngine engine = new StandardJMeterEngine();
@@ -459,6 +469,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         //使用for循环传统写法
         //采用了先给同一个节点机传送多个文件的方式，因为数据库的连接消耗优于节点机的链接消耗
         for (StressTestSlaveEntity slave : stressTestSlaveList) {
+
+            // 不向本地节点传送文件
+            if ("127.0.0.1".equals(slave.getIp().trim())) {
+                continue;
+            }
+
             SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
                     slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
             try {
@@ -543,22 +559,52 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         return DigestUtils.md5Hex(file.getBytes());
     }
 
+    /**
+     * 拼装分布式节点，当前还没有遇到分布式节点非常多的情况。
+     * @return 分布式节点的IP地址拼装，不包含本地127.0.0.1的IP
+     */
     public String getSlaveIPPort() {
         Map query = new HashMap<>();
         query.put("status", StressTestUtils.ENABLE);
         List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(query);
 
         StringBuilder stringBuilder = new StringBuilder();
-        stressTestSlaveList.forEach(slave -> {
+        for (StressTestSlaveEntity slave : stressTestSlaveList) {
+            // 本机不包含在内
+            if ("127.0.0.1".equals(slave.getIp().trim())) {
+                continue;
+            }
+
             if (stringBuilder.length() != 0) {
                 stringBuilder.append(",");
             }
             stringBuilder.append(slave.getIp()).append(":").append(slave.getJmeterPort());
-        });
-
+        }
         return stringBuilder.toString();
     }
 
+    /**
+     * master节点是否被使用为压力节点
+     */
+    public boolean checkSlaveLocal(){
+        Map query = new HashMap<>();
+        query.put("status", StressTestUtils.ENABLE);
+        List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(query);
+
+        for (StressTestSlaveEntity slave : stressTestSlaveList) {
+            // 本机配置IP为127.0.0.1，没配置localhost
+            if ("127.0.0.1".equals(slave.getIp().trim())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * 获取文件的MD5值，远程节点机也是通过MD5值来判断文件是否重复及存在，所以就不使用其他算法了。
+     */
     public String getMd5ByFile(String filePath) throws IOException {
         FileInputStream fis = new FileInputStream(filePath);
         return DigestUtils.md5Hex(IOUtils.toByteArray(fis));

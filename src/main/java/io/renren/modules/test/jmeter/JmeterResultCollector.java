@@ -58,7 +58,7 @@ public class JmeterResultCollector extends ResultCollector {
      */
     @Override
     public void sampleOccurred(SampleEvent sampleEvent) {
-        if (stressTestFile != null){ //单节点压测
+        if (stressTestFile != null && StringUtils.isEmpty(stressTestFile.getSlaveStr())){ //单节点压测
             // 使用父类默认的保存csv/xml结果的方法。未来可能会优化，保存到性能更高的地方。
             // csv最终的实现是来一个结果，使用PrintWriter写一行(有锁)，保证时序性。
             // 本质是将信息保存到操作系统的文件内存里，默认是不实时刷新操作系统的文件buffer（Jmeter源码写的）。

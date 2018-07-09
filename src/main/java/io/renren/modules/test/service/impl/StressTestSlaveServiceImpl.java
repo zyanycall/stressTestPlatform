@@ -8,6 +8,8 @@ import io.renren.modules.test.entity.StressTestSlaveEntity;
 import io.renren.modules.test.service.StressTestSlaveService;
 import io.renren.modules.test.utils.SSH2Utils;
 import io.renren.modules.test.utils.StressTestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,8 @@ import java.util.regex.Pattern;
 
 @Service("stressTestSlaveService")
 public class StressTestSlaveServiceImpl implements StressTestSlaveService {
+
+    Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private StressTestSlaveDao stressTestSlaveDao;
@@ -67,7 +71,10 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
         for (Long slaveId : slaveIds) {
             StressTestSlaveEntity slave = queryObject(slaveId);
 
-            runOrDownSlave(slave, status);
+            // 跳过本机节点
+            if (!"127.0.0.1".equals(slave.getIp().trim())) {
+                runOrDownSlave(slave, status);
+            }
 
             //更新数据库
             slave.setStatus(status);
@@ -108,7 +115,10 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
                 String enableResult = ssh2Util.runCommand(
                         "cd " + slave.getHomeDir() + "/bin/stressTestCases/" + "\n" +
                         "sh " + "../jmeter-server");
-                if (!enableResult.contains("endpoint")) {
+
+                logger.error(enableResult);
+
+                if (!enableResult.contains("remote")) {
                     throw new RRException(slave.getSlaveName() + " jmeter-server启动节点失败！请先尝试在节点机命令执行");
                 }
             }

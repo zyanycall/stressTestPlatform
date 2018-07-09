@@ -21,8 +21,9 @@ spring:
             min-evictable-idle-time-millis: 300000
             validation-query: SELECT 1 FROM DUAL
             test-while-idle: true
-            test-on-borrow: false
+            test-on-borrow: true
             test-on-return: false
+#            removeAbandoned: false
             stat-view-servlet:
                 enabled: true
                 url-pattern: /druid/*

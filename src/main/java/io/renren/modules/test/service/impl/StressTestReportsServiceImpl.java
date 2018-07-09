@@ -243,6 +243,9 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             throw new RRException("已经存在测试报告不要重复创建！");
         }
 
+        //修复csv文件
+        fixReportFile(csvPath);
+
         //设置开始执行命令生成报告
         stressTestReport.setStatus(StressTestUtils.RUNNING);
         update(stressTestReport);
@@ -286,5 +289,36 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             update(stressTestReport);
             throw new RRException("执行生成测试报告脚本异常！", e);
         }
+    }
+
+    /**
+     * 测试报告文件如果最后一行不完整，会报生成报告的错误。
+     * 所以每次生成报告之前，删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
+     *
+     * @param fileName csv 文件
+     */
+    public void fixReportFile(String fileName){
+        try {
+            RandomAccessFile f = new RandomAccessFile(fileName,"rw");
+            long length = f.length() - 1;
+            byte b;
+            do {
+                length -= 1;
+                f.seek(length);
+                b = f.readByte();
+            } while(b!= 10 && length> 0);
+            if (length == 0) {
+                f.setLength(length);
+            } else {
+                f.setLength(length + 1);
+            }
+        } catch (FileNotFoundException e) {
+            logger.error("测试报告原始csv文件找不到！", e);
+            throw new RRException("测试报告原始文件找不到！");
+        } catch (IOException e) {
+            logger.error("测试报告原始文件修复时，IO错误！", e);
+            throw new RRException("测试报告原始文件修复时出错！");
+        }
+
     }
 }
