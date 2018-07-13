@@ -7,11 +7,11 @@ $(function () {
             {label: '用例ID', name: 'caseId', width: 30},
             {
                 label: '文件名称', name: 'originName', width: 120, formatter: function (value, options, row) {
-                if (row.status === 1) {
-                    return "<a href='javascript:void(0);' onclick='" +
-                        "ShowRunning(" + row.fileId + ")'>" + value + "</a>";
+                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                    return value;
                 }
-                return value;
+                return "<a href='javascript:void(0);' onclick='" +
+                        "ShowRunning(" + row.fileId + ")'>" + value + "</a>";
             }
             },
             {label: '添加时间', name: 'addTime', width: 70},

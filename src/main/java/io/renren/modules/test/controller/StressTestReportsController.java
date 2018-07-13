@@ -36,10 +36,10 @@ public class StressTestReportsController {
     public R list(@RequestParam Map<String, Object> params) {
         //查询列表数据
         Query query = new Query(params);
-        List<StressTestReportsEntity> jobList = stressTestReportsService.queryList(query);
+        List<StressTestReportsEntity> reportList = stressTestReportsService.queryList(query);
         int total = stressTestReportsService.queryTotal(query);
 
-        PageUtils pageUtil = new PageUtils(jobList, total, query.getLimit(), query.getPage());
+        PageUtils pageUtil = new PageUtils(reportList, total, query.getLimit(), query.getPage());
 
         return R.ok().put("page", pageUtil);
     }

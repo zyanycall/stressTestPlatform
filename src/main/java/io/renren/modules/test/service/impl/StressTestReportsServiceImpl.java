@@ -312,6 +312,8 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             } else {
                 f.setLength(length + 1);
             }
+            //关闭回收
+            f.close();
         } catch (FileNotFoundException e) {
             logger.error("测试报告原始csv文件找不到！", e);
             throw new RRException("测试报告原始文件找不到！");
@@ -319,6 +321,5 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             logger.error("测试报告原始文件修复时，IO错误！", e);
             throw new RRException("测试报告原始文件修复时出错！");
         }
-
     }
 }

@@ -1,5 +1,7 @@
 package io.renren.modules.test.utils;
 
+import io.renren.common.utils.SpringContextUtils;
+import io.renren.modules.sys.service.SysConfigService;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
 import org.apache.jmeter.visualizers.SamplingStatCalculator;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,11 +14,19 @@ import java.util.Map;
 import static io.renren.common.utils.ConfigConstant.OS_NAME_LC;
 
 /**
- * 性能测试的工具类，用于读取配置文件。
+ * 性能测试的工具类，同时用于读取配置文件。
+ * 也可以将性能测试参数配置到系统参数配置中去。
  */
 @ConfigurationProperties(prefix = "test.stress")
 @Component
 public class StressTestUtils {
+
+    private static SysConfigService sysConfigService;
+
+    static {
+        StressTestUtils.sysConfigService = (SysConfigService) SpringContextUtils.getBean("sysConfigService");
+    }
+
 
     //0：初始状态  1：正在运行  2：成功执行  3：运行出现异常
     public static final Integer INITIAL = 0;
@@ -77,8 +87,15 @@ public class StressTestUtils {
 
     private boolean useJmeterScript;
 
+    public final static String MASTER_JMETER_HOME_KEY = "MASTER_JMETER_HOME_KEY";
+
+    public final static String MASTER_JMETER_CASES_HOME_KEY = "MASTER_JMETER_CASES_HOME_KEY";
+
+    public final static String MASTER_JMETER_USE_SCRIPT_KEY = "MASTER_JMETER_USE_SCRIPT_KEY";
+
     public String getJmeterHome() {
-        return jmeterHome;
+        String value = sysConfigService.getValue(MASTER_JMETER_HOME_KEY);
+        return value == null ? jmeterHome : value;
     }
 
     public void setJmeterHome(String jmeterHome) {
@@ -86,7 +103,8 @@ public class StressTestUtils {
     }
 
     public String getCasePath() {
-        return casePath;
+        String value = sysConfigService.getValue(MASTER_JMETER_CASES_HOME_KEY);
+        return value == null ? casePath : value;
     }
 
     public void setCasePath(String casePath) {
@@ -94,7 +112,8 @@ public class StressTestUtils {
     }
 
     public boolean isUseJmeterScript() {
-        return useJmeterScript;
+        String value = sysConfigService.getValue(MASTER_JMETER_USE_SCRIPT_KEY);
+        return value == null ? useJmeterScript : Boolean.valueOf(value);
     }
 
     public void setUseJmeterScript(boolean useJmeterScript) {

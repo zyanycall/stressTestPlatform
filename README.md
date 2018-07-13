@@ -62,6 +62,7 @@ renren-fast
 - 前端监控：ECharts 3.8
 - 压测内核：Apache JMeter 4.0
 - 脚本调用内核：Apache Commons Exec 1.3
+- 远程执行命令：Jcraft 0.1.54
 <br> 
 
 
