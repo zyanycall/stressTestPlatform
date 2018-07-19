@@ -153,4 +153,28 @@ public class StressTestUtils {
         }
         return jmeterExc;
     }
+
+    /**
+     * 为前台的排序和数据之间做适配
+     */
+    public static Map<String, Object> filterParms(Map<String, Object> params) {
+        if (params.containsKey("sidx") && params.get("sidx") != null ) {
+            String sidxValue = params.get("sidx").toString();
+
+            if ("caseid".equalsIgnoreCase(sidxValue)) {
+                params.put("sidx", "case_id");
+            } else if ("addTime".equalsIgnoreCase(sidxValue)) {
+                params.put("sidx", "add_time");
+            } else if ("updateTime".equalsIgnoreCase(sidxValue)) {
+                params.put("sidx", "update_time");
+            } else if ("fileId".equalsIgnoreCase(sidxValue)) {
+                params.put("sidx", "file_id");
+            } else if ("reportId".equalsIgnoreCase(sidxValue)) {
+                params.put("sidx", "report_id");
+            } else if ("slaveId".equalsIgnoreCase(sidxValue)) {
+                params.put("sidx", "slave_id");
+            }
+        }
+        return params;
+    }
 }

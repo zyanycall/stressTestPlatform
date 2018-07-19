@@ -47,7 +47,7 @@ public class StressTestController {
     @RequiresPermissions("test:stress:list")
     public R list(@RequestParam Map<String, Object> params) {
         //查询列表数据
-        Query query = new Query(params);
+        Query query = new Query(StressTestUtils.filterParms(params));
         List<StressTestEntity> stressTestList = stressTestService.queryList(query);
         int total = stressTestService.queryTotal(query);
 

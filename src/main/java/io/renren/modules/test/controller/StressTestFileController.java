@@ -8,6 +8,7 @@ import io.renren.common.validator.ValidatorUtils;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.service.StressTestFileService;
+import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -38,7 +39,7 @@ public class StressTestFileController {
     @RequiresPermissions("test:stress:fileList")
     public R list(@RequestParam Map<String, Object> params){
         //查询列表数据
-        Query query = new Query(params);
+        Query query = new Query(StressTestUtils.filterParms(params));
         List<StressTestFileEntity> jobList = stressTestFileService.queryList(query);
         int total = stressTestFileService.queryTotal(query);
 
@@ -59,7 +60,7 @@ public class StressTestFileController {
     /**
      * 修改性能测试用例脚本文件
      */
-    @SysLog("修改性能测试用例")
+    @SysLog("修改性能测试用例脚本文件")
     @RequestMapping("/update")
     @RequiresPermissions("test:stress:fileUpdate")
     public R update(@RequestBody StressTestFileEntity stressTestFile) {

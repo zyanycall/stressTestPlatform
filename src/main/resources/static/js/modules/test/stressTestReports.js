@@ -3,9 +3,9 @@ $(function () {
         url: baseURL + 'test/stressReports/list',
         datatype: "json",
         colModel: [
-            {label: '结果文件ID', name: 'reportId', width: 40, key: true},
+            {label: '报告ID', name: 'reportId', width: 30, key: true},
             {
-                label: '报告名称', name: 'originName', width: 80, formatter: function (value, options, row) {
+                label: '报告名称', name: 'originName', width: 70, sortable: false, formatter: function (value, options, row) {
                 if (row.status === 2) {
                     var reportDir = row.reportName.substring(0, row.reportName.lastIndexOf("."));
                     return "<a href='" + baseURL + "testReport/" + reportDir + "/index.html'>" + value + "</a>";
@@ -14,16 +14,16 @@ $(function () {
                 }
             }
             },
-            {label: '测试用例ID', name: 'caseId', width: 40},
-            {label: '测试脚本ID', name: 'fileId', width: 40},
+            {label: '描述', name: 'remark', width: 65, sortable: false},
+            {label: '脚本ID', name: 'fileId', width: 30},
             {
-                label: '结果文件大小', name: 'fileSize', width: 50, formatter: function (value, options, row) {
+                label: '结果文件大小', name: 'fileSize', width: 45, sortable: false, formatter: function (value, options, row) {
                 return conver(value);
             }
             },
             {label: '添加时间', name: 'addTime', width: 60},
             {
-                label: '状态', name: 'status', width: 40, formatter: function (value, options, row) {
+                label: '状态', name: 'status', width: 35, formatter: function (value, options, row) {
                 if (value === 0) {
                     return '<span class="label label-info">创建成功</span>';
                 } else if (value === 1) {
@@ -36,7 +36,7 @@ $(function () {
             }
             },
             {
-                label: '执行操作', name: '', width: 80, formatter: function (value, options, row) {
+                label: '执行操作', name: '', width: 80, sortable: false, formatter: function (value, options, row) {
                 var createReportBtn = "<a href='#' class='btn btn-primary' onclick='createReport(" + row.reportId + ")' ><i class='fa fa-plus'></i>&nbsp;生成报告</a>";
                 var downloadReportBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressReports/downloadReport/" + row.reportId + "' class='btn btn-primary' onclick='return checkStatus(" + row.status + ")'><i class='fa fa-download'></i>&nbsp;下载</a>";
                 return createReportBtn + downloadReportBtn;
@@ -77,7 +77,10 @@ var vm = new Vue({
     data: {
         q: {
             caseId: null
-        }
+        },
+        stressCaseReport: {},
+        title: null,
+        showList: true
     },
     methods: {
         query: function () {
@@ -85,6 +88,28 @@ var vm = new Vue({
                 postData: {'caseId': vm.q.caseId},
                 page: 1
             }).trigger("reloadGrid");
+        },
+        saveOrUpdate: function () {
+            if (vm.validator()) {
+                return;
+            }
+
+            var url = vm.stressCaseReport.reportId == null ? "test/stressReports/save" : "test/stressReports/update";
+            $.ajax({
+                type: "POST",
+                url: baseURL + url,
+                contentType: "application/json",
+                data: JSON.stringify(vm.stressCaseReport),
+                success: function (r) {
+                    if (r.code === 0) {
+                        // alert('操作成功', function(){
+                        vm.reload();
+                        // });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
         },
         // showError: function(logId) {
         // 	// 目前没有展示文件内容信息的需要。
@@ -96,6 +121,18 @@ var vm = new Vue({
         // 		// });
         // 	});
         // },
+        update: function () {
+            var reportId = getSelectedRow();
+            if (reportId == null) {
+                return;
+            }
+
+            $.get(baseURL + "test/stressReports/info/" + reportId, function (r) {
+                vm.showList = false;
+                vm.title = "修改";
+                vm.stressCaseReport = r.stressCaseReport;
+            });
+        },
         del: function () {
             var reportIds = getSelectedRows();
             if (reportIds == null) {
@@ -154,6 +191,12 @@ var vm = new Vue({
                 postData: {'caseId': vm.q.caseId},
                 page: page
             }).trigger("reloadGrid");
+        },
+        validator: function () {
+            if (isBlank(vm.stressCaseReport.remark)) {
+                alert("描述不能为空");
+                return true;
+            }
         }
     }
 });

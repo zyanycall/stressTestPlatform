@@ -14,6 +14,9 @@
                 case_id = #{caseId}
             </if>
         </where>
+        <if test="sidx != null and sidx.trim() != ''">
+            order by ${sidx} ${order}
+        </if>
         <if test="offset != null and limit != null ">
             limit #{offset}, #{limit}
         </if>

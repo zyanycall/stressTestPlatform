@@ -4,12 +4,13 @@ $(function () {
         datatype: "json",
         colModel: [
             {label: '用例ID', name: 'caseId', width: 50, key: true},
-            {label: '名称', name: 'caseName', width: 120},
-            {label: '项目', name: 'project', width: 80},
-            {label: '模块', name: 'module', width: 80},
-            {label: '操作人', name: 'operator', width: 80},
+            {label: '名称', name: 'caseName', sortable: false, width: 120},
+            {label: '添加时间', name: 'addTime', width: 90},
+            {label: '项目', name: 'project', sortable: false, width: 80},
+            {label: '模块', name: 'module', sortable: false, width: 80},
+            {label: '操作人', name: 'operator', sortable: false, width: 60},
             // { label: 'cron表达式 ', name: 'cronExpression', width: 100 },
-            { label: '备注', name: 'remark', width: 200 }
+            { label: '备注', name: 'remark', sortable: false, width: 140 }
         ],
         viewrecords: true,
         height: 385,

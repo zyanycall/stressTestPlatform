@@ -3,32 +3,36 @@
 
 <mapper namespace="io.renren.modules.test.dao.StressTestDao">
 
-	<select id="queryObject" resultType="io.renren.modules.test.entity.StressTestEntity" >
+    <select id="queryObject" resultType="io.renren.modules.test.entity.StressTestEntity">
 		select * from test_stress_case where case_id = #{value}
-	</select> 
+	</select>
 
-	<select id="queryList" resultType="io.renren.modules.test.entity.StressTestEntity" >
-		select * from test_stress_case
-		<where>
-			<if test="caseName != null and caseName.trim() != ''">
-				case_name like concat('%', #{caseName}, '%')
-			</if>
-		</where>
-		<if test="offset != null and limit != null ">
-		limit #{offset}, #{limit}
-		</if>
-	</select>
-	
- 	<select id="queryTotal" resultType="int">
-		select count(1) from test_stress_case
-		<where>
-			<if test="caseName != null and caseName.trim() != ''">
-				case_name like concat('%', #{caseName}, '%')
-			</if>
-		</where>
-	</select>
-	 
-	<insert id="save" parameterType="io.renren.modules.test.entity.StressTestEntity" useGeneratedKeys="true" keyProperty="caseId">
+    <select id="queryList" resultType="io.renren.modules.test.entity.StressTestEntity">
+        select * from test_stress_case
+        <where>
+            <if test="caseName != null and caseName.trim() != ''">
+                case_name like concat('%', #{caseName}, '%')
+            </if>
+        </where>
+        <if test="sidx != null and sidx.trim() != ''">
+              order by ${sidx} ${order}
+        </if>
+        <if test="offset != null and limit != null ">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(1) from test_stress_case
+        <where>
+            <if test="caseName != null and caseName.trim() != ''">
+                case_name like concat('%', #{caseName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="io.renren.modules.test.entity.StressTestEntity" useGeneratedKeys="true"
+            keyProperty="caseId">
 		insert into test_stress_case
 		(
 			`case_name`,
@@ -54,36 +58,36 @@
 			#{addBy}
 		)
 	</insert>
-	 
-	<update id="update" parameterType="io.renren.modules.test.entity.StressTestEntity">
-		update test_stress_case
-		<set> 
-			<if test="caseName != null">`case_name` = #{caseName}, </if>
-			<if test="project != null">`project` = #{project}, </if>
-			<if test="module != null">`module` = #{module}, </if>
-			<if test="status != null">`status` = #{status}, </if>
-			<if test="operator != null">`operator` = #{operator}, </if>
-			<if test="remark != null">`remark` = #{remark}, </if>
-			<if test="priority != null">`priority` = #{priority}, </if>
-			<if test="caseDir != null">`case_dir` = #{caseDir}, </if>
-			<if test="updateBy != null">`update_by` = #{updateBy}, </if>
-		</set>
-		where case_id = #{caseId}
-	</update>
-	
-	<!-- 批量更新状态 -->
-	<update id="updateBatch"> 
-		update test_stress_case set status = #{status} where case_id in
-		<foreach item="caseId" collection="list"  open="(" separator="," close=")">
-			#{caseId}
-		</foreach>
-	</update>
-	
-	<delete id="deleteBatch">
-		delete from test_stress_case where case_id in
-		<foreach item="caseId" collection="array" open="(" separator="," close=")">
-			#{caseId}
-		</foreach>
-	</delete>
+
+    <update id="update" parameterType="io.renren.modules.test.entity.StressTestEntity">
+        update test_stress_case
+        <set>
+            <if test="caseName != null">`case_name` = #{caseName},</if>
+            <if test="project != null">`project` = #{project},</if>
+            <if test="module != null">`module` = #{module},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="operator != null">`operator` = #{operator},</if>
+            <if test="remark != null">`remark` = #{remark},</if>
+            <if test="priority != null">`priority` = #{priority},</if>
+            <if test="caseDir != null">`case_dir` = #{caseDir},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+        </set>
+        where case_id = #{caseId}
+    </update>
+
+    <!-- 批量更新状态 -->
+    <update id="updateBatch">
+        update test_stress_case set status = #{status} where case_id in
+        <foreach item="caseId" collection="list" open="(" separator="," close=")">
+            #{caseId}
+        </foreach>
+    </update>
+
+    <delete id="deleteBatch">
+        delete from test_stress_case where case_id in
+        <foreach item="caseId" collection="array" open="(" separator="," close=")">
+            #{caseId}
+        </foreach>
+    </delete>
 
 </mapper>

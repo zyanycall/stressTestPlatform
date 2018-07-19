@@ -4,8 +4,10 @@ import io.renren.common.annotation.SysLog;
 import io.renren.common.utils.PageUtils;
 import io.renren.common.utils.Query;
 import io.renren.common.utils.R;
+import io.renren.common.validator.ValidatorUtils;
 import io.renren.modules.test.entity.StressTestReportsEntity;
 import io.renren.modules.test.service.StressTestReportsService;
+import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -35,7 +37,7 @@ public class StressTestReportsController {
     @RequiresPermissions("test:stress:reportsList")
     public R list(@RequestParam Map<String, Object> params) {
         //查询列表数据
-        Query query = new Query(params);
+        Query query = new Query(StressTestUtils.filterParms(params));
         List<StressTestReportsEntity> reportList = stressTestReportsService.queryList(query);
         int total = stressTestReportsService.queryTotal(query);
 
@@ -51,7 +53,19 @@ public class StressTestReportsController {
     @RequiresPermissions("test:stress:reportInfo")
     public R info(@PathVariable("reportId") Long reportId) {
         StressTestReportsEntity reportsEntity = stressTestReportsService.queryObject(reportId);
-        return R.ok().put("file", reportsEntity);
+        return R.ok().put("stressCaseReport", reportsEntity);
+    }
+
+    /**
+     * 修改性能测试用例报告文件
+     */
+    @SysLog("修改性能测试用例报告文件")
+    @RequestMapping("/update")
+    @RequiresPermissions("test:stress:reportUpdate")
+    public R update(@RequestBody StressTestReportsEntity stressCaseReport) {
+        ValidatorUtils.validateEntity(stressCaseReport);
+        stressTestReportsService.update(stressCaseReport);
+        return R.ok();
     }
 
     /**
@@ -91,6 +105,7 @@ public class StressTestReportsController {
     /**
      * 下载测试报告zip包
      */
+    @SysLog("下载测试报告zip包")
     @RequestMapping("/downloadReport/{reportId}")
     @RequiresPermissions("test:stress:reportDownLoad")
     public ResponseEntity<InputStreamResource> downloadReport(@PathVariable("reportId") Long reportId) throws IOException {

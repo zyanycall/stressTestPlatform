@@ -4,12 +4,12 @@ $(function () {
         datatype: "json",
         colModel: [
             {label: '节点ID', name: 'slaveId', width: 30, key: true},
-            {label: '名称', name: 'slaveName', width: 80},
-            {label: 'IP地址', name: 'ip', width: 50},
-            {label: 'Jmeter端口', name: 'jmeterPort', width: 40},
-            {label: '用户名', name: 'userName', width: 30},
-            {label: '密码', name: 'passwd', width: 50},
-            {label: 'ssh端口', name: 'sshPort', width: 30},
+            {label: '名称', name: 'slaveName', width: 80, sortable: false},
+            {label: 'IP地址', name: 'ip', width: 50, sortable: false},
+            {label: 'Jmeter端口', name: 'jmeterPort', width: 40, sortable: false},
+            {label: '用户名', name: 'userName', width: 30, sortable: false},
+            {label: '密码', name: 'passwd', width: 50, sortable: false},
+            {label: 'ssh端口', name: 'sshPort', width: 30, sortable: false},
             {
                 label: '状态', name: 'status', width: 30, formatter: function (value, options, row) {
                 if (value === 0) {
@@ -19,7 +19,7 @@ $(function () {
                 }
             }
             },
-            {label: '安装路径', name: 'homeDir', width: 120}
+            {label: '安装路径', name: 'homeDir', width: 120, sortable: false}
         ],
         viewrecords: true,
         height: 385,

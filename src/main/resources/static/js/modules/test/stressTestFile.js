@@ -4,9 +4,9 @@ $(function () {
         datatype: "json",
         colModel: [
             {label: '文件ID', name: 'fileId', width: 30, key: true},
-            {label: '用例ID', name: 'caseId', width: 30},
+            {label: '用例ID', name: 'caseId', width: 35},
             {
-                label: '文件名称', name: 'originName', width: 120, formatter: function (value, options, row) {
+                label: '文件名称', name: 'originName', width: 120, sortable: false, formatter: function (value, options, row) {
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                     return value;
                 }
@@ -18,7 +18,7 @@ $(function () {
             // 当前不做更新时间，页面复杂性价比不高。
             // { label: '更新时间', name: 'updateTime', width: 80 }
             {
-                label: 'Chart监控', name: 'webchartStatus', width: 40, formatter: function (value, options, row) {
+                label: 'Chart监控', name: 'webchartStatus', width: 40, sortable: false, formatter: function (value, options, row) {
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                     return '';
                 }
@@ -30,7 +30,7 @@ $(function () {
             }
             },
             {
-                label: '测试报告', name: 'reportStatus', width: 40, formatter: function (value, options, row) {
+                label: '测试报告', name: 'reportStatus', width: 40, sortable: false, formatter: function (value, options, row) {
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                     return '';
                 }
@@ -55,7 +55,7 @@ $(function () {
             }
             },
             {
-                label: '执行操作', name: '', width: 100, formatter: function (value, options, row) {
+                label: '执行操作', name: '', width: 100, sortable: false, formatter: function (value, options, row) {
                 var btn = '';
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                     btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
