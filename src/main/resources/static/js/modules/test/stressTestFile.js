@@ -228,6 +228,9 @@ var vm = new Vue({
         },
         startEcharts: function (event) {
             startInterval(fileIdData);
+        },
+        clearEcharts: function (event) {
+            clearEcharts();
         }
     }
 });
@@ -293,6 +296,10 @@ var xAxisData = [];
 var fileIdData;
 
 function startInterval(fileId) {
+    // 如果是多个脚本同时运行，切换监控页面时会发生这种情况。
+    if (fileIdData > 0) {
+        clearEcharts();
+    }
     fileIdData = fileId;
     timeTicket = setInterval(function () {
         $.get(baseURL + "test/stressFile/statInfo/" + fileId, function (r) {
@@ -333,6 +340,21 @@ function ShowRunning(fileId) {
     startInterval(fileId);
 }
 
+function clearEcharts() {
+    responseTimeDataObj = {};
+    responseTimeLegendData = [];
+    throughputDataObj = {};
+    throughputLegendData = [];
+    networkSentDataObj = {};
+    networkSentLegendData = [];
+    networkReceiveDataObj = {};
+    networkReceiveLegendData = [];
+    successPercentageDataObj = {};
+    successPercentageLegendData = [];
+    threadCountsDataObj = {};
+    threadCountsLegendData = [];
+    xAxisData = [];
+}
 
 function getOption(map, legendData, dataObj, areaStyle) {
     for (var runLabel in map) {
