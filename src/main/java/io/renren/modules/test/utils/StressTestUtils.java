@@ -87,11 +87,34 @@ public class StressTestUtils {
 
     private boolean useJmeterScript;
 
+    private boolean replaceFile = true;
+
+    /**
+     * Jmeter在Master节点的绝对路径
+     */
     public final static String MASTER_JMETER_HOME_KEY = "MASTER_JMETER_HOME_KEY";
 
+    /**
+     * Jmeter在Master节点存储用例信息的绝对路径
+     * 存放用例的总目录，里面会细分文件存放用例及用例文件
+     * Jmeter节点机需要在/etc/bashrc中配置JAVA_HOME，同时source /etc/bashrc生效
+     */
     public final static String MASTER_JMETER_CASES_HOME_KEY = "MASTER_JMETER_CASES_HOME_KEY";
 
+    /**
+     * 如果配置了Jmeter脚本启动，则额外开启Jmeter进程运行测试用例脚本及分布式程序。
+     * 分布式程序可以取消ssl校验。
+     * 同时仅支持Jmeter+InfluxDB+Grafana的实时监控。
+     * 如果没有配置Jmeter脚本启动，则使用web本身自带的Jmeter功能。
+     * 支持自带的ECharts实时监控。
+     * 默认是false，即使用web程序进程来启动Jmeter-master程序。
+     */
     public final static String MASTER_JMETER_USE_SCRIPT_KEY = "MASTER_JMETER_USE_SCRIPT_KEY";
+
+    /**
+     * 上传文件时，遇到同名文件是替换还是报错，默认是替换为true
+     */
+    public final static String MASTER_JMETER_REPLACE_FILE_KEY = "MASTER_JMETER_REPLACE_FILE_KEY";
 
     public String getJmeterHome() {
         String value = sysConfigService.getValue(MASTER_JMETER_HOME_KEY);
@@ -118,6 +141,15 @@ public class StressTestUtils {
 
     public void setUseJmeterScript(boolean useJmeterScript) {
         this.useJmeterScript = useJmeterScript;
+    }
+
+    public boolean isReplaceFile() {
+        String value = sysConfigService.getValue(MASTER_JMETER_REPLACE_FILE_KEY);
+        return value == null ? replaceFile : Boolean.valueOf(value);
+    }
+
+    public void setReplaceFile(boolean replaceFile) {
+        this.replaceFile = replaceFile;
     }
 
     public static String getSuffix4() {
@@ -158,7 +190,7 @@ public class StressTestUtils {
      * 为前台的排序和数据之间做适配
      */
     public static Map<String, Object> filterParms(Map<String, Object> params) {
-        if (params.containsKey("sidx") && params.get("sidx") != null ) {
+        if (params.containsKey("sidx") && params.get("sidx") != null) {
             String sidxValue = params.get("sidx").toString();
 
             if ("caseid".equalsIgnoreCase(sidxValue)) {
@@ -173,6 +205,8 @@ public class StressTestUtils {
                 params.put("sidx", "report_id");
             } else if ("slaveId".equalsIgnoreCase(sidxValue)) {
                 params.put("sidx", "slave_id");
+            } else if ("fileSize".equalsIgnoreCase(sidxValue)) {
+                params.put("sidx", "file_size");
             }
         }
         return params;

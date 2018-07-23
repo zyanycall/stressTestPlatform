@@ -17,7 +17,7 @@ $(function () {
             {label: '描述', name: 'remark', width: 65, sortable: false},
             {label: '脚本ID', name: 'fileId', width: 30},
             {
-                label: '结果文件大小', name: 'fileSize', width: 45, sortable: false, formatter: function (value, options, row) {
+                label: '结果文件大小', name: 'fileSize', width: 45, formatter: function (value, options, row) {
                 return conver(value);
             }
             },

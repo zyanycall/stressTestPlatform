@@ -107,7 +107,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         } catch (IOException e) {
             throw new RRException("获取上传文件的MD5失败！", e);
         }
-        save(stressTestFile);
+        if (stressTestFile.getFileId() != null && stressTestFile.getFileId() > 0L) {
+            update(stressTestFile);
+        } else {
+            save(stressTestFile);
+        }
         // 肯定存在已有的用例信息
         stressTestDao.update(stressCase);
         saveFile(multipartFile, filePath);

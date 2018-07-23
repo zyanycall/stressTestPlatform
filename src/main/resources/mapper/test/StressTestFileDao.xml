@@ -13,6 +13,9 @@
             <if test="caseId != null and caseId.trim() != ''">
                 case_id = #{caseId}
             </if>
+            <if test="originName != null and originName.trim() != ''">
+                origin_name = #{originName}
+            </if>
         </where>
         <if test="sidx != null and sidx.trim() != ''">
             order by ${sidx} ${order}

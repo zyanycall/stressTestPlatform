@@ -89,13 +89,8 @@ public interface StressTestFileService {
      */
     void synchronizeFile(Long[] fileIds);
 
+    /**
+     * 获取文件路径，是文件的真实绝对路径
+     */
     String getFilePath(StressTestFileEntity stressTestFile);
-
-
-//    /**
-//     * 批量更新性能测试用例信息
-//     */
-//    int updateBatch(Long[] caseIds, int status);
-
-
 }

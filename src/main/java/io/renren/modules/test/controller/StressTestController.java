@@ -20,10 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * 性能测试
@@ -88,44 +85,66 @@ public class StressTestController {
         }
 
         String caseId = request.getParameter("caseIds");
-
         //允许文件名不同但是文件内容相同,因为不同的文件名对应不同的用例.
         StressTestEntity stressCase = stressTestService.queryObject(Long.valueOf(caseId));
-
-        StressTestFileEntity stressCaseFile = new StressTestFileEntity();
-        stressCaseFile.setOriginName(originName);
-
-        //主节点master文件夹名称
-        //主节点master会根据stressCase的添加时间及随机数生成唯一的文件夹,用来保存用例文件及参数化文件.
-        //从节点slave会默认使用$JMETER_HOME/bin/stressTest 来存储参数化文件
-        //master的文件分开放(web页面操作无感知),slave的参数化文件统一放.
-        Date caseAddTime = stressCase.getAddTime();
-        String caseAddTimeStr = DateUtils.format(caseAddTime, DateUtils.DATE_TIME_PATTERN_4DIR);
-        String caseFilePath;
-        if (StringUtils.isEmpty(stressCase.getCaseDir())) {
-            //random使用时间种子的随机数,避免了轻度并发造成文件夹重名.
-            caseFilePath = caseAddTimeStr + new Random(System.nanoTime()).nextInt(1000);
-            stressCase.setCaseDir(caseFilePath);
-        } else {
-            caseFilePath = stressCase.getCaseDir();
-        }
-
-        String filePath;
         //主节点master的用于保存Jmeter用例及文件的地址
         String casePath = stressTestUtils.getCasePath();
-        if (".jmx".equalsIgnoreCase(suffix)) {
-            String jmxRealName = "case" + caseAddTimeStr +
-                    new Random(System.nanoTime()).nextInt(1000) + suffix;
-            stressCaseFile.setFileName(caseFilePath + File.separator + jmxRealName);
-            filePath = casePath + File.separator + caseFilePath + File.separator + jmxRealName;
-        } else {
-            stressCaseFile.setFileName(caseFilePath + File.separator + originName);
-            filePath = casePath + File.separator + caseFilePath + File.separator + originName;
+
+        Map<String, Object> query = new HashMap<String, Object>();
+        query.put("originName", originName);
+        // fileList中最多有一条记录
+        List<StressTestFileEntity> fileList = stressTestFileService.queryList(query);
+        //数据库中已经存在同名文件
+        if (!fileList.isEmpty()) {
+            // 不允许上传同名文件
+            if (!stressTestUtils.isReplaceFile()) {
+                throw new RRException("系统中已经存在此文件记录！不允许上传同名文件！");
+            } else {// 允许上传同名文件方式是覆盖。
+                for (StressTestFileEntity stressCaseFile : fileList) {
+                    // 如果是不同用例，但是要上传同名文件，是不允许的，这是数据库的唯一索引要求的。
+                    if (Long.valueOf(caseId) != stressCaseFile.getCaseId()) {
+                        throw new RRException("其他用例已经包含此同名文件！");
+                    }
+                    // 目的是从名称上严格区分脚本。而同名脚本不同项目模块甚至标签
+                    String filePath = casePath + File.separator + stressCaseFile.getFileName();
+                    stressTestFileService.save(multipartFile, filePath, stressCase, stressCaseFile);
+                }
+            }
+        } else {// 新上传文件
+            StressTestFileEntity stressCaseFile = new StressTestFileEntity();
+            stressCaseFile.setOriginName(originName);
+
+            //主节点master文件夹名称
+            //主节点master会根据stressCase的添加时间及随机数生成唯一的文件夹,用来保存用例文件及参数化文件.
+            //从节点slave会默认使用$JMETER_HOME/bin/stressTest 来存储参数化文件
+            //master的文件分开放(web页面操作无感知),slave的参数化文件统一放.
+            Date caseAddTime = stressCase.getAddTime();
+            String caseAddTimeStr = DateUtils.format(caseAddTime, DateUtils.DATE_TIME_PATTERN_4DIR);
+            String caseFilePath;
+            if (StringUtils.isEmpty(stressCase.getCaseDir())) {
+                //random使用时间种子的随机数,避免了轻度并发造成文件夹重名.
+                caseFilePath = caseAddTimeStr + new Random(System.nanoTime()).nextInt(1000);
+                stressCase.setCaseDir(caseFilePath);
+            } else {
+                caseFilePath = stressCase.getCaseDir();
+            }
+
+            String filePath;
+            if (".jmx".equalsIgnoreCase(suffix)) {
+                String jmxRealName = "case" + caseAddTimeStr +
+                        new Random(System.nanoTime()).nextInt(1000) + suffix;
+                stressCaseFile.setFileName(caseFilePath + File.separator + jmxRealName);
+                filePath = casePath + File.separator + caseFilePath + File.separator + jmxRealName;
+            } else {
+                stressCaseFile.setFileName(caseFilePath + File.separator + originName);
+                filePath = casePath + File.separator + caseFilePath + File.separator + originName;
+            }
+
+            //保存文件信息
+            stressCaseFile.setCaseId(Long.valueOf(caseId));
+            stressTestFileService.save(multipartFile, filePath, stressCase, stressCaseFile);
         }
 
-        //保存文件信息
-        stressCaseFile.setCaseId(Long.valueOf(caseId));
-        stressTestFileService.save(multipartFile, filePath, stressCase, stressCaseFile);
         return R.ok();
     }
 

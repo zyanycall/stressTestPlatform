@@ -449,6 +449,7 @@ INSERT INTO `test_stress_slave` (`slave_id`, `slave_name`, `ip`, `jmeter_port`, 
 INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('2', 'MASTER_JMETER_HOME_KEY', 'D:\\software\\apache-jmeter-4.0', '1', '本地Jmeter_home绝对路径');
 INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('3', 'MASTER_JMETER_CASES_HOME_KEY', 'D:\\E\\stressTestCases', '1', '本地保存用例数据的绝对路径，不要随意切换会导致文件找不到错误。');
 INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('4', 'MASTER_JMETER_USE_SCRIPT_KEY', 'false', '1', 'false:在服务器进程内启动Jmeter压测。true:启动Jmeter_home中的命令压测');
+INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('5', 'MASTER_JMETER_REPLACE_FILE_KEY', 'true', '1', '上传文件时，遇到同名文件是替换还是报错，默认是替换为true');
 
 
 -- 还没有完全实现的测试场景组装功能
