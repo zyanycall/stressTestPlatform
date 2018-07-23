@@ -297,7 +297,7 @@ var fileIdData;
 
 function startInterval(fileId) {
     // 如果是多个脚本同时运行，切换监控页面时会发生这种情况。
-    if (fileIdData > 0) {
+    if (fileIdData > 0 && fileIdData != fileId) {
         clearEcharts();
     }
     fileIdData = fileId;
