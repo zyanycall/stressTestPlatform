@@ -220,6 +220,7 @@ var vm = new Vue({
                 postData: {'caseId': vm.q.caseId},
                 page: page
             }).trigger("reloadGrid");
+            // clearInterval 是自带的函数。
             clearInterval(timeTicket);
         },
         suspendEcharts: function (event) {
@@ -296,6 +297,11 @@ function startInterval(fileId) {
     timeTicket = setInterval(function () {
         $.get(baseURL + "test/stressFile/statInfo/" + fileId, function (r) {
             var responseTimeMap = r.statInfo.responseTimesMap;
+            //拿其中的一个值尝试一下，没有则不刷新option了。
+            if (Object.keys(responseTimeMap).length  === 0) {
+                return;
+            }
+
             var throughputMap = r.statInfo.throughputMap;
             var networkSentMap = r.statInfo.networkSentMap;
             var networkReceiveMap = r.statInfo.networkReceiveMap;
