@@ -290,6 +290,8 @@ var networkReceiveDataObj = {};
 var networkReceiveLegendData = [];
 var successPercentageDataObj = {};
 var successPercentageLegendData = [];
+var errorPercentageDataObj = {};
+var errorPercentageLegendData = [];
 var threadCountsDataObj = {};
 var threadCountsLegendData = [];
 var xAxisData = [];
@@ -313,6 +315,7 @@ function startInterval(fileId) {
             var networkSentMap = r.statInfo.networkSentMap;
             var networkReceiveMap = r.statInfo.networkReceiveMap;
             var successPercentageMap = r.statInfo.successPercentageMap;
+            var errorPercentageMap = r.statInfo.errorPercentageMap;
             var threadCountsMap = r.statInfo.threadCountsMap;
             xAxisData.push(new Date().toLocaleTimeString());
 
@@ -321,6 +324,7 @@ function startInterval(fileId) {
             var networkSentMapOption = getOption(networkSentMap, networkSentLegendData, networkSentDataObj, 'sent');
             var networkReceiveMapOption = getOption(networkReceiveMap, networkReceiveLegendData, networkReceiveDataObj, 'received');
             var successPercentageMapOption = getOption(successPercentageMap, successPercentageLegendData, successPercentageDataObj, 'successPercentage');
+            var errorPercentageMapOption = getOption(errorPercentageMap, errorPercentageLegendData, errorPercentageDataObj, null);
             var threadCountsMapOption = getOption(threadCountsMap, threadCountsLegendData, threadCountsDataObj, null);
 
             responseTimesEChart.setOption(responseTimesEChartOption);
@@ -328,6 +332,7 @@ function startInterval(fileId) {
             networkSentEChart.setOption(networkSentMapOption);
             networkReceivedEChart.setOption(networkReceiveMapOption);
             successPercentageEChart.setOption(successPercentageMapOption);
+            errorPercentageEChart.setOption(errorPercentageMapOption);
             threadCountsEChart.setOption(threadCountsMapOption);
         });
     }, 2000);
@@ -351,6 +356,8 @@ function clearEcharts() {
     networkReceiveLegendData = [];
     successPercentageDataObj = {};
     successPercentageLegendData = [];
+    errorPercentageDataObj = {};
+    errorPercentageLegendData = [];
     threadCountsDataObj = {};
     threadCountsLegendData = [];
     xAxisData = [];
@@ -406,6 +413,7 @@ var throughputEChart = echarts.init(document.getElementById('throughputChart'), 
 var networkSentEChart = echarts.init(document.getElementById('networkSentChart'), 'shine');
 var networkReceivedEChart = echarts.init(document.getElementById('networkReceivedChart'), 'shine');
 var successPercentageEChart = echarts.init(document.getElementById('successPercentageChart'), 'shine');
+var errorPercentageEChart = echarts.init(document.getElementById('errorPercentageChart'), 'shine');
 var threadCountsEChart = echarts.init(document.getElementById('threadCountsChart'), 'shine');
 
 //用于使chart自适应高度和宽度
@@ -416,6 +424,7 @@ window.onresize = function () {
     networkSentEChart.resize();
     networkReceivedEChart.resize();
     successPercentageEChart.resize();
+    errorPercentageEChart.resize();
     threadCountsEChart.resize();
 };
 
@@ -426,6 +435,7 @@ function setEChartSize() {
     $("#networkSentChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
     $("#networkReceivedChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
     $("#successPercentageChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
+    $("#errorPercentageChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
     $("#threadCountsChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
 }
 
@@ -498,4 +508,5 @@ throughputEChart.setOption(option);
 networkSentEChart.setOption(option);
 networkReceivedEChart.setOption(option);
 successPercentageEChart.setOption(option);
+errorPercentageEChart.setOption(option);
 threadCountsEChart.setOption(option);

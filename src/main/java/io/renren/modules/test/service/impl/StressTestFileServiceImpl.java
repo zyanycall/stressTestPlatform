@@ -44,8 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.util.*;
 
 @Service("stressTestFileService")
@@ -339,12 +337,17 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             String slaveStr = getSlaveIPPort();
             // slaveStr用来做脚本是否是分布式执行的判断，不入库。
             stressTestFile.setSlaveStr(slaveStr);
-            // 都会添加收集观察监听程序。
-            // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
-            // 使用自定义的Collector，用于前端绘图的数据收集和日志收集等。
-            JmeterResultCollector jmeterResultCollector = new JmeterResultCollector(stressTestFile);
-            jmeterResultCollector.setFilename(csvFile.getPath());
-            jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
+
+            //如果不要监控也不要测试报告，则不加自定义的Collector到文件里，让性能最大化。
+            if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())
+                    || StressTestUtils.NEED_WEB_CHART.equals(stressTestFile.getWebchartStatus())) {
+                // 添加收集观察监听程序。
+                // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
+                // 使用自定义的Collector，用于前端绘图的数据收集和日志收集等。
+                JmeterResultCollector jmeterResultCollector = new JmeterResultCollector(stressTestFile);
+                jmeterResultCollector.setFilename(csvFile.getPath());
+                jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
+            }
 
             if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
                 java.util.StringTokenizer st = new java.util.StringTokenizer(slaveStr, ",");//$NON-NLS-1$

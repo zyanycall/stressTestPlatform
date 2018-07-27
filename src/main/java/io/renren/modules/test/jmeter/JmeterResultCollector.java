@@ -46,7 +46,6 @@ public class JmeterResultCollector extends ResultCollector {
         } else {
             StressTestUtils.samplingStatCalculator4File.put(stressTestFile.getFileId(), samplingStatCalculatorMap);
         }
-
     }
 
     /**

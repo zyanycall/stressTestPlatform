@@ -16,6 +16,11 @@ public class JmeterStatEntity {
 
     private Long fileId;
 
+    /**
+     * key值是label，即每个请求的名称。
+     * value值是计算值的对象，里面包含每个label所对应的监控计算数据。
+     * statMap是在回调时，填充数据
+     */
     private Map<String, SamplingStatCalculator> statMap;
 
     /**
@@ -39,12 +44,20 @@ public class JmeterStatEntity {
     private Map<String, String> networkReceiveMap = new HashMap<>();
 
     /**
-     * 正确率相关的监控数据。
+     * 正确率相关的监控数据。是总的请求数的正确率的占比，这个图在单个请求或者
+     * 每个请求的请求数量相差不大的时候，比较直观，但是除此之外，不能显现问题严重性。
      */
     private Map<String, String> successPercentageMap = new HashMap<>();
 
     /**
+     * 每个label的错误率，double类型。和successPercentageMap不同，successPercentageMap是所有
+     * 请求中，成功失败的占比。
+     */
+    private Map<String, String> errorPercentageMap = new HashMap<>();
+
+    /**
      * 虚拟用户数相关的监控数据，没有根据label/slave的名称区分。
+     * slave分布式节点的线程数，master默认统计不到。
      */
     private Map<String, String> threadCountsMap = new HashMap<>();
 
@@ -146,6 +159,20 @@ public class JmeterStatEntity {
 
     public void setSuccessPercentageMap(Map<String, String> successPercentageMap) {
         this.successPercentageMap = successPercentageMap;
+    }
+
+    public Map<String, String> getErrorPercentageMap() {
+        if (statMap != null) {
+            for (String key : statMap.keySet()) {
+                SamplingStatCalculator calculator = statMap.get(key);
+                errorPercentageMap.put(key + "_ErrorPercent", String.format("%.2f", calculator.getErrorPercentage()));
+            }
+        }
+        return errorPercentageMap;
+    }
+
+    public void setErrorPercentageMap(Map<String, String> errorPercentageMap) {
+        this.errorPercentageMap = errorPercentageMap;
     }
 
     public Map<String, String> getThreadCountsMap() {
