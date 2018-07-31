@@ -186,7 +186,14 @@ public class StressTestController {
     public R delete(@RequestBody Long[] caseIds) {
         stressTestService.deleteBatch(caseIds);
 
+        for (Long caseId : caseIds) {
+            ArrayList fileIdList = new ArrayList();
+            List<StressTestFileEntity> fileList = stressTestFileService.queryList(caseId);
+            for (StressTestFileEntity stressTestFile : fileList) {
+                fileIdList.add(stressTestFile.getFileId());
+            }
+            stressTestFileService.deleteBatch(fileIdList.toArray());
+        }
         return R.ok();
     }
-
 }

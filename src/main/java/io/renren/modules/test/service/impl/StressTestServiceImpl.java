@@ -76,7 +76,8 @@ public class StressTestServiceImpl implements StressTestService {
             }
         }
         // 删除数据库内容
-        stressTestFileDao.deleteBatchByCaseIds(caseIds);
+        // 脚本文件的删除调用file的自身方法，在controller中调用。因为file包含了分布式节点的数据。
+        // 测试报告的内容都在master服务器端，所以直接删除case文件夹即可。
         stressTestReportsDao.deleteBatchByCaseIds(caseIds);
         stressTestDao.deleteBatch(caseIds);
     }

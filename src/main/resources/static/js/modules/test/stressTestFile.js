@@ -48,6 +48,9 @@ $(function () {
                 } else if (value === 1) {
                     return '<span class="label label-warning">正在执行</span>';
                 } else if (value === 2) {
+                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                        return '<span class="label label-success">同步成功</span>';
+                    }
                     return '<span class="label label-success">执行成功</span>';
                 } else if (value === 3) {
                     return '<span class="label label-danger">出现异常</span>';

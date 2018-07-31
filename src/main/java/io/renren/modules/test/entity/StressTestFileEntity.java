@@ -25,6 +25,11 @@ public class StressTestFileEntity implements Serializable {
     private Long caseId;
 
     /**
+     * 用例名称
+     */
+    private Long slaveId;
+
+    /**
      * 用例文件名
      */
     @NotBlank(message="文件名不能为空")
@@ -43,7 +48,7 @@ public class StressTestFileEntity implements Serializable {
     /**
      * 任务状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常
      */
-    private Integer status;
+    private Integer status = 0;
 
     /**
      * 状态  0：保存测试报告原始文件  1：不需要测试报告
@@ -200,5 +205,28 @@ public class StressTestFileEntity implements Serializable {
 
     public void setFileMd5(String fileMd5) {
         this.fileMd5 = fileMd5;
+    }
+
+    public Long getSlaveId() {
+        return slaveId;
+    }
+
+    public void setSlaveId(Long slaveId) {
+        this.slaveId = slaveId;
+    }
+
+    public StressTestFileEntity clone() {
+        StressTestFileEntity clone = new StressTestFileEntity();
+        clone.setCaseId(this.getCaseId());
+        clone.setStatus(this.getStatus());
+        clone.setFileMd5(this.getFileMd5());
+        clone.setFileName(this.getFileName());
+        clone.setOriginName(this.getOriginName());
+        clone.setSlaveStr(this.getSlaveStr());
+        clone.setReportStatus(this.getReportStatus());
+        clone.setWebchartStatus(this.getWebchartStatus());
+        clone.setWeblogStatus(this.getWeblogStatus());
+        clone.setSlaveId(this.getSlaveId());
+        return clone;
     }
 }

@@ -82,8 +82,8 @@ public class SSH2Utils {
     public void close() {
         if (session != null && session.isConnected()) {
             session.disconnect();
-            session = null;
         }
+        session = null;
     }
 
     /**
@@ -101,11 +101,11 @@ public class SSH2Utils {
             throws JSchException, SftpException {
         Channel channelSftp = session.openChannel("sftp");
         channelSftp.connect();
-        ChannelSftp c = (ChannelSftp) channelSftp;
+        ChannelSftp sftp = (ChannelSftp) channelSftp;
         String remoteFile = null;
         if (remotePath != null && remotePath.trim().length() > 0) {
             try {
-                c.mkdir(remotePath);
+                sftp.mkdir(remotePath);
             } catch (Exception e) {
             }
             remoteFile = remotePath + "/.";
@@ -125,9 +125,10 @@ public class SSH2Utils {
                 file = localPath + "/" + file;
             }
         }
-        c.put(file, remoteFile);
+        sftp.put(file, remoteFile);
 
         channelSftp.disconnect();
+        channelSftp = null;
     }
 
     /**
@@ -217,19 +218,9 @@ public class SSH2Utils {
 
         inReader.close();
 //        errReader.close();
+        inReader = null;
         channel.disconnect();
+        channel = null;
         return sb.toString();
-    }
-
-    public static void main(String[] args) throws Exception {
-        SSH2Utils ssh2Util = new SSH2Utils("172.16.0.170", "root","51talk", 22);
-        ssh2Util.initialSession();
-//        ssh2Util.putFile("D:\\E\\stressTestCases\\20180523155023932\\12121.txt", "/home/apache-jmeter-4.0\\bin\\stressTestCases");
-
-        ssh2Util.putFile("D:\\D\\Git\\stressTestPlatform\\target", "renren-fast.war","/home/zhaoyu/apache-jmeter-4.0/bin/stressTestCases");
-//        ssh2Util.runCommand("ls -l /home/zhaoyuss/renren-fast.war");
-//        ssh2Util.runCommand("md5sum /home/zhaoyuss/renren-fast.wars|cut -d ' ' -f1");
-
-        ssh2Util.close();
     }
 }

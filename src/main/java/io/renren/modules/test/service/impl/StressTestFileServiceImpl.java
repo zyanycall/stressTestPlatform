@@ -78,7 +78,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     @Override
     public List<StressTestFileEntity> queryList(Long caseId) {
-        return stressTestFileDao.queryList(caseId);
+        Map query = new HashMap<>();
+        query.put("caseId", caseId.toString());
+        return stressTestFileDao.queryList(query);
     }
 
     @Override
@@ -152,9 +154,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     @Override
     @Transactional
-    public void deleteBatch(Long[] fileIds) {
+    public void deleteBatch(Object[] fileIds) {
         Arrays.asList(fileIds).stream().forEach(fileId -> {
-            StressTestFileEntity stressTestFile = queryObject(fileId);
+            StressTestFileEntity stressTestFile = queryObject((Long) fileId);
             String casePath = stressTestUtils.getCasePath();
             String FilePath = casePath + File.separator + stressTestFile.getFileName();
 
@@ -176,6 +178,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             } catch (IOException e) {
                 throw new RRException("删除jmx文件夹异常失败", e);
             }
+            //删除远程节点的同步文件，如果远程节点比较多，网络不好，执行时间会比较长。
+            deleteSlaveFile((Long)fileId);
         });
 
         stressTestFileDao.deleteBatch(fileIds);
@@ -467,6 +471,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         return new JmeterStatEntity(fileId);
     }
 
+    /**
+     * 向子节点同步参数化文件
+     */
     @Override
     public void synchronizeFile(Long[] fileIds) {
         //当前是向所有的分布式节点推送这个，阻塞操作+轮询，并非多线程，因为本地同步网卡会是瓶颈。
@@ -488,7 +495,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 ssh2Util.initialSession();
 
                 for (Long fileId : fileIds) {
-                    putFileToSlave(slave, ssh2Util, fileId);
+                    StressTestFileEntity stressTestFile = queryObject(fileId);
+                    putFileToSlave(slave, ssh2Util, stressTestFile);
                 }
             } catch (JSchException e) {
                 throw new RRException(slave.getSlaveName() + "节点机远程链接初始化时失败！请核对节点机信息路径", e);
@@ -500,6 +508,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 }
             }
         }
+
     }
 
     @Override
@@ -512,8 +521,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     /**
      * 将文件上传到节点机目录上。
      */
-    private void putFileToSlave(StressTestSlaveEntity slave, SSH2Utils ssh2Util, Long fileId) {
-        StressTestFileEntity stressTestFile = queryObject(fileId);
+    @Transactional
+    public void putFileToSlave(StressTestSlaveEntity slave, SSH2Utils ssh2Util, StressTestFileEntity stressTestFile) {
         String casePath = stressTestUtils.getCasePath();
         String fileNameSave = stressTestFile.getFileName();
         String filePath = casePath + File.separator + fileNameSave;
@@ -526,10 +535,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
         // 避免跨系统的问题，远端由于都时linux服务器，则文件分隔符统一为/，不然同步文件会报错。
         String caseFileHome = slave.getHomeDir() + "/bin/stressTestCases";
-        String fileNameUpload = stressTestFile.getOriginName();
         try {
-            String MD5 = ssh2Util.runCommand("md5sum " + caseFileHome + File.separator +
-                    fileNameUpload + "|cut -d ' ' -f1");
+            String MD5 = ssh2Util.runCommand("md5sum " + getSlaveFileName(stressTestFile, slave) + "|cut -d ' ' -f1");
             if (fileSaveMD5.equals(MD5)) {//说明目标服务器已经存在相同文件不再重复上传
                 return;
             }
@@ -543,6 +550,102 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         } catch (SftpException e) {
             throw new RRException(stressTestFile.getOriginName() + "上传到节点机文件时失败！", e);
         }
+
+        stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
+        //由于事务性，这个地方不好批量更新。
+        update(stressTestFile);
+        Map fileQuery = new HashMap<>();
+        fileQuery.put("originName", stressTestFile.getOriginName() + "_slaveId" + slave.getSlaveId());
+        fileQuery.put("slaveId", slave.getSlaveId().toString());
+        StressTestFileEntity newStressTestFile = stressTestFileDao.queryObjectForClone(fileQuery);
+        if (newStressTestFile == null) {
+            newStressTestFile = stressTestFile.clone();
+            newStressTestFile.setStatus(-1);
+            newStressTestFile.setFileName(getSlaveFileName(stressTestFile, slave));
+            newStressTestFile.setOriginName(stressTestFile.getOriginName() + "_slaveId" + slave.getSlaveId());
+            newStressTestFile.setFileMd5(fileSaveMD5);
+            // 最重要是保存分布式子节点的ID
+            newStressTestFile.setSlaveId(slave.getSlaveId());
+            save(newStressTestFile);
+        } else {
+            newStressTestFile.setFileMd5(fileSaveMD5);
+            update(newStressTestFile);
+        }
+    }
+
+    /**
+     * 根据fileId 删除对应的slave节点的文件。
+     */
+    public void deleteSlaveFile(Long fileId) {
+        StressTestFileEntity stressTestFile = queryObject(fileId);
+        // 获取参数化文件同步到哪些分布式子节点的记录
+        Map fileQuery = new HashMap<>();
+        fileQuery.put("originName", stressTestFile.getOriginName() + "_slaveId");
+        List<StressTestFileEntity> fileDeleteList = stressTestFileDao.queryListForDelete(fileQuery);
+
+        if (fileDeleteList.isEmpty()) {
+            return;
+        }
+        // 将同步过的分布式子节点的ID收集起来，用于查询子节点对象集合。
+        String slaveIds = "";
+        ArrayList fileDeleteIds = new ArrayList();
+        for (StressTestFileEntity stressTestFile4Slave : fileDeleteList) {
+            if (stressTestFile4Slave.getSlaveId() == null) {
+                continue;
+            }
+            if (slaveIds.isEmpty()) {
+                slaveIds = stressTestFile4Slave.getSlaveId().toString();
+            } else {
+                slaveIds += " , " + stressTestFile4Slave.getSlaveId().toString();
+            }
+            fileDeleteIds.add(stressTestFile4Slave.getFileId());
+        }
+
+        if (slaveIds.isEmpty()) {
+            return;
+        }
+
+        // 每一个参数化文件，会对应多个同步子节点slave的记录。
+        Map slaveQuery = new HashMap<>();
+        slaveQuery.put("slaveIds", slaveIds);
+        // 每一个被同步过的记录，都要执行删除操作。
+        List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(slaveQuery);
+        for (StressTestSlaveEntity slave : stressTestSlaveList) {
+            // 跳过本地节点
+            if ("127.0.0.1".equals(slave.getIp().trim())) {
+                continue;
+            }
+
+            SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
+                    slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
+
+            try {
+                ssh2Util.initialSession();
+                ssh2Util.runCommand("rm -f " + getSlaveFileName(stressTestFile, slave));
+            } catch (JSchException e) {
+                throw new RRException(slave.getSlaveName() + "节点机远程链接初始化时失败！请核对节点机信息路径", e);
+            } catch (IOException e) {
+                throw new RRException(slave.getSlaveName() + "删除远程文件命令执行失败!", e);
+            } finally {
+                try {
+                    ssh2Util.close();
+                } catch (Exception e) {
+                    throw new RRException(slave.getSlaveName() + "节点机远程链接关闭时失败！", e);
+                }
+            }
+        }
+
+        stressTestFileDao.deleteBatch(fileDeleteIds.toArray());
+    }
+
+    /**
+     * 获取slave节点上的参数化文件具体路径
+     */
+    public String getSlaveFileName(StressTestFileEntity stressTestFile, StressTestSlaveEntity slave) {
+        // 避免跨系统的问题，远端由于都时linux服务器，则文件分隔符统一为/，不然同步文件会报错。
+        String caseFileHome = slave.getHomeDir() + "/bin/stressTestCases";
+        String fileNameUpload = stressTestFile.getOriginName();
+        return caseFileHome + "/" + fileNameUpload;
     }
 
     /**
@@ -560,7 +663,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     /**
      * 获取上传文件的md5
-     *
      */
     public String getMd5(MultipartFile file) throws IOException {
         return DigestUtils.md5Hex(file.getBytes());
@@ -568,6 +670,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     /**
      * 拼装分布式节点，当前还没有遇到分布式节点非常多的情况。
+     *
      * @return 分布式节点的IP地址拼装，不包含本地127.0.0.1的IP
      */
     public String getSlaveIPPort() {
@@ -593,7 +696,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     /**
      * master节点是否被使用为压力节点
      */
-    public boolean checkSlaveLocal(){
+    public boolean checkSlaveLocal() {
         Map query = new HashMap<>();
         query.put("status", StressTestUtils.ENABLE);
         List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(query);

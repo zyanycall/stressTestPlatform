@@ -7,16 +7,24 @@
         select * from test_stress_case_file where file_id = #{value}
     </select>
 
+    <select id="queryObjectForClone" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+        select * from test_stress_case_file where status = -1
+        <if test="slaveId != null">
+            and slave_id = #{slaveId}
+        </if>
+        <if test="originName != null and originName.trim() != ''">
+            and origin_name like concat('', #{originName}, '%')
+        </if>
+    </select>
+
     <select id="queryList" resultType="io.renren.modules.test.entity.StressTestFileEntity">
-        select * from test_stress_case_file
-        <where>
-            <if test="caseId != null and caseId.trim() != ''">
-                case_id = #{caseId}
-            </if>
-            <if test="originName != null and originName.trim() != ''">
-                origin_name = #{originName}
-            </if>
-        </where>
+        select * from test_stress_case_file where status > -1
+        <if test="caseId != null and caseId.trim() != ''">
+            and case_id = #{caseId}
+        </if>
+        <if test="originName != null and originName.trim() != ''">
+            and origin_name = #{originName}
+        </if>
         <if test="sidx != null and sidx.trim() != ''">
             order by ${sidx} ${order}
         </if>
@@ -25,13 +33,18 @@
         </if>
     </select>
 
+    <select id="queryListForDelete" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+        select * from test_stress_case_file where status = -1
+        <if test="originName != null and originName.trim() != ''">
+            and origin_name like concat('', #{originName}, '%')
+        </if>
+    </select>
+
     <select id="queryTotal" resultType="int">
-        select count(1) from test_stress_case_file
-        <where>
-            <if test="caseId != null and caseId.trim() != ''">
-                case_id = #{caseId}
-            </if>
-        </where>
+        select count(1) from test_stress_case_file where status > -1
+        <if test="caseId != null and caseId.trim() != ''">
+            and case_id = #{caseId}
+        </if>
     </select>
 
     <delete id="deleteBatchByCaseIds">
@@ -46,6 +59,8 @@
         insert into test_stress_case_file
         (
         `case_id`,
+        `slave_id`,
+        `status`,
         `origin_name`,
         `file_name`,
         `file_md5`,
@@ -54,6 +69,8 @@
         values
         (
         #{caseId},
+        #{slaveId},
+        #{status},
         #{originName},
         #{fileName},
         #{fileMd5},
@@ -65,6 +82,7 @@
         update test_stress_case_file
         <set>
             <if test="caseId != null">`case_id` = #{caseId},</if>
+            <if test="slaveId != null">`slave_id` = #{slaveId},</if>
             <if test="originName != null">`origin_name` = #{originName},</if>
             <if test="fileName != null">`file_name` = #{fileName},</if>
             <if test="fileMd5 != null">`file_md5` = #{fileMd5},</if>

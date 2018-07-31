@@ -62,7 +62,7 @@ public interface StressTestFileService {
     /**
      * 批量删除
      */
-    void deleteBatch(Long[] fileIds);
+    void deleteBatch(Object[] fileIds);
 
     /**
      * 立即执行

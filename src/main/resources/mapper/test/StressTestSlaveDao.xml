@@ -16,6 +16,9 @@
             <if test="status != null">
                 `status` = #{status}
             </if>
+            <if test="slaveIds != null and slaveIds.trim() != ''">
+                slave_id in ( #{slaveIds} )
+            </if>
         </where>
         <if test="sidx != null and sidx.trim() != ''">
             order by ${sidx} ${order}
