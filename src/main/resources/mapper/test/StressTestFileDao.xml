@@ -91,6 +91,7 @@
             <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
             <if test="weblogStatus != null">`weblog_status` = #{weblogStatus},</if>
             <if test="updateBy != null">`update_by` = #{updateBy}</if>
+            <if test="addTime != null">`add_time` = #{addTime}</if>
         </set>
         where file_id = #{fileId}
     </update>

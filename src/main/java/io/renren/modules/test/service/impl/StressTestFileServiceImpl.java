@@ -108,6 +108,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             throw new RRException("获取上传文件的MD5失败！", e);
         }
         if (stressTestFile.getFileId() != null && stressTestFile.getFileId() > 0L) {
+            // 替换文件，同时修改添加时间，便于前端显示。
+            stressTestFile.setAddTime(new Date());
             update(stressTestFile);
         } else {
             save(stressTestFile);
