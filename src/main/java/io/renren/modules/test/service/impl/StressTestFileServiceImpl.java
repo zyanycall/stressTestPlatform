@@ -544,14 +544,15 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             }
 
             //上传文件
-            ssh2Util.putFile(filePath, caseFileHome);
+            ssh2Util.scpPutFile(filePath, caseFileHome);
         } catch (JSchException e) {
             throw new RRException(stressTestFile.getOriginName() + "校验节点机文件MD5时失败！", e);
         } catch (IOException e) {
             throw new RRException(stressTestFile.getOriginName() + "IO传输失败！", e);
-        } catch (SftpException e) {
-            throw new RRException(stressTestFile.getOriginName() + "上传到节点机文件时失败！", e);
         }
+//        catch (SftpException e) {
+//            throw new RRException(stressTestFile.getOriginName() + "上传到节点机文件时失败！", e);
+//        }
 
         stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
         //由于事务性，这个地方不好批量更新。

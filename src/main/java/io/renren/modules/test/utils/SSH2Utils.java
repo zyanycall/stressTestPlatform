@@ -1,6 +1,10 @@
 package io.renren.modules.test.utils;
 
+import ch.ethz.ssh2.Connection;
+import ch.ethz.ssh2.SCPClient;
 import com.jcraft.jsch.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 
@@ -8,6 +12,8 @@ import java.io.*;
  * Created by zyanycall@gmail.com on 2018/6/15.
  */
 public class SSH2Utils {
+
+    Logger logger = LoggerFactory.getLogger(getClass());
 
     private String host;
 
@@ -132,7 +138,7 @@ public class SSH2Utils {
     }
 
     /**
-     * 上传文件
+     * 上传文件，使用sftp方式
      *
      * @param filePath
      *            本地文件完整路径，若为空，表示当前路径
@@ -147,6 +153,34 @@ public class SSH2Utils {
         String localPath =  filePath.substring(0, filePath.lastIndexOf(File.separator));
 
         putFile(localPath, localFile, remotePath);
+    }
+
+    /**
+     * 上传文件，使用ssh方式
+     *
+     * @param filePath
+     *            本地文件完整路径，若为空，表示当前路径
+     * @param remotePath
+     *            远程路径，若为空，表示当前路径，若服务器上无此目录，则会自动创建
+     */
+    public void scpPutFile(String filePath, String remotePath) {
+        //文件scp到数据服务器
+        Connection conn = new Connection(host);
+        try {
+            conn.connect();
+            boolean isAuthenticated = conn.authenticateWithPassword(user, password);
+            if (isAuthenticated == false)
+                throw new IOException("Authentication failed.文件scp到数据服务器时发生异常");
+            SCPClient client = new SCPClient(conn);
+            logger.error("scp文件开始 : " + filePath);
+            client.put(filePath, remotePath); //本地文件scp到远程目录
+//            client.get(dataServerDestDir + "00审计.zip", localDir);//远程的文件scp到本地目录
+        } catch (IOException e) {
+            logger.error("文件scp到数据服务器时发生异常", e);
+        } finally {
+            conn.close();
+        }
+        logger.error("scp文件结束 : " + filePath);
     }
 
     /**
