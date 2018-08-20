@@ -390,7 +390,7 @@ CREATE TABLE `test_stress_case` (
 CREATE TABLE `test_stress_case_file` (
   `file_id` bigint NOT NULL AUTO_INCREMENT,
   `case_id` bigint NOT NULL COMMENT '所关联的用例',
-  `slave_id` bigint NOT NULL COMMENT '所关联的同步过的slave子节点',
+  `slave_id` bigint COMMENT '所关联的同步过的slave子节点',
   `origin_name` varchar(200) NOT NULL COMMENT '上传的文件名带后缀',
   `file_name` varchar(200) COMMENT '防止汉字编码错误实际保存的文件名带后缀',
   `file_md5` varchar(100) COMMENT '文件的MD5对于参数化文件有效主要用于节点的参数化文件校验',
