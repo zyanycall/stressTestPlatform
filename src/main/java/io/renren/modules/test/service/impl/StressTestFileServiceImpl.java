@@ -1,7 +1,6 @@
 package io.renren.modules.test.service.impl;
 
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.SftpException;
 import io.renren.common.exception.RRException;
 import io.renren.modules.test.dao.StressTestDao;
 import io.renren.modules.test.dao.StressTestFileDao;
@@ -44,6 +43,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 @Service("stressTestFileService")
@@ -65,6 +66,90 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     @Autowired
     private StressTestUtils stressTestUtils;
+
+    private static final String JAVA_CLASS_PATH = "java.class.path";
+    private static final String CLASSPATH_SEPARATOR = File.pathSeparator;
+
+    private static final String OS_NAME = System.getProperty("os.name");// $NON-NLS-1$
+
+    private static final String OS_NAME_LC = OS_NAME.toLowerCase(java.util.Locale.ENGLISH);
+
+    private static final String JMETER_INSTALLATION_DIRECTORY;
+
+    /**
+     * 增加了一个static代码块，本身是从Jmeter的NewDriver源码中复制过来的。
+     * Jmeter的api中是删掉了这部分代码的，需要从Jmeter源码中才能看到。
+     * 由于源码中bug的修复很多，我也就原封保留了。
+     *
+     * 这段代码块的意义在于，通过Jmeter_Home的地址，找到Jmeter要加载的jar包的目录。
+     * 将这些jar包中的方法的class_path，放置到JAVA_CLASS_PATH系统变量中。
+     * 而Jmeter在遇到参数化的函数表达式的时候，会从JAVA_CLASS_PATH系统变量中来找到这些对应关系。
+     * 而Jmeter的插件也是一个原理，来找到这些对应关系。
+     * 其中配置文件还包含了这些插件的过滤配置，默认是.functions. 的必须，.gui.的非必须。
+     * 配置key为  classfinder.functions.notContain
+     *
+     * 带来的影响：
+     * 让程序和Jmeter_home外部的联系更加耦合了，这样master必带Jmeter_home才可以。
+     * 不仅仅是测试报告的生成了。
+     * 同时，需要在pom文件中引用ApacheJMeter_functions，这其中才包含了参数化所用的函数的实现类。
+     *
+     * 自己修改：
+     * 1. 可以将class_path直接拼接字符串的形式添加到系统变量中，不过如果Jmeter改了命名，则这边也要同步修改很麻烦。
+     * 2. 修改Jmeter源码，将JAVA_CLASS_PATH系统变量这部分的查找改掉。在CompoundVariable 类的static块中。
+     *    ClassFinder.findClassesThatExtend 方法。
+     *
+     * 写成static代码块，也是因为类加载（第一次请求时），才会初始化并初始化一次。这也是符合逻辑的。
+     */
+    static {
+        final List<URL> jars = new LinkedList<>();
+        final String initial_classpath = System.getProperty(JAVA_CLASS_PATH);
+
+        JMETER_INSTALLATION_DIRECTORY = StressTestUtils.getJmeterHome();
+
+        /*
+         * Does the system support UNC paths? If so, may need to fix them up
+         * later
+         */
+        boolean usesUNC = OS_NAME_LC.startsWith("windows");// $NON-NLS-1$
+
+        // Add standard jar locations to initial classpath
+        StringBuilder classpath = new StringBuilder();
+        File[] libDirs = new File[]{new File(JMETER_INSTALLATION_DIRECTORY + File.separator + "lib"),// $NON-NLS-1$ $NON-NLS-2$
+                new File(JMETER_INSTALLATION_DIRECTORY + File.separator + "lib" + File.separator + "ext"),// $NON-NLS-1$ $NON-NLS-2$
+                new File(JMETER_INSTALLATION_DIRECTORY + File.separator + "lib" + File.separator + "junit")};// $NON-NLS-1$ $NON-NLS-2$
+        for (File libDir : libDirs) {
+            File[] libJars = libDir.listFiles((dir, name) -> name.endsWith(".jar"));
+            if (libJars == null) {
+                new Throwable("Could not access " + libDir).printStackTrace(); // NOSONAR No logging here
+                continue;
+            }
+            Arrays.sort(libJars); // Bug 50708 Ensure predictable order of jars
+            for (File libJar : libJars) {
+                try {
+                    String s = libJar.getPath();
+
+                    // Fix path to allow the use of UNC URLs
+                    if (usesUNC) {
+                        if (s.startsWith("\\\\") && !s.startsWith("\\\\\\")) {// $NON-NLS-1$ $NON-NLS-2$
+                            s = "\\\\" + s;// $NON-NLS-1$
+                        } else if (s.startsWith("//") && !s.startsWith("///")) {// $NON-NLS-1$ $NON-NLS-2$
+                            s = "//" + s;// $NON-NLS-1$
+                        }
+                    } // usesUNC
+
+                    jars.add(new File(s).toURI().toURL());// See Java bug 4496398
+                    classpath.append(CLASSPATH_SEPARATOR);
+                    classpath.append(s);
+                } catch (MalformedURLException e) { // NOSONAR
+//                    EXCEPTIONS_IN_INIT.add(new Exception("Error adding jar:"+libJar.getAbsolutePath(), e));
+                }
+            }
+        }
+
+        // ClassFinder needs the classpath
+        System.setProperty(JAVA_CLASS_PATH, initial_classpath + classpath.toString());
+    }
+
 
     @Override
     public StressTestFileEntity queryObject(Long fileId) {
@@ -181,7 +266,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 throw new RRException("删除jmx文件夹异常失败", e);
             }
             //删除远程节点的同步文件，如果远程节点比较多，网络不好，执行时间会比较长。
-            deleteSlaveFile((Long)fileId);
+            deleteSlaveFile((Long) fileId);
         });
 
         stressTestFileDao.deleteBatch(fileIds);
@@ -330,10 +415,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         jmeterRunEntity.setEngines(engines);
         StressTestUtils.jMeterEntity4file.put(stressTestFile.getFileId(), jmeterRunEntity);
 
-        String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
-        JMeterUtils.loadJMeterProperties(jmeterHomeBin + File.separator + "jmeter.properties");
-        JMeterUtils.setJMeterHome(stressTestUtils.getJmeterHome());
-        JMeterUtils.initLocale();
+        setJmeterProperties();
+
         FileServer.getFileServer().setBaseForScript(jmxFile);
 
         try {
@@ -392,6 +475,46 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         } catch (RuntimeException e) {
             throw new RRException(e.getMessage(), e);
         }
+    }
+
+    /**
+     * 设置Jmeter运行环境相关的配置，如配置文件的加载，当地语言环境等。
+     */
+    public void setJmeterProperties() {
+        String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
+        JMeterUtils.loadJMeterProperties(jmeterHomeBin + File.separator + "jmeter.properties");
+        JMeterUtils.setJMeterHome(StressTestUtils.getJmeterHome());
+        JMeterUtils.initLocale();
+
+        Properties jmeterProps = JMeterUtils.getJMeterProperties();
+
+        // Add local JMeter properties, if the file is found
+        String userProp = JMeterUtils.getPropDefault("user.properties", ""); //$NON-NLS-1$
+        if (userProp.length() > 0) { //$NON-NLS-1$
+            File file = JMeterUtils.findFile(userProp);
+            if (file.canRead()) {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    Properties tmp = new Properties();
+                    tmp.load(fis);
+                    jmeterProps.putAll(tmp);
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        // Add local system properties, if the file is found
+        String sysProp = JMeterUtils.getPropDefault("system.properties", ""); //$NON-NLS-1$
+        if (sysProp.length() > 0) {
+            File file = JMeterUtils.findFile(sysProp);
+            if (file.canRead()) {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    System.getProperties().load(fis);
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        jmeterProps.put("jmeter.version", JMeterUtils.getJMeterVersion());
     }
 
 

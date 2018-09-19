@@ -81,7 +81,7 @@ public class StressTestUtils {
     public static Map<String, String> jMeterStatuses = new HashMap<>();
 
 
-    private String jmeterHome;
+    private static String jmeterHome;
 
     private String casePath;
 
@@ -116,7 +116,7 @@ public class StressTestUtils {
      */
     public final static String MASTER_JMETER_REPLACE_FILE_KEY = "MASTER_JMETER_REPLACE_FILE_KEY";
 
-    public String getJmeterHome() {
+    public static String getJmeterHome() {
         String value = sysConfigService.getValue(MASTER_JMETER_HOME_KEY);
         return value == null ? jmeterHome : value;
     }

@@ -191,6 +191,47 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_functions -->
+		<dependency>
+			<groupId>org.apache.jmeter</groupId>
+			<artifactId>ApacheJMeter_functions</artifactId>
+			<version>4.0</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_components -->
+		<!--<dependency>-->
+			<!--<groupId>org.apache.jmeter</groupId>-->
+			<!--<artifactId>ApacheJMeter_components</artifactId>-->
+			<!--<version>4.0</version>-->
+		<!--</dependency>-->
+		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_java -->
+		<!--<dependency>-->
+			<!--<groupId>org.apache.jmeter</groupId>-->
+			<!--<artifactId>ApacheJMeter_java</artifactId>-->
+			<!--<version>4.0</version>-->
+		<!--</dependency>-->
+		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter -->
+		<!--<dependency>-->
+			<!--<groupId>org.apache.jmeter</groupId>-->
+			<!--<artifactId>ApacheJMeter</artifactId>-->
+			<!--<version>4.0</version>-->
+		<!--</dependency>-->
+		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_config -->
+		<!--<dependency>-->
+			<!--<groupId>org.apache.jmeter</groupId>-->
+			<!--<artifactId>ApacheJMeter_config</artifactId>-->
+			<!--<version>4.0</version>-->
+		<!--</dependency>-->
+		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_native -->
+		<!--<dependency>-->
+			<!--<groupId>org.apache.jmeter</groupId>-->
+			<!--<artifactId>ApacheJMeter_native</artifactId>-->
+			<!--<version>4.0</version>-->
+		<!--</dependency>-->
+
+
+
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-exec -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
