@@ -19,10 +19,15 @@ public class StressTestFileEntity implements Serializable {
     private Long fileId;
 
     /**
-     * 用例名称
+     * 用例id
      */
     @Min(value= 1)
     private Long caseId;
+
+    /**
+     * 用例名称
+     */
+    private String caseName;
 
     /**
      * 用例名称
@@ -213,6 +218,14 @@ public class StressTestFileEntity implements Serializable {
 
     public void setSlaveId(Long slaveId) {
         this.slaveId = slaveId;
+    }
+
+    public String getCaseName() {
+        return caseName;
+    }
+
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
     }
 
     public StressTestFileEntity clone() {

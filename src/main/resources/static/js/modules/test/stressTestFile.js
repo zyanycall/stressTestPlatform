@@ -4,7 +4,8 @@ $(function () {
         datatype: "json",
         colModel: [
             {label: '文件ID', name: 'fileId', width: 30, key: true},
-            {label: '用例ID', name: 'caseId', width: 35},
+            // {label: '用例ID', name: 'caseId', width: 35},
+            {label: '用例名称', name: 'caseName', width: 35, sortable: false},
             {
                 label: '文件名称', name: 'originName', width: 120, sortable: false, formatter: function (value, options, row) {
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
