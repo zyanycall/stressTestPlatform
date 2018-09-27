@@ -64,7 +64,11 @@ $(function () {
                 if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                     btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
                 } else {
-                    btn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;启动</a>";
+                    if (row.status == 1) {
+                        btn = "<a href='#' class='btn btn-danger' onclick='stopOnce(" + row.fileId + ")' ><i class='fa fa-stop-circle'></i>&nbsp;停止</a>";
+                    } else {
+                        btn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;启动</a>";
+                    }
                 }
                 // var stopBtn = "<a href='#' class='btn btn-primary' onclick='stop(" + row.fileId + ")' ><i class='fa fa-stop'></i>&nbsp;停止</a>";
                 // var stopNowBtn = "<a href='#' class='btn btn-primary' onclick='stopNow(" + row.fileId + ")' ><i class='fa fa-times-circle'></i>&nbsp;强制停止</a>";
@@ -246,6 +250,27 @@ function runOnce(fileIds) {
     $.ajax({
         type: "POST",
         url: baseURL + "test/stressFile/runOnce",
+        contentType: "application/json",
+        data: JSON.stringify(numberToArray(fileIds)),
+        success: function (r) {
+            if (r.code == 0) {
+                vm.reload();
+                alert('操作成功', function () {
+                });
+            } else {
+                alert(r.msg);
+            }
+        }
+    });
+}
+
+function stopOnce(fileIds) {
+    if (!fileIds) {
+        return;
+    }
+    $.ajax({
+        type: "POST",
+        url: baseURL + "test/stressFile/stopOnce",
         contentType: "application/json",
         data: JSON.stringify(numberToArray(fileIds)),
         success: function (r) {

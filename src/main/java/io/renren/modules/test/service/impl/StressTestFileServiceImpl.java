@@ -517,6 +517,57 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         jmeterProps.put("jmeter.version", JMeterUtils.getJMeterVersion());
     }
 
+    /**
+     * 没有事务，不允许回滚
+     * 因为是遍历执行，每一个执行可以是一个事务。
+     */
+    @Override
+    public void stop(Long[] fileIds) {
+        Arrays.asList(fileIds).stream().forEach(fileId -> {
+            stopSingle(fileId);
+        });
+    }
+
+    /**
+     * 脚本的启动都是新的线程，其中的SQL是不和启动是同一个事务的。
+     * 同理，也不会回滚这一事务。
+     */
+    public void stopSingle(Long fileId) {
+        if (stressTestUtils.isUseJmeterScript()) {
+            throw new RRException("Jmeter脚本启动不支持单独停止，请使用全部停止！");
+        } else {
+            Map<Long, JmeterRunEntity> jMeterEntity4file = StressTestUtils.jMeterEntity4file;
+            if (!jMeterEntity4file.isEmpty()) {
+                jMeterEntity4file.forEach((fileIdRunning, jmeterRunEntity) -> {
+                    if (fileId == fileIdRunning) {  //找到要停止的脚本文件
+                        stopLocal(fileId, jmeterRunEntity);
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * 停止内核Jmeter-core方式执行的脚本
+     */
+    @Transactional
+    public void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity) {
+        StressTestFileEntity stressTestFile = jmeterRunEntity.getStressTestFile();
+        StressTestReportsEntity stressTestReports = jmeterRunEntity.getStressTestReports();
+
+        // 只处理了成功的情况，失败的情况当前捕获不到。
+        stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
+        if (stressTestReports != null && stressTestReports.getFile().exists()) {
+            stressTestReports.setFileSize(FileUtils.sizeOf(stressTestReports.getFile()));
+        }
+        update(stressTestFile, stressTestReports);
+
+        jmeterRunEntity.stop();
+
+        // 需要将结果收集的部分干掉
+        StressTestUtils.samplingStatCalculator4File.remove(fileId);
+
+    }
 
     /**
      * 脚本方式执行，只能全部停止，做不到根据线程名称停止指定执行的用例脚本。
@@ -554,20 +605,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             Map<Long, JmeterRunEntity> jMeterEntity4file = StressTestUtils.jMeterEntity4file;
             if (!jMeterEntity4file.isEmpty()) {
                 jMeterEntity4file.forEach((fileId, jmeterRunEntity) -> {
-                    StressTestFileEntity stressTestFile = jmeterRunEntity.getStressTestFile();
-                    StressTestReportsEntity stressTestReports = jmeterRunEntity.getStressTestReports();
-
-                    // 只处理了成功的情况，失败的情况当前捕获不到。
-                    stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
-                    if (stressTestReports != null && stressTestReports.getFile().exists()) {
-                        stressTestReports.setFileSize(FileUtils.sizeOf(stressTestReports.getFile()));
-                    }
-                    update(stressTestFile, stressTestReports);
-
-                    jmeterRunEntity.stop();
+                    stopLocal(fileId, jmeterRunEntity);
                 });
             }
 
+            // 对于全部停止，再次全部移除统计数据
             StressTestUtils.samplingStatCalculator4File.clear();
 
             // 如果本地已经没有保存engines了，则将数据库中的状态归位。

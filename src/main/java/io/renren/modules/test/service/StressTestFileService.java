@@ -70,6 +70,11 @@ public interface StressTestFileService {
     void run(Long[] fileIds);
 
     /**
+     * 立即停止
+     */
+    void stop(Long[] fileIds);
+
+    /**
      * 停止运行
      */
     void stopAll();

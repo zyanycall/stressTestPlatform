@@ -84,7 +84,7 @@ public class StressTestFileController {
     }
 
     /**
-     * 立即执行性能测试用例，当前仅支持同一时间执行一个性能测试用例。
+     * 立即执行性能测试脚本。
      */
     @SysLog("立即执行性能测试用例脚本文件")
     @RequestMapping("/runOnce")
@@ -92,6 +92,18 @@ public class StressTestFileController {
     public R run(@RequestBody Long[] fileIds) {
 
         stressTestFileService.run(fileIds);
+        return R.ok();
+    }
+
+    /**
+     * 立即停止性能测试脚本，仅有使用api方式时，才可以单独停止。
+     */
+    @SysLog("立即停止性能测试用例脚本文件")
+    @RequestMapping("/stopOnce")
+    @RequiresPermissions("test:stress:stopOnce")
+    public R stop(@RequestBody Long[] fileIds) {
+
+        stressTestFileService.stop(fileIds);
         return R.ok();
     }
 
