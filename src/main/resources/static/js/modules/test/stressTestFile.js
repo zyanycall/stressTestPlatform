@@ -7,74 +7,86 @@ $(function () {
             // {label: '用例ID', name: 'caseId', width: 35},
             {label: '用例名称', name: 'caseName', width: 35, sortable: false},
             {
-                label: '文件名称', name: 'originName', width: 120, sortable: false, formatter: function (value, options, row) {
-                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
-                    return value;
-                }
-                return "<a href='javascript:void(0);' onclick='" +
+                label: '文件名称',
+                name: 'originName',
+                width: 120,
+                sortable: false,
+                formatter: function (value, options, row) {
+                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                        return value;
+                    }
+                    return "<a href='javascript:void(0);' onclick='" +
                         "ShowRunning(" + row.fileId + ")'>" + value + "</a>";
-            }
+                }
             },
             {label: '添加时间', name: 'addTime', width: 70},
             // 当前不做更新时间，页面复杂性价比不高。
             // { label: '更新时间', name: 'updateTime', width: 80 }
             {
-                label: 'Chart监控', name: 'webchartStatus', width: 40, sortable: false, formatter: function (value, options, row) {
-                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
-                    return '';
+                label: 'Chart监控',
+                name: 'webchartStatus',
+                width: 40,
+                sortable: false,
+                formatter: function (value, options, row) {
+                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                        return '';
+                    }
+                    if (value === 0) {
+                        return '<span class="label label-success">启用</span>';
+                    } else if (value === 1) {
+                        return '<span class="label label-danger">禁止</span>';
+                    }
                 }
-                if (value === 0) {
-                    return '<span class="label label-success">启用</span>';
-                } else if (value === 1) {
-                    return '<span class="label label-danger">禁止</span>';
-                }
-            }
             },
             {
-                label: '测试报告', name: 'reportStatus', width: 40, sortable: false, formatter: function (value, options, row) {
-                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
-                    return '';
+                label: '测试报告',
+                name: 'reportStatus',
+                width: 40,
+                sortable: false,
+                formatter: function (value, options, row) {
+                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                        return '';
+                    }
+                    if (value === 0) {
+                        return '<span class="label label-success">启用</span>';
+                    } else if (value === 1) {
+                        return '<span class="label label-danger">禁止</span>';
+                    }
                 }
-                if (value === 0) {
-                    return '<span class="label label-success">启用</span>';
-                } else if (value === 1) {
-                    return '<span class="label label-danger">禁止</span>';
-                }
-            }
             },
             {
                 label: '状态', name: 'status', width: 50, formatter: function (value, options, row) {
-                if (value === 0) {
-                    return '<span class="label label-info">创建成功</span>';
-                } else if (value === 1) {
-                    return '<span class="label label-warning">正在执行</span>';
-                } else if (value === 2) {
-                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
-                        return '<span class="label label-success">同步成功</span>';
+                    if (value === 0) {
+                        return '<span class="label label-info">创建成功</span>';
+                    } else if (value === 1) {
+                        return '<span class="label label-warning">正在执行</span>';
+                    } else if (value === 2) {
+                        if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                            return '<span class="label label-success">同步成功</span>';
+                        }
+                        return '<span class="label label-success">执行成功</span>';
+                    } else if (value === 3) {
+                        return '<span class="label label-danger">出现异常</span>';
                     }
-                    return '<span class="label label-success">执行成功</span>';
-                } else if (value === 3) {
-                    return '<span class="label label-danger">出现异常</span>';
                 }
-            }
             },
             {
                 label: '执行操作', name: '', width: 100, sortable: false, formatter: function (value, options, row) {
-                var btn = '';
-                if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
-                    btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
-                } else {
-                    if (row.status == 1) {
-                        btn = "<a href='#' class='btn btn-danger' onclick='stopOnce(" + row.fileId + ")' ><i class='fa fa-stop-circle'></i>&nbsp;停止</a>";
+                    var btn = '';
+                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                        btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
                     } else {
-                        btn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;启动</a>";
+                        if (row.status == 1) {
+                            btn = "<a href='#' class='btn btn-danger' onclick='stopOnce(" + row.fileId + ")' ><i class='fa fa-stop-circle'></i>&nbsp;停止</a>";
+                        } else {
+                            btn = "<a href='#' class='btn btn-primary' onclick='runOnce(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;启动</a>";
+                        }
                     }
+                    // var stopBtn = "<a href='#' class='btn btn-primary' onclick='stop(" + row.fileId + ")' ><i class='fa fa-stop'></i>&nbsp;停止</a>";
+                    // var stopNowBtn = "<a href='#' class='btn btn-primary' onclick='stopNow(" + row.fileId + ")' ><i class='fa fa-times-circle'></i>&nbsp;强制停止</a>";
+                    var downloadFileBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressFile/downloadFile/" + row.fileId + "' class='btn btn-primary'><i class='fa fa-download'></i>&nbsp;下载</a>";
+                    return btn + downloadFileBtn;
                 }
-                // var stopBtn = "<a href='#' class='btn btn-primary' onclick='stop(" + row.fileId + ")' ><i class='fa fa-stop'></i>&nbsp;停止</a>";
-                // var stopNowBtn = "<a href='#' class='btn btn-primary' onclick='stopNow(" + row.fileId + ")' ><i class='fa fa-times-circle'></i>&nbsp;强制停止</a>";
-                var downloadFileBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressFile/downloadFile/" + row.fileId + "' class='btn btn-primary'><i class='fa fa-download'></i>&nbsp;下载</a>";
-                return btn + downloadFileBtn;
-            }
             }
         ],
         viewrecords: true,
@@ -336,7 +348,12 @@ function startInterval(fileId) {
         $.get(baseURL + "test/stressFile/statInfo/" + fileId, function (r) {
             var responseTimeMap = r.statInfo.responseTimesMap;
             //拿其中的一个值尝试一下，没有则不刷新option了。
-            if (Object.keys(responseTimeMap).length  === 0) {
+            // if (Object.keys(responseTimeMap).length  === 0) {
+            //     return;
+            // }
+
+            // 如果已经执行结束，则不再刷新前端
+            if (r.statInfo.runStatus === 2) {
                 return;
             }
 
@@ -390,6 +407,15 @@ function clearEcharts() {
     threadCountsDataObj = {};
     threadCountsLegendData = [];
     xAxisData = [];
+
+    // 清空数据
+    responseTimesEChart.setOption(option, true);
+    throughputEChart.setOption(option, true);
+    networkSentEChart.setOption(option, true);
+    networkReceivedEChart.setOption(option, true);
+    successPercentageEChart.setOption(option, true);
+    errorPercentageEChart.setOption(option, true);
+    threadCountsEChart.setOption(option, true);
 }
 
 function getOption(map, legendData, dataObj, areaStyle) {

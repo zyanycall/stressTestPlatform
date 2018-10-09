@@ -13,6 +13,7 @@ import io.renren.modules.test.entity.StressTestSlaveEntity;
 import io.renren.modules.test.handler.FileExecuteResultHandler;
 import io.renren.modules.test.handler.FileResultHandler;
 import io.renren.modules.test.handler.FileStopResultHandler;
+import io.renren.modules.test.jmeter.JmeterListenToTest;
 import io.renren.modules.test.jmeter.JmeterResultCollector;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
@@ -427,7 +428,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             // slaveStr用来做脚本是否是分布式执行的判断，不入库。
             stressTestFile.setSlaveStr(slaveStr);
 
-            //如果不要监控也不要测试报告，则不加自定义的Collector到文件里，让性能最大化。
+            // 如果不要监控也不要测试报告，则不加自定义的Collector到文件里，让性能最大化。
             if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())
                     || StressTestUtils.NEED_WEB_CHART.equals(stressTestFile.getWebchartStatus())) {
                 // 添加收集观察监听程序。
@@ -437,6 +438,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 jmeterResultCollector.setFilename(csvFile.getPath());
                 jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
             }
+
+            // 增加程序执行结束的监控
+            // engines 为null停止脚本后不会直接停止远程client的JVM进程。
+            // reportGenerator 为null停止后脚本后不会直接生成测试报告。
+            jmxTree.add(jmxTree.getArray()[0], new JmeterListenToTest(null,
+                    null, this, stressTestFile));
 
             if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
                 java.util.StringTokenizer st = new java.util.StringTokenizer(slaveStr, ",");//$NON-NLS-1$
@@ -632,10 +639,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     @Override
     public JmeterStatEntity getJmeterStatEntity(Long fileId) {
+        // 每次调用都是一个全新的对象。不过这个对象仅用于前端返回，直接可以垃圾回收掉。
         if (StringUtils.isNotEmpty(getSlaveIPPort())) {
-            return new JmeterStatEntity(0L);
+            return new JmeterStatEntity(fileId, 0L);
         }
-        return new JmeterStatEntity(fileId);
+        return new JmeterStatEntity(fileId, null);
     }
 
     /**

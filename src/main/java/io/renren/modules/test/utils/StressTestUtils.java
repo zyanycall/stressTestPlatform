@@ -76,10 +76,9 @@ public class StressTestUtils {
     public static Map<Long, JmeterRunEntity> jMeterEntity4file = new HashMap<>();
 
     /**
-     * 主进程Master内保存的一些状态，用于分布式的压测操作服务。
+     * 主进程Master内保存的一些状态，主要用于分布式的压测操作服务。
      */
     public static Map<String, String> jMeterStatuses = new HashMap<>();
-
 
     private static String jmeterHome;
 

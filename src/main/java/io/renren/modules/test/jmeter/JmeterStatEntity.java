@@ -61,9 +61,28 @@ public class JmeterStatEntity {
      */
     private Map<String, String> threadCountsMap = new HashMap<>();
 
-    public JmeterStatEntity(Long fileId) {
-        this.fileId = fileId;
-        statMap = StressTestUtils.samplingStatCalculator4File.get(fileId);
+    /**
+     * 当前是否正在运行
+     */
+    private Integer runStatus = StressTestUtils.RUNNING;
+
+    /**
+     * 对于分布式场景，取到的statMap是总的，即包含了所有脚本执行的label的数据。
+     */
+    public JmeterStatEntity(Long fileId, Long fileIdZero) {
+        if (fileIdZero != null) {// 分布式情况下
+            this.fileId = fileIdZero;
+            statMap = StressTestUtils.samplingStatCalculator4File.get(fileIdZero);
+        } else {// 单机模式下
+            this.fileId = fileId;
+            statMap = StressTestUtils.samplingStatCalculator4File.get(fileId);
+        }
+
+        // StressTestUtils.jMeterEntity4file 中保存的都是真实的脚本文件信息
+        JmeterRunEntity jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);
+        if (jmeterRunEntity != null) {
+            runStatus = jmeterRunEntity.getRunStatus();
+        }
     }
 
     public Map<String, String> getResponseTimesMap() {
@@ -185,5 +204,13 @@ public class JmeterStatEntity {
 
     public void setThreadCountsMap(Map<String, String> threadCountsMap) {
         this.threadCountsMap = threadCountsMap;
+    }
+
+    public Integer getRunStatus() {
+        return runStatus;
+    }
+
+    public void setRunStatus(Integer runStatus) {
+        this.runStatus = runStatus;
     }
 }

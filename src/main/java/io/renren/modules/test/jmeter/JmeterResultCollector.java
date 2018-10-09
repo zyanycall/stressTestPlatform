@@ -28,10 +28,13 @@ public class JmeterResultCollector extends ResultCollector {
     public static final String SLAVE_NEED_REPORT = "slave_need_report";
     public static final String SLAVE_NEED_CHART = "slave_need_chart";
 
-    StressTestFileEntity stressTestFile;
+    private StressTestFileEntity stressTestFile;
 
-    Map<String, SamplingStatCalculator> samplingStatCalculatorMap;
+    private Map<String, SamplingStatCalculator> samplingStatCalculatorMap;
 
+    /**
+     * 为分布式反射使用
+     */
     public JmeterResultCollector() {
     }
 
