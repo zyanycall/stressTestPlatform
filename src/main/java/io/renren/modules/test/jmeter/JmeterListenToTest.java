@@ -1,6 +1,5 @@
 package io.renren.modules.test.jmeter;
 
-import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.service.StressTestFileService;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.jmeter.engine.ClientJMeterEngine;
@@ -38,18 +37,18 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
 
     private final StressTestFileService stressTestFileService;
 
-    private final StressTestFileEntity stressTestFile;
+    private final Long fileId;
 
     /**
      * @param engines         List<JMeterEngine>
      * @param reportGenerator {@link ReportGenerator}
      */
     public JmeterListenToTest(List<JMeterEngine> engines, ReportGenerator reportGenerator,
-                              StressTestFileService stressTestFileService, StressTestFileEntity stressTestFile) {
+                              StressTestFileService stressTestFileService, Long fileId) {
         this.engines = engines;
         this.reportGenerator = reportGenerator;
         this.stressTestFileService = stressTestFileService;
-        this.stressTestFile = stressTestFile;
+        this.fileId = fileId;
     }
 
     @Override
@@ -64,7 +63,7 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
             stopSoon.setDaemon(false);
             stopSoon.start();
         }
-        updateFileStatus(StressTestUtils.RUN_SUCCESS);
+        updateEndStatus();
     }
 
     @Override
@@ -77,7 +76,7 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
             log.error("Error generating the report", e);
         }
         checkForRemainingThreads();
-        updateFileStatus(StressTestUtils.RUN_SUCCESS);
+        updateEndStatus();
         log.error("... end of run");
     }
 
@@ -183,7 +182,7 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
      * 程序到这里engine已经停止结束了。
      * 分布式处理会复杂，先考虑单机
      */
-    private void updateFileStatus(Integer status) {
+    private void updateEndStatus() {
         // 延时两秒，是为了给前端监控返回完整的数据。
         // 要不然直接停止设置停止状态后，前端监控就会立即停止更新
         // 有可能丢掉一次内容数据
@@ -193,15 +192,8 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
             log.error("Thread.sleep meet error!", e);
         }
 
-        stressTestFile.setStatus(status);
-        stressTestFileService.update(stressTestFile);
+        JmeterRunEntity jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);
 
-        JmeterRunEntity jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(stressTestFile.getFileId());
-        if (jmeterRunEntity != null) {
-            jmeterRunEntity.setRunStatus(status);
-        }
-
-        // 需要将结果收集的部分干掉
-        StressTestUtils.samplingStatCalculator4File.remove(stressTestFile.getFileId());
+        stressTestFileService.stopLocal(fileId, jmeterRunEntity);
     }
 }

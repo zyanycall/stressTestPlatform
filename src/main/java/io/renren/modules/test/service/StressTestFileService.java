@@ -3,6 +3,7 @@ package io.renren.modules.test.service;
 import io.renren.modules.test.entity.StressTestEntity;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.entity.StressTestReportsEntity;
+import io.renren.modules.test.jmeter.JmeterRunEntity;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -98,4 +99,9 @@ public interface StressTestFileService {
      * 获取文件路径，是文件的真实绝对路径
      */
     String getFilePath(StressTestFileEntity stressTestFile);
+
+    /**
+     * 相同进程内执行的脚本，可以使用这个方法停止
+     */
+    void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity);
 }

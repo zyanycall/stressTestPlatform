@@ -443,7 +443,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             // engines 为null停止脚本后不会直接停止远程client的JVM进程。
             // reportGenerator 为null停止后脚本后不会直接生成测试报告。
             jmxTree.add(jmxTree.getArray()[0], new JmeterListenToTest(null,
-                    null, this, stressTestFile));
+                    null, this, stressTestFile.getFileId()));
 
             if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
                 java.util.StringTokenizer st = new java.util.StringTokenizer(slaveStr, ",");//$NON-NLS-1$
@@ -557,6 +557,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     /**
      * 停止内核Jmeter-core方式执行的脚本
      */
+    @Override
     @Transactional
     public void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity) {
         StressTestFileEntity stressTestFile = jmeterRunEntity.getStressTestFile();

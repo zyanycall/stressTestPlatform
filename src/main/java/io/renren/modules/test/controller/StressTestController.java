@@ -81,7 +81,7 @@ public class StressTestController {
         //用例的参数化文件不允许包含汉字,避免Linux系统读取文件报错.
         String suffix = originName.substring(originName.lastIndexOf("."));
         if (!".jmx".equalsIgnoreCase(suffix) && originName.length() != originName.getBytes().length) {
-            throw new RRException("参数化文件名不能包含汉字");
+            throw new RRException("非脚本文件名不能包含汉字");
         }
 
         String caseId = request.getParameter("caseIds");

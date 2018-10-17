@@ -49,10 +49,10 @@ $(function () {
             if (caseId == null) {
                 return false;
             }
-            if (!(extension && /^(txt|jmx)$/.test(extension.toLowerCase()))) {
-                alert('只支持jmx、txt格式的用例相关文件！');
-                return false;
-            }
+            // if (!(extension && /^(txt|jmx)$/.test(extension.toLowerCase()))) {
+            //     alert('只支持jmx、txt格式的用例相关文件！');
+            //     return false;
+            // }
 
             this.setData({caseIds: caseId})
         },
