@@ -293,27 +293,44 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
 
     /**
      * 测试报告文件如果最后一行不完整，会报生成报告的错误。
-     * 所以每次生成报告之前，删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
+     * 所以每次生成报告之前，如果不完整则删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
      *
      * @param fileName csv 文件
      */
     public void fixReportFile(String fileName){
+        // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
+        // 如果是完整的，则直接跳出不执行删除操作。
         try {
-            RandomAccessFile f = new RandomAccessFile(fileName,"rw");
-            long length = f.length() - 1;
-            byte b;
-            do {
-                length -= 1;
-                f.seek(length);
-                b = f.readByte();
-            } while(b!= 10 && length> 0);
-            if (length == 0) {
-                f.setLength(length);
-            } else {
-                f.setLength(length + 1);
+            RandomAccessFile raf = new RandomAccessFile(fileName,"rw");
+            if (raf.length() == 0L) {
+                logger.error("测试报告原始csv文件为空，可以删除！");
+                throw new RRException("测试报告原始文件找不到，请删除！");
             }
+            // 获取倒数第一行的数据
+            long pos = raf.length() - 1;
+            pos = getPos(raf, pos);
+            String lastLine = getLineStr(raf, raf.length(), pos);
+
+            // 获取倒数第二行的数据
+            long posSec = pos - 1;
+            posSec = getPos(raf, posSec);
+            String lastSecLine = getLineStr(raf, pos, posSec);
+
+            // 是否删除最后一行，可以通过最后一行的数据结构是否和倒数第二行相同来判断。
+            // csv文件都是英文逗号, 做分割
+            String[] theLast = lastLine.split(",");
+            String[] theLastSec = lastSecLine.split(",");
+            if (theLast.length != theLastSec.length) {
+                // 这会删除最后一行
+                if (pos <= 0) {
+                    raf.setLength(pos);
+                } else {
+                    raf.setLength(pos + 1);
+                }
+            }
+
             //关闭回收
-            f.close();
+            raf.close();
         } catch (FileNotFoundException e) {
             logger.error("测试报告原始csv文件找不到！", e);
             throw new RRException("测试报告原始文件找不到！");
@@ -321,5 +338,40 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             logger.error("测试报告原始文件修复时，IO错误！", e);
             throw new RRException("测试报告原始文件修复时出错！");
         }
+    }
+
+    /**
+     * 获取文件中的某一段数据，这里是以\n做分割的。
+     * 本身文件是从后向前做循环，所以多次调用并不会增加过多的性能时间损耗。
+     * 默认是UTF-8的编码
+     *
+     * @param raf  原始文件
+     * @param posEnd 要截取数据行的在文件中结束的位置
+     * @param posStart  要截取数据行的开始的位置
+     * @return  返回一行数据
+     * @throws IOException
+     */
+    public String getLineStr(RandomAccessFile raf, long posEnd, long posStart) throws IOException {
+        byte[] bytes = new byte[(int) (posEnd - posStart)];
+        raf.read(bytes);
+        return new String(bytes, Charset.forName("UTF-8"));
+    }
+
+    /**
+     * 获取要截取数据行的开始的位置
+     * 是从文本的最后开始向前找，找到换行符\n之后即停止，返回位置。
+     * 该位置其他调用方法会遇到，会作为起点。
+     *
+     * 同时由于是从文本的最后向前寻找，所以csv文本是脏数据，最后一行不包含\n，也会找到最后一行。
+     */
+    public long getPos(RandomAccessFile raf, long posStart) throws IOException {
+        while (posStart > 0) {
+            posStart--;
+            raf.seek(posStart);
+            if (raf.readByte() == '\n') {
+                break;
+            }
+        }
+        return posStart;
     }
 }
