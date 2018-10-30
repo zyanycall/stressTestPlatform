@@ -34,6 +34,7 @@
         <aliyun.oss.version>2.5.0</aliyun.oss.version>
         <qcloud.cos.version>4.4</qcloud.cos.version>
         <swagger.version>2.2.2</swagger.version>
+        <jmeter.version>4.0</jmeter.version>
     </properties>
 
     <dependencies>
@@ -176,25 +177,34 @@
             </exclusions>
         </dependency>
         <!--性能测试-->
-		<!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_http &ndash;&gt;-->
         <dependency>
             <groupId>org.apache.jmeter</groupId>
             <artifactId>ApacheJMeter_http</artifactId>
-			<version>4.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.logging.log4j</groupId>
-					<artifactId>log4j-slf4j-impl</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_functions -->
+            <version>${jmeter.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>org.apache.jmeter</groupId>
             <artifactId>ApacheJMeter_functions</artifactId>
-            <version>4.0</version>
+            <version>${jmeter.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-exec -->
+        <dependency>
+            <groupId>org.apache.jmeter</groupId>
+            <artifactId>ApacheJMeter_jdbc</artifactId>
+            <version>${jmeter.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-exec -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-exec</artifactId>
@@ -234,16 +244,16 @@
                 </configuration>
             </plugin>
             <!--<plugin>-->
-                <!--<artifactId>maven-compiler-plugin</artifactId>-->
-                <!--<version>2.3.2</version>-->
-                <!--<configuration>-->
-                    <!--<source>1.8</source>-->
-                    <!--<target>1.8</target>-->
-                    <!--<encoding>UTF-8</encoding>-->
-                    <!--<compilerArguments>-->
-                        <!--<extdirs>D:\D\Git\testPlatformLib</extdirs>&lt;!&ndash;指定外部lib&ndash;&gt;-->
-                    <!--</compilerArguments>-->
-                <!--</configuration>-->
+            <!--<artifactId>maven-compiler-plugin</artifactId>-->
+            <!--<version>2.3.2</version>-->
+            <!--<configuration>-->
+            <!--<source>1.8</source>-->
+            <!--<target>1.8</target>-->
+            <!--<encoding>UTF-8</encoding>-->
+            <!--<compilerArguments>-->
+            <!--<extdirs>D:\D\Git\testPlatformLib</extdirs>&lt;!&ndash;指定外部lib&ndash;&gt;-->
+            <!--</compilerArguments>-->
+            <!--</configuration>-->
             <!--</plugin>-->
         </plugins>
     </build>
