@@ -203,6 +203,12 @@
             <groupId>org.apache.jmeter</groupId>
             <artifactId>ApacheJMeter_jdbc</artifactId>
             <version>${jmeter.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-exec -->
         <dependency>
