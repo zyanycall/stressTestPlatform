@@ -184,8 +184,7 @@ public class StressTestController {
     @RequestMapping("/delete")
     @RequiresPermissions("test:stress:delete")
     public R delete(@RequestBody Long[] caseIds) {
-        stressTestService.deleteBatch(caseIds);
-
+        // 先删除其下的脚本文件。
         for (Long caseId : caseIds) {
             ArrayList fileIdList = new ArrayList();
             List<StressTestFileEntity> fileList = stressTestFileService.queryList(caseId);
@@ -194,6 +193,8 @@ public class StressTestController {
             }
             stressTestFileService.deleteBatch(fileIdList.toArray());
         }
+        // 后删除用例
+        stressTestService.deleteBatch(caseIds);
         return R.ok();
     }
 }

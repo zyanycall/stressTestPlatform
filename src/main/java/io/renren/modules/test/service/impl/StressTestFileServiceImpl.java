@@ -243,6 +243,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     @Override
     @Transactional
     public void deleteBatch(Object[] fileIds) {
+
         Arrays.asList(fileIds).stream().forEach(fileId -> {
             StressTestFileEntity stressTestFile = queryObject((Long) fileId);
             String casePath = stressTestUtils.getCasePath();
@@ -266,6 +267,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             } catch (IOException e) {
                 throw new RRException("删除jmx文件夹异常失败", e);
             }
+
+            //删除缓存
+            StressTestUtils.samplingStatCalculator4File.remove(fileId);
+            StressTestUtils.jMeterEntity4file.remove(fileId);
+
             //删除远程节点的同步文件，如果远程节点比较多，网络不好，执行时间会比较长。
             deleteSlaveFile((Long) fileId);
         });
