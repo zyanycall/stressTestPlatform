@@ -552,7 +552,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             Map<Long, JmeterRunEntity> jMeterEntity4file = StressTestUtils.jMeterEntity4file;
             if (!jMeterEntity4file.isEmpty()) {
                 jMeterEntity4file.forEach((fileIdRunning, jmeterRunEntity) -> {
-                    if (fileId == fileIdRunning) {  //找到要停止的脚本文件
+                    if (fileId.equals(fileIdRunning)) {  //找到要停止的脚本文件
                         stopLocal(fileId, jmeterRunEntity);
                     }
                 });
