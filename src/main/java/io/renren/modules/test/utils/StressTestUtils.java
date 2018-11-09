@@ -1,15 +1,24 @@
 package io.renren.modules.test.utils;
 
+import io.renren.common.exception.RRException;
 import io.renren.common.utils.SpringContextUtils;
 import io.renren.modules.sys.service.SysConfigService;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.SamplingStatCalculator;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import static io.renren.common.utils.ConfigConstant.OS_NAME_LC;
 
@@ -209,5 +218,85 @@ public class StressTestUtils {
             }
         }
         return params;
+    }
+
+    /**
+     * 获取上传文件的md5
+     */
+    public String getMd5(MultipartFile file) throws IOException {
+        return DigestUtils.md5Hex(file.getBytes());
+    }
+
+    /**
+     * 获取文件的MD5值，远程节点机也是通过MD5值来判断文件是否重复及存在，所以就不使用其他算法了。
+     */
+    public String getMd5ByFile(String filePath) throws IOException {
+        FileInputStream fis = new FileInputStream(filePath);
+        return DigestUtils.md5Hex(IOUtils.toByteArray(fis));
+    }
+
+    /**
+     * 保存文件
+     */
+    public void saveFile(MultipartFile multipartFile, String filePath) {
+        try {
+            File file = new File(filePath);
+            FileUtils.forceMkdirParent(file);
+            multipartFile.transferTo(file);
+        } catch (IOException e) {
+            throw new RRException("保存文件异常失败", e);
+        }
+    }
+
+    /**
+     * 判断当前是否存在正在执行的脚本
+     */
+    public static boolean checkExistRunningScript(){
+        for (JmeterRunEntity jmeterRunEntity : jMeterEntity4file.values()) {
+            if (jmeterRunEntity.getRunStatus().equals(RUNNING)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 设置Jmeter运行环境相关的配置，如配置文件的加载，当地语言环境等。
+     */
+    public void setJmeterProperties() {
+        String jmeterHomeBin = getJmeterHomeBin();
+        JMeterUtils.loadJMeterProperties(jmeterHomeBin + File.separator + "jmeter.properties");
+        JMeterUtils.setJMeterHome(getJmeterHome());
+        JMeterUtils.initLocale();
+
+        Properties jmeterProps = JMeterUtils.getJMeterProperties();
+
+        // Add local JMeter properties, if the file is found
+        String userProp = JMeterUtils.getPropDefault("user.properties", ""); //$NON-NLS-1$
+        if (userProp.length() > 0) { //$NON-NLS-1$
+            File file = JMeterUtils.findFile(userProp);
+            if (file.canRead()) {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    Properties tmp = new Properties();
+                    tmp.load(fis);
+                    jmeterProps.putAll(tmp);
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        // Add local system properties, if the file is found
+        String sysProp = JMeterUtils.getPropDefault("system.properties", ""); //$NON-NLS-1$
+        if (sysProp.length() > 0) {
+            File file = JMeterUtils.findFile(sysProp);
+            if (file.canRead()) {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    System.getProperties().load(fis);
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        jmeterProps.put("jmeter.version", JMeterUtils.getJMeterVersion());
     }
 }

@@ -1,10 +1,15 @@
 package io.renren.modules.test.jmeter;
 
+import io.renren.common.exception.RRException;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.entity.StressTestReportsEntity;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.jmeter.engine.JMeterEngine;
+import org.apache.jmeter.engine.StandardJMeterEngine;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,22 +21,37 @@ public class JmeterRunEntity {
 
     private StressTestFileEntity stressTestFile;
     private StressTestReportsEntity stressTestReports;
+    private JmeterResultCollector jmeterResultCollector;
 
     /**
      * 进行状态，为了和stop配合使用，还是放到了这个对象里。
      */
-    private Integer runStatus = StressTestUtils.RUNNING;
+    private Integer runStatus = StressTestUtils.INITIAL;
 
     private List<JMeterEngine> engines = new LinkedList<>();
+
+    /**
+     * 脚本文件所使用的文件名的集合，例如"classinfo.txt"
+     */
+    private ArrayList<String> fileAliaList;
 
     public void stop() {
         engines.forEach(engine -> {
             if (engine != null) {
-                // 本身不是gui方式运行的，没有进程强制结束风险。
-                engine.stopTest();
+                if (engine instanceof StandardJMeterEngine) {
+                    // 本身不是gui方式运行的，没有进程强制结束风险。
+                    // 反射的类使用反射的方法。
+                    try {
+                        Method stopTestM = engine.getClass().getMethod("stopTest", new Class[]{});
+                        stopTestM.invoke(engine, new Object[]{});
+                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                        throw new RRException(e.getMessage(), e);
+                    }
+                } else {
+                    engine.stopTest();
+                }
             }
         });
-
         runStatus = StressTestUtils.RUN_SUCCESS;
     }
 
@@ -65,5 +85,21 @@ public class JmeterRunEntity {
 
     public void setRunStatus(Integer runStatus) {
         this.runStatus = runStatus;
+    }
+
+    public ArrayList<String> getFileAliaList() {
+        return fileAliaList;
+    }
+
+    public void setFileAliaList(ArrayList<String> fileAliaList) {
+        this.fileAliaList = fileAliaList;
+    }
+
+    public JmeterResultCollector getJmeterResultCollector() {
+        return jmeterResultCollector;
+    }
+
+    public void setJmeterResultCollector(JmeterResultCollector jmeterResultCollector) {
+        this.jmeterResultCollector = jmeterResultCollector;
     }
 }

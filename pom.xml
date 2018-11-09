@@ -34,7 +34,7 @@
 		<aliyun.oss.version>2.5.0</aliyun.oss.version>
 		<qcloud.cos.version>4.4</qcloud.cos.version>
 		<swagger.version>2.2.2</swagger.version>
-		<jmeter.version>4.0</jmeter.version>
+		<jmeter.version>5.0</jmeter.version>
 
 		<!--wagon plugin 配置-->
 		<service-path>/work/renren</service-path>
@@ -213,19 +213,31 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.jmeter</groupId>
+			<artifactId>ApacheJMeter_java</artifactId>
+			<version>${jmeter.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-slf4j-impl</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!--<dependency>-->
+			<!--<groupId>javassist</groupId>-->
+			<!--<artifactId>javassist</artifactId>-->
+			<!--<version>3.12.1.GA</version>-->
+		<!--</dependency>-->
+
+
 
 
 		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_components -->
 		<!--<dependency>-->
-			<!--<groupId>org.apache.jmeter</groupId>-->
-			<!--<artifactId>ApacheJMeter_components</artifactId>-->
-			<!--<version>4.0</version>-->
-		<!--</dependency>-->
-		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_java -->
-		<!--<dependency>-->
-			<!--<groupId>org.apache.jmeter</groupId>-->
-			<!--<artifactId>ApacheJMeter_java</artifactId>-->
-			<!--<version>4.0</version>-->
+		<!--<groupId>org.apache.jmeter</groupId>-->
+		<!--<artifactId>ApacheJMeter_components</artifactId>-->
+		<!--<version>4.0</version>-->
 		<!--</dependency>-->
 		<!-- https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter -->
 		<!--<dependency>-->

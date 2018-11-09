@@ -66,6 +66,7 @@ public class JmeterStatEntity {
      */
     private Integer runStatus = StressTestUtils.RUNNING;
 
+
     /**
      * 对于分布式场景，取到的statMap是总的，即包含了所有脚本执行的label的数据。
      */
@@ -89,8 +90,8 @@ public class JmeterStatEntity {
         if (statMap != null) {
             statMap.forEach((k, v) -> {
                 /**
-                 * 平均响应时间并非真正的一个请求响应的时间，而是一段时间内响应了多少请求而计算出的平均响应时间。
-                 * 所以，如果是被测试的服务器满负荷，这个响应时间才是接近于一个请求的真正的响应时间。
+                 * 平均响应时间算法是当前请求总共花费的时间/响应了多少请求。
+                 * 这个时间是正确的。
                  */
                 responseTimesMap.put(k + "_Avg(ms)", String.format("%.2f", v.getMean()));
 //                responseTimesMap.put(k + "_Max(ms)", String.valueOf(v.getMax()));
