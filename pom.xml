@@ -34,7 +34,7 @@
 		<aliyun.oss.version>2.5.0</aliyun.oss.version>
 		<qcloud.cos.version>4.4</qcloud.cos.version>
 		<swagger.version>2.2.2</swagger.version>
-		<jmeter.version>5.0</jmeter.version>
+		<jmeter.version>4.0</jmeter.version>
 
 		<!--wagon plugin 配置-->
 		<service-path>/work/renren</service-path>
