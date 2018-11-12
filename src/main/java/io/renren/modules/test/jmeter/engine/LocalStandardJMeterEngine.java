@@ -593,4 +593,8 @@ public class LocalStandardJMeterEngine extends StandardJMeterEngine {
     public boolean isActive() {
         return active;
     }
+
+    public List<AbstractThreadGroup> getGroups() {
+        return groups;
+    }
 }

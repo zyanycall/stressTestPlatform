@@ -3,9 +3,12 @@ package io.renren.modules.test.jmeter;
 import io.renren.common.exception.RRException;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.entity.StressTestReportsEntity;
+import io.renren.modules.test.jmeter.engine.LocalStandardJMeterEngine;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.jmeter.engine.JMeterEngine;
 import org.apache.jmeter.engine.StandardJMeterEngine;
+import org.apache.jmeter.threads.AbstractThreadGroup;
+import org.apache.jmeter.threads.JMeterContextService;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -14,13 +17,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * 为了执行Jmeter用例而设计的类，每一个脚本文件对应一批engine
+ * 为了执行Jmeter用例而设计的类，每一个脚本文件对应一个JmeterRunEntity对象
  * Created by zyanycall@gmail.com on 13:59.
  */
 public class JmeterRunEntity {
 
     private StressTestFileEntity stressTestFile;
     private StressTestReportsEntity stressTestReports;
+    /**
+     * 用于测试报告文件流的flush
+     */
     private JmeterResultCollector jmeterResultCollector;
 
     /**
@@ -34,6 +40,11 @@ public class JmeterRunEntity {
      * 脚本文件所使用的文件名的集合，例如"classinfo.txt"
      */
     private ArrayList<String> fileAliaList;
+
+    /**
+     * 当前脚本正在执行的active状态的线程数，是以脚本为单位，脚本内如果包含多个请求，则统计整体数量。
+     */
+    private int numberOfActiveThreads = 0;
 
     public void stop() {
         engines.forEach(engine -> {
@@ -101,5 +112,25 @@ public class JmeterRunEntity {
 
     public void setJmeterResultCollector(JmeterResultCollector jmeterResultCollector) {
         this.jmeterResultCollector = jmeterResultCollector;
+    }
+
+    /**
+     * 返回当前脚本所有的engine的正在活跃的线程数量
+     */
+    public int getNumberOfActiveThreads() {
+        numberOfActiveThreads = 0;
+        engines.forEach(engine -> {
+            if (engine != null) {
+                if (engine instanceof LocalStandardJMeterEngine) {
+                    List<AbstractThreadGroup> groups = ((LocalStandardJMeterEngine) engine).getGroups();
+                    for (AbstractThreadGroup group : groups) {
+                        numberOfActiveThreads += group.getNumberOfThreads();
+                    }
+                } else { // 分布式情况下
+                    numberOfActiveThreads = JMeterContextService.getThreadCounts().activeThreads;
+                }
+            }
+        });
+        return numberOfActiveThreads;
     }
 }

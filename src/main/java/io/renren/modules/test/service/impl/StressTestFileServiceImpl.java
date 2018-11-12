@@ -13,10 +13,7 @@ import io.renren.modules.test.entity.StressTestSlaveEntity;
 import io.renren.modules.test.handler.FileExecuteResultHandler;
 import io.renren.modules.test.handler.FileResultHandler;
 import io.renren.modules.test.handler.FileStopResultHandler;
-import io.renren.modules.test.jmeter.JmeterListenToTest;
-import io.renren.modules.test.jmeter.JmeterResultCollector;
-import io.renren.modules.test.jmeter.JmeterRunEntity;
-import io.renren.modules.test.jmeter.JmeterStatEntity;
+import io.renren.modules.test.jmeter.*;
 import io.renren.modules.test.jmeter.engine.LocalStandardJMeterEngine;
 import io.renren.modules.test.jmeter.fix.JavassistEngine;
 import io.renren.modules.test.service.StressTestFileService;
@@ -35,6 +32,7 @@ import org.apache.jmeter.engine.JMeterEngine;
 import org.apache.jmeter.engine.JMeterEngineException;
 import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.services.FileServer;
+import org.apache.jmeter.threads.RemoteThreadsListenerTestElement;
 import org.apache.jorphan.collections.HashTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -466,6 +464,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             jmxTree.add(jmxTree.getArray()[0], new JmeterListenToTest(null,
                     null, this, stressTestFile.getFileId()));
 
+            // Used for remote notification of threads start/stop,see BUG 54152
+            // Summariser uses this feature to compute correctly number of threads
+            // when NON GUI mode is used
+            jmxTree.add(jmxTree.getArray()[0], new RemoteThreadsListenerTestElement());
+
             // 在内存中保留启动信息使用。
             List<JMeterEngine> engines = new LinkedList<>();
             JmeterRunEntity jmeterRunEntity = new JmeterRunEntity();
@@ -538,22 +541,23 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 由于新增的方法，所以采用反射的方式执行engine的runTest
      * 此方法还没有通过全面测试，故还不会全面使用。
      */
-    public Object engineRun(StressTestFileEntity stressTestFile, HashTree jmxTree)
-            throws InstantiationException, IllegalAccessException, NoSuchMethodException,
-            InvocationTargetException {
+    public Object engineRun(StressTestFileEntity stressTestFile, HashTree jmxTree) {
         // 反射得到修改后的类，并将其值插入并修改
         Class<?> clazz = JavassistEngine.engineClazz;
-        Object engine = clazz.newInstance();
+        Object engine;
+        try {
+            engine = clazz.newInstance();
+            Method setFileM = engine.getClass().getMethod("setStressTestFile", new Class[]{StressTestFileEntity.class});
+            setFileM.invoke(engine, new Object[]{stressTestFile});
 
-        Method setFileM = engine.getClass().getMethod("setStressTestFile", new Class[]{StressTestFileEntity.class});
-        setFileM.invoke(engine, new Object[]{stressTestFile});
+            Method configureM = engine.getClass().getMethod("configure", new Class[]{HashTree.class});
+            configureM.invoke(engine, new Object[]{jmxTree});
 
-        Method configureM = engine.getClass().getMethod("configure", new Class[]{HashTree.class});
-        configureM.invoke(engine, new Object[]{jmxTree});
-
-        Method runTestM = engine.getClass().getMethod("runTest", new Class[]{});
-        runTestM.invoke(engine, new Object[]{});
-
+            Method runTestM = engine.getClass().getMethod("runTest", new Class[]{});
+            runTestM.invoke(engine, new Object[]{});
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new RRException("本地执行启动脚本反射功能时异常！", e);
+        }
         return engine;
     }
 

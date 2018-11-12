@@ -1,7 +1,6 @@
 package io.renren.modules.test.jmeter;
 
 import io.renren.modules.test.utils.StressTestUtils;
-import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.visualizers.SamplingStatCalculator;
 
 import java.util.HashMap;
@@ -66,6 +65,7 @@ public class JmeterStatEntity {
      */
     private Integer runStatus = StressTestUtils.RUNNING;
 
+    private JmeterRunEntity jmeterRunEntity;
 
     /**
      * 对于分布式场景，取到的statMap是总的，即包含了所有脚本执行的label的数据。
@@ -80,7 +80,7 @@ public class JmeterStatEntity {
         }
 
         // StressTestUtils.jMeterEntity4file 中保存的都是真实的脚本文件信息
-        JmeterRunEntity jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);
+        jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);
         if (jmeterRunEntity != null) {
             runStatus = jmeterRunEntity.getRunStatus();
         }
@@ -196,10 +196,9 @@ public class JmeterStatEntity {
     }
 
     public Map<String, String> getThreadCountsMap() {
-        JMeterContextService.ThreadCounts tc = JMeterContextService.getThreadCounts();
-        threadCountsMap.put("Active", String.valueOf(tc.activeThreads));
-        threadCountsMap.put("Started", String.valueOf(tc.startedThreads));
-        threadCountsMap.put("Finished", String.valueOf(tc.finishedThreads));
+        if (jmeterRunEntity != null) {
+            threadCountsMap.put("Active", String.valueOf(jmeterRunEntity.getNumberOfActiveThreads()));
+        }
         return threadCountsMap;
     }
 
