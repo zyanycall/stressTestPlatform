@@ -119,7 +119,7 @@ public class JmeterRunEntity {
      */
     public int getNumberOfActiveThreads() {
         numberOfActiveThreads = 0;
-        engines.forEach(engine -> {
+        for (JMeterEngine engine : engines) {
             if (engine != null) {
                 if (engine instanceof LocalStandardJMeterEngine) {
                     List<AbstractThreadGroup> groups = ((LocalStandardJMeterEngine) engine).getGroups();
@@ -128,9 +128,11 @@ public class JmeterRunEntity {
                     }
                 } else { // 分布式情况下
                     numberOfActiveThreads = JMeterContextService.getThreadCounts().activeThreads;
+                    break;
                 }
             }
-        });
+
+        }
         return numberOfActiveThreads;
     }
 }

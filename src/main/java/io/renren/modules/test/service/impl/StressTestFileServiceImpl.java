@@ -286,12 +286,10 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     }
 
     /**
-     * 没有事务，不允许回滚
-     * 因为是遍历执行，每一个执行可以是一个事务。
-     * <p>
      * 接口是支持批量运行的，但是强烈不建议这样做。
      */
     @Override
+    @Transactional
     public void run(Long[] fileIds) {
         Arrays.asList(fileIds).stream().forEach(fileId -> {
             runSingle(fileId);
@@ -303,7 +301,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 脚本的启动都是新的线程，其中的SQL是不和启动是同一个事务的。
      * 同理，也不会回滚这一事务。
      */
-    @Transactional
     public void runSingle(Long fileId) {
         StressTestFileEntity stressTestFile = queryObject(fileId);
         if (stressTestFile.getStatus() == 1) {
@@ -562,10 +559,10 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     }
 
     /**
-     * 没有事务，不允许回滚
-     * 因为是遍历执行，每一个执行可以是一个事务。
+     * 停止
      */
     @Override
+    @Transactional
     public void stop(Long[] fileIds) {
         Arrays.asList(fileIds).stream().forEach(fileId -> {
             stopSingle(fileId);
@@ -597,7 +594,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 停止内核Jmeter-core方式执行的脚本
      */
     @Override
-    @Transactional
     public void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity) {
         StressTestFileEntity stressTestFile = jmeterRunEntity.getStressTestFile();
         StressTestReportsEntity stressTestReports = jmeterRunEntity.getStressTestReports();
@@ -918,7 +914,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 return true;
             }
         }
-
         return false;
     }
 }
