@@ -32,12 +32,13 @@ public class JmeterTestPlan extends TestPlan {
     /**
      * 原有方法是执行的  closeFiles(); 这会导致整个环境的文件流都关闭，会造成问题。
      * 所以覆盖了这个方法，让其有选择的关闭files。
+     *
      * {@inheritDoc}
      */
     @Override
     public void testEnded() {
         try {
-            if (stressTestFile == null) {
+            if (stressTestFile == null || !StressTestUtils.checkExistRunningScript()) {
                 FileServer.getFileServer().closeFiles();
             } else {
                 Long fileId = stressTestFile.getFileId();

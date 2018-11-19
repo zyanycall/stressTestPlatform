@@ -33,6 +33,7 @@ import org.apache.jmeter.engine.JMeterEngineException;
 import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.services.FileServer;
 import org.apache.jmeter.threads.RemoteThreadsListenerTestElement;
+import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jorphan.collections.HashTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -480,13 +481,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             // 后续可能还会有其他文件能得到引用（如文件下载的测试等等），可能还需要扩充此方法。
             ArrayList<String> fileAliaList = new ArrayList<>();
             for (HashTree lht : jmxTree.values()) {
-                for (Object oo : lht.keySet()) {
-                    if (oo instanceof CSVDataSet) {
-                        // filename通过查看源码，没有发现有变化的地方，所以让其成为关键字。
-                        String filename = ((CSVDataSet) oo).getPropertyAsString("filename");
-                        fileAliaList.add(filename);
-                    }
-                }
+                fillFileAliaList(fileAliaList, lht);
             }
             jmeterRunEntity.setFileAliaList(fileAliaList);
 
@@ -530,6 +525,23 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RRException("本地执行启动脚本反射功能时异常！", e);
         }
+    }
+
+    /**
+     * 将当前脚本所用到的文件保存起来。
+     * 目前已知的最常用的有CSVDataSet类型的。
+     */
+    public ArrayList fillFileAliaList(ArrayList<String> fileAliaList, HashTree hashTree) {
+        for (Object os : hashTree.keySet()) {
+            if (os instanceof CSVDataSet) {
+                // filename通过查看源码，没有发现有变化的地方，所以让其成为关键字。
+                String filename = ((CSVDataSet) os).getPropertyAsString("filename");
+                fileAliaList.add(filename);
+            } else if (os instanceof ThreadGroup) {
+                fillFileAliaList(fileAliaList, hashTree.get(os));
+            }
+        }
+        return fileAliaList;
     }
 
     /**
