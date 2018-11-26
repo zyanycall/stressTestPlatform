@@ -613,6 +613,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
         // 只处理了成功的情况，失败的情况当前捕获不到。
         stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
+        // 全面停止之前将测试报告文件从缓存刷到磁盘上去。
+        // 避免多脚本执行时停止其中一个脚本而测试报告文件不完整。
         jmeterResultCollector.flushFile();
         if (stressTestReports != null && stressTestReports.getFile().exists()) {
             stressTestReports.setFileSize(FileUtils.sizeOf(stressTestReports.getFile()));

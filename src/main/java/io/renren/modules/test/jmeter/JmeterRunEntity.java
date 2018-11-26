@@ -42,16 +42,16 @@ public class JmeterRunEntity {
     private ArrayList<String> fileAliaList;
 
     /**
-     * 当前脚本正在执行的active状态的线程数，是以脚本为单位，脚本内如果包含多个请求，则统计整体数量。
+     * 停止当前脚本的压力引擎
      */
-    private int numberOfActiveThreads = 0;
-
     public void stop() {
+        // 缓存中变更状态为成功执行
+        runStatus = StressTestUtils.RUN_SUCCESS;
         engines.forEach(engine -> {
             if (engine != null) {
                 if (engine instanceof StandardJMeterEngine) {
                     // 本身不是gui方式运行的，没有进程强制结束风险。
-                    // 反射的类使用反射的方法。
+                    // 如果使用字节码修改技术，则必须使用反射的方法调用。
                     try {
                         Method stopTestM = engine.getClass().getMethod("stopTest", new Class[]{});
                         stopTestM.invoke(engine, new Object[]{});
@@ -63,7 +63,6 @@ public class JmeterRunEntity {
                 }
             }
         });
-        runStatus = StressTestUtils.RUN_SUCCESS;
     }
 
     public StressTestFileEntity getStressTestFile() {
@@ -118,7 +117,8 @@ public class JmeterRunEntity {
      * 返回当前脚本所有的engine的正在活跃的线程数量
      */
     public int getNumberOfActiveThreads() {
-        numberOfActiveThreads = 0;
+        // 当前脚本正在执行的active状态的线程数，是以脚本为单位，脚本内如果包含多个请求，则统计整体数量。
+        int numberOfActiveThreads = 0;
         for (JMeterEngine engine : engines) {
             if (engine != null) {
                 if (engine instanceof LocalStandardJMeterEngine) {
@@ -131,7 +131,6 @@ public class JmeterRunEntity {
                     break;
                 }
             }
-
         }
         return numberOfActiveThreads;
     }

@@ -26,9 +26,14 @@
         <if test="originName != null and originName.trim() != ''">
             and t1.origin_name = #{originName}
         </if>
-        <if test="sidx != null and sidx.trim() != ''">
-            order by ${sidx} ${order}
-        </if>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                order by ${sidx} ${order}
+            </when>
+            <otherwise>
+                order by t1.add_time desc
+            </otherwise>
+        </choose>
         <if test="offset != null and limit != null ">
             limit #{offset}, #{limit}
         </if>
