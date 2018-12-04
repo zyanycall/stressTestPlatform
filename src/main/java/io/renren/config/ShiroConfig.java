@@ -88,6 +88,7 @@ public class ShiroConfig {
 //        filterMap.put("/logout", "logout");
 
         filterMap.put("/test/stressReports/downloadReport/*?*", "anon");
+        filterMap.put("/test/debugReports/downloadReport/*?*", "anon");
         filterMap.put("/test/stressFile/downloadFile/*?*", "anon");
         filterMap.put("/test/stressFile/statInfo/*?*", "anon");
         filterMap.put("/testReport/**", "anon");

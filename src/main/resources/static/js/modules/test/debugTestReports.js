@@ -1,6 +1,6 @@
 $(function () {
     $("#jqGrid").jqGrid({
-        url: baseURL + 'test/stressReports/list',
+        url: baseURL + 'test/debugReports/list',
         datatype: "json",
         colModel: [
             {label: '报告ID', name: 'reportId', width: 30, key: true},
@@ -8,7 +8,7 @@ $(function () {
                 label: '报告名称', name: 'originName', width: 70, sortable: false, formatter: function (value, options, row) {
                 if (row.status === 2) {
                     var reportDir = row.reportName.substring(0, row.reportName.lastIndexOf("."));
-                    return "<a href='" + baseURL + "testReport/" + reportDir + "/index.html'>" + value + "</a>";
+                    return "<a href='" + baseURL + "testReport/" + reportDir + ".html'>" + value + "</a>";
                 } else {
                     return value;
                 }
@@ -38,7 +38,7 @@ $(function () {
             {
                 label: '执行操作', name: '', width: 80, sortable: false, formatter: function (value, options, row) {
                 var createReportBtn = "<a href='#' class='btn btn-primary' onclick='createReport(" + row.reportId + ")' ><i class='fa fa-plus'></i>&nbsp;生成报告</a>";
-                var downloadReportBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressReports/downloadReport/" + row.reportId + "' class='btn btn-primary' onclick='return checkStatus(" + row.status + ")'><i class='fa fa-download'></i>&nbsp;下载</a>";
+                var downloadReportBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/debugReports/downloadReport/" + row.reportId + "' class='btn btn-primary' onclick='return checkStatus(" + row.status + ")'><i class='fa fa-download'></i>&nbsp;下载</a>";
                 return createReportBtn + downloadReportBtn;
             }
             }
@@ -78,7 +78,7 @@ var vm = new Vue({
         q: {
             caseId: null
         },
-        stressCaseReport: {},
+        debugCaseReport: {},
         title: null,
         showList: true
     },
@@ -94,12 +94,12 @@ var vm = new Vue({
                 return;
             }
 
-            var url = vm.stressCaseReport.reportId == null ? "test/stressReports/save" : "test/stressReports/update";
+            var url = vm.debugCaseReport.reportId == null ? "test/debugReports/save" : "test/debugReports/update";
             $.ajax({
                 type: "POST",
                 url: baseURL + url,
                 contentType: "application/json",
-                data: JSON.stringify(vm.stressCaseReport),
+                data: JSON.stringify(vm.debugCaseReport),
                 success: function (r) {
                     if (r.code === 0) {
                         // alert('操作成功', function(){
@@ -127,10 +127,10 @@ var vm = new Vue({
                 return;
             }
 
-            $.get(baseURL + "test/stressReports/info/" + reportId, function (r) {
+            $.get(baseURL + "test/debugReports/info/" + reportId, function (r) {
                 vm.showList = false;
                 vm.title = "修改";
-                vm.stressCaseReport = r.stressCaseReport;
+                vm.debugCaseReport = r.debugCaseReport;
             });
         },
         del: function () {
@@ -142,7 +142,7 @@ var vm = new Vue({
             confirm('确定要删除选中的记录？', function () {
                 $.ajax({
                     type: "POST",
-                    url: baseURL + "test/stressReports/delete",
+                    url: baseURL + "test/debugReports/delete",
                     contentType: "application/json",
                     data: JSON.stringify(reportIds),
                     success: function (r) {
@@ -157,7 +157,7 @@ var vm = new Vue({
                 });
             });
         },
-        delCsv: function () {
+        delJtl: function () {
             var reportIds = getSelectedRows();
             if (reportIds == null) {
                 return;
@@ -166,7 +166,7 @@ var vm = new Vue({
             confirm('建议生成报告后再删除结果文件，确定删除？', function () {
                 $.ajax({
                     type: "POST",
-                    url: baseURL + "test/stressReports/deleteCsv",
+                    url: baseURL + "test/debugReports/deleteJtl",
                     contentType: "application/json",
                     data: JSON.stringify(reportIds),
                     success: function (r) {
@@ -193,7 +193,7 @@ var vm = new Vue({
             }).trigger("reloadGrid");
         },
         validator: function () {
-            if (isBlank(vm.stressCaseReport.remark)) {
+            if (isBlank(vm.debugCaseReport.remark)) {
                 alert("描述不能为空");
                 return true;
             }
@@ -205,10 +205,10 @@ function createReport(reportIds) {
     if (!reportIds) {
         return;
     }
-    confirm('文件越大生成报告时间越长,请耐心等待!', function () {
+    confirm('结果文件超过1MB建议直接下载报告查看!', function () {
         $.ajax({
             type: "POST",
-            url: baseURL + "test/stressReports/createReport",
+            url: baseURL + "test/debugReports/createReport",
             contentType: "application/json",
             data: JSON.stringify(numberToArray(reportIds)),
             success: function (r) {

@@ -5,8 +5,8 @@ import io.renren.common.utils.PageUtils;
 import io.renren.common.utils.Query;
 import io.renren.common.utils.R;
 import io.renren.common.validator.ValidatorUtils;
-import io.renren.modules.test.entity.StressTestReportsEntity;
-import io.renren.modules.test.service.StressTestReportsService;
+import io.renren.modules.test.entity.DebugTestReportsEntity;
+import io.renren.modules.test.service.DebugTestReportsService;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,21 +25,21 @@ import java.util.Map;
  * 压力测试报告
  */
 @RestController
-@RequestMapping("/test/stressReports")
-public class StressTestReportsController {
+@RequestMapping("/test/debugReports")
+public class DebugTestReportsController {
     @Autowired
-    private StressTestReportsService stressTestReportsService;
+    private DebugTestReportsService debugTestReportsService;
 
     /**
      * 测试报告列表
      */
     @RequestMapping("/list")
-    @RequiresPermissions("test:stress:reportsList")
+    @RequiresPermissions("test:debug:reportsList")
     public R list(@RequestParam Map<String, Object> params) {
         //查询列表数据
         Query query = new Query(StressTestUtils.filterParms(params));
-        List<StressTestReportsEntity> reportList = stressTestReportsService.queryList(query);
-        int total = stressTestReportsService.queryTotal(query);
+        List<DebugTestReportsEntity> reportList = debugTestReportsService.queryList(query);
+        int total = debugTestReportsService.queryTotal(query);
 
         PageUtils pageUtil = new PageUtils(reportList, total, query.getLimit(), query.getPage());
 
@@ -50,72 +50,72 @@ public class StressTestReportsController {
      * 查询具体测试报告信息
      */
     @RequestMapping("/info/{reportId}")
-    @RequiresPermissions("test:stress:reportInfo")
+    @RequiresPermissions("test:debug:reportInfo")
     public R info(@PathVariable("reportId") Long reportId) {
-        StressTestReportsEntity reportsEntity = stressTestReportsService.queryObject(reportId);
-        return R.ok().put("stressCaseReport", reportsEntity);
+        DebugTestReportsEntity reportsEntity = debugTestReportsService.queryObject(reportId);
+        return R.ok().put("debugCaseReport", reportsEntity);
     }
 
     /**
-     * 修改性能测试用例报告文件
+     * 修改调试报告数据
      */
-    @SysLog("修改性能测试用例报告文件")
+    @SysLog("修改调试测试报告数据")
     @RequestMapping("/update")
-    @RequiresPermissions("test:stress:reportUpdate")
-    public R update(@RequestBody StressTestReportsEntity stressCaseReport) {
-        ValidatorUtils.validateEntity(stressCaseReport);
-        stressTestReportsService.update(stressCaseReport);
+    @RequiresPermissions("test:debug:reportUpdate")
+    public R update(@RequestBody DebugTestReportsEntity debugCaseReport) {
+        ValidatorUtils.validateEntity(debugCaseReport);
+        debugTestReportsService.update(debugCaseReport);
         return R.ok();
     }
 
     /**
      * 删除指定测试报告及文件
      */
-    @SysLog("删除性能测试报告")
+    @SysLog("删除调试测试报告")
     @RequestMapping("/delete")
-    @RequiresPermissions("test:stress:reportDelete")
+    @RequiresPermissions("test:debug:reportDelete")
     public R delete(@RequestBody Long[] reportIds) {
-        stressTestReportsService.deleteBatch(reportIds);
+        debugTestReportsService.deleteBatch(reportIds);
         return R.ok();
     }
 
     /**
      * 删除指定测试报告的测试结果文件，目的是避免占用空间太大
      */
-    @SysLog("删除性能测试报告结果文件")
-    @RequestMapping("/deleteCsv")
-    @RequiresPermissions("test:stress:reportDeleteCsv")
-    public R deleteCsv(@RequestBody Long[] reportIds) {
-        stressTestReportsService.deleteBatchCsv(reportIds);
+    @SysLog("删除调试报告结果文件")
+    @RequestMapping("/deleteJtl")
+    @RequiresPermissions("test:debug:reportDeleteJtl")
+    public R deleteJtl(@RequestBody Long[] reportIds) {
+        debugTestReportsService.deleteBatchJtl(reportIds);
         return R.ok();
     }
 
     /**
      * 生成测试报告及文件
      */
-    @SysLog("生成性能测试报告")
+    @SysLog("生成调试测试报告")
     @RequestMapping("/createReport")
-    @RequiresPermissions("test:stress:reportCreate")
+    @RequiresPermissions("test:debug:reportCreate")
     public R createReport(@RequestBody Long[] reportIds) {
-        stressTestReportsService.createReport(reportIds);
+        debugTestReportsService.createReport(reportIds);
         return R.ok();
     }
 
 
     /**
-     * 下载测试报告zip包
+     * 下载测试报告
      */
-    @SysLog("下载测试报告zip包")
+    @SysLog("下载调试测试报告")
     @RequestMapping("/downloadReport/{reportId}")
-    @RequiresPermissions("test:stress:reportDownLoad")
+    @RequiresPermissions("test:debug:reportDownLoad")
     public ResponseEntity<InputStreamResource> downloadReport(@PathVariable("reportId") Long reportId) throws IOException {
-        StressTestReportsEntity reportsEntity = stressTestReportsService.queryObject(reportId);
-        FileSystemResource zipFile = stressTestReportsService.getZipFile(reportsEntity);
+        DebugTestReportsEntity reportsEntity = debugTestReportsService.queryObject(reportId);
+        FileSystemResource fileResource = debugTestReportsService.getReportFile(reportsEntity);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache,no-store,must-revalidate");
         headers.add("Content-Disposition",
-                "attachment;filename=" + reportsEntity.getOriginName() + ".zip");
+                "attachment;filename=" + reportsEntity.getOriginName() + ".html");
         headers.add("Pragma", "no-cache");
         headers.add("Expires", "0");
         headers.setContentType(MediaType.parseMediaType("application/octet-stream"));
@@ -123,7 +123,7 @@ public class StressTestReportsController {
         return ResponseEntity
                 .ok()
                 .headers(headers)
-                .contentLength(zipFile.contentLength())
-                .body(new InputStreamResource(zipFile.getInputStream()));
+                .contentLength(fileResource.contentLength())
+                .body(new InputStreamResource(fileResource.getInputStream()));
     }
 }

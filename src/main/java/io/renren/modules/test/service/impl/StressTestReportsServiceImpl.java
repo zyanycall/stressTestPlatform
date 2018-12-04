@@ -82,17 +82,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             }
             deleteReportCSV(stressTestReport);
             deleteReportZip(stressTestReport);
-            try {
-                String jmxDir = reportPath.substring(0, reportPath.lastIndexOf(File.separator));
-                File jmxDirFile = new File(jmxDir);
-                if (FileUtils.sizeOf(jmxDirFile) == 0L) {
-                    FileUtils.forceDelete(jmxDirFile);
-                }
-            } catch (FileNotFoundException | IllegalArgumentException e) {
-                logger.error("要删除的测试报告上级文件夹找不到(删除成功)  " + e.getMessage());
-            } catch (IOException e) {
-                throw new RRException("删除测试报告上级文件夹异常失败", e);
-            }
+            stressTestUtils.deleteJmxDir(reportPath);
         });
         stressTestReportsDao.deleteBatch(reportIds);
     }
@@ -110,7 +100,12 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         });
     }
 
+    /**
+     * 实际上Jmeter自身的生成测试报告无法批量进行
+     * 未来如果自己实现生成测试报告，可以尝试改变。
+     */
     @Override
+    @Transactional
     public void createReport(Long[] reportIds) {
         for (Long reportId : reportIds) {
             excuteJmeterCreateReport(reportId);
@@ -220,7 +215,6 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
     /**
      * 使用Jmeter自带的生成测试报告脚本
      */
-    @Transactional
     public void excuteJmeterCreateReport(Long reportId) {
         StressTestReportsEntity stressTestReport = queryObject(reportId);
 

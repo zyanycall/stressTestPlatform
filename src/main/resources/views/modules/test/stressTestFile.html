@@ -64,6 +64,15 @@
                 </label>
             </div>
             <div class="form-group">
+                <div class="col-sm-2 control-label">调试报告</div>
+                <label class="radio-inline">
+                    <input type="radio" name="debugStatus" value="0" v-model="stressTestFile.debugStatus"/> 关闭调试
+                </label>
+                <label class="radio-inline">
+                    <input type="radio" name="debugStatus" value="1" v-model="stressTestFile.debugStatus"/> 开启调试
+                </label>
+            </div>
+            <div class="form-group">
                 <div class="col-sm-2 control-label"></div>
                 <input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定"/>
                 &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>

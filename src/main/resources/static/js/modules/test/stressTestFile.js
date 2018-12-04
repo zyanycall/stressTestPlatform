@@ -9,7 +9,7 @@ $(function () {
             {
                 label: '文件名称',
                 name: 'originName',
-                width: 120,
+                width: 100,
                 sortable: false,
                 formatter: function (value, options, row) {
                     if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
@@ -55,7 +55,23 @@ $(function () {
                 }
             },
             {
-                label: '状态', name: 'status', width: 50, formatter: function (value, options, row) {
+                label: '调试',
+                name: 'debugStatus',
+                width: 40,
+                sortable: false,
+                formatter: function (value, options, row) {
+                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                        return '';
+                    }
+                    if (value === 1) {
+                        return '<span class="label label-success">启用</span>';
+                    } else if (value === 0) {
+                        return '<span class="label label-danger">禁止</span>';
+                    }
+                }
+            },
+            {
+                label: '状态', name: 'status', width: 45, formatter: function (value, options, row) {
                     if (value === 0) {
                         return '<span class="label label-info">创建成功</span>';
                     } else if (value === 1) {
@@ -71,7 +87,7 @@ $(function () {
                 }
             },
             {
-                label: '执行操作', name: '', width: 100, sortable: false, formatter: function (value, options, row) {
+                label: '执行操作', name: '', width: 95, sortable: false, formatter: function (value, options, row) {
                     var btn = '';
                     if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                         btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
@@ -91,7 +107,7 @@ $(function () {
         ],
         viewrecords: true,
         height: 385,
-        rowNum: 10,
+        rowNum: 50,
         rowList: [10, 30, 50, 100, 200],
         rownumbers: true,
         rownumWidth: 25,

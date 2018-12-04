@@ -2,18 +2,15 @@ package io.renren.modules.test.service.impl;
 
 import com.jcraft.jsch.JSchException;
 import io.renren.common.exception.RRException;
-import io.renren.modules.test.dao.StressTestDao;
-import io.renren.modules.test.dao.StressTestFileDao;
-import io.renren.modules.test.dao.StressTestReportsDao;
-import io.renren.modules.test.dao.StressTestSlaveDao;
-import io.renren.modules.test.entity.StressTestEntity;
-import io.renren.modules.test.entity.StressTestFileEntity;
-import io.renren.modules.test.entity.StressTestReportsEntity;
-import io.renren.modules.test.entity.StressTestSlaveEntity;
+import io.renren.modules.test.dao.*;
+import io.renren.modules.test.entity.*;
 import io.renren.modules.test.handler.FileExecuteResultHandler;
 import io.renren.modules.test.handler.FileResultHandler;
 import io.renren.modules.test.handler.FileStopResultHandler;
-import io.renren.modules.test.jmeter.*;
+import io.renren.modules.test.jmeter.JmeterListenToTest;
+import io.renren.modules.test.jmeter.JmeterResultCollector;
+import io.renren.modules.test.jmeter.JmeterRunEntity;
+import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.jmeter.engine.LocalStandardJMeterEngine;
 import io.renren.modules.test.jmeter.fix.JavassistEngine;
 import io.renren.modules.test.service.StressTestFileService;
@@ -63,6 +60,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     @Autowired
     private StressTestReportsDao stressTestReportsDao;
+
+    @Autowired
+    private DebugTestReportsDao debugTestReportsDao;
 
     @Autowired
     private StressTestSlaveDao stressTestSlaveDao;
@@ -222,7 +222,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     public void update(StressTestFileEntity stressTestFile, StressTestReportsEntity stressTestReports) {
         update(stressTestFile);
         if (stressTestReports != null) {
-            stressTestReportsDao.update(stressTestReports);
+            if (stressTestReports instanceof DebugTestReportsEntity) {
+                debugTestReportsDao.update((DebugTestReportsEntity) stressTestReports);
+            } else {
+                stressTestReportsDao.update(stressTestReports);
+            }
         }
     }
 
@@ -304,7 +308,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     public void runSingle(Long fileId) {
         StressTestFileEntity stressTestFile = queryObject(fileId);
-        if (stressTestFile.getStatus() == 1) {
+        if (stressTestFile.getStatus() == StressTestUtils.RUNNING) {
             throw new RRException("脚本正在运行");
         }
 
@@ -315,9 +319,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         // 测试结果文件路径
         // jmx用例文件夹对应的相对路径名如20180504172207568\case20180504172207607
         String jmxDir = fileName.substring(0, fileName.lastIndexOf("."));
-        // csv文件的名称，如case20180504172207607_4444.csv
-        String csvName = jmxDir.substring(jmxDir.lastIndexOf(File.separator) + 1) + StressTestUtils.getSuffix4() + ".csv";
-        // csv文件的真实路径，如D:\E\stressTestCases\20180504172207568\case20180504172207607\case20180504172207607_4444.csv
+        String suffix = StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus()) ?
+                "jtl" : "csv";
+        // 测试结果文件csv文件的名称，如case20180504172207607_4444.csv
+        String csvName = jmxDir.substring(jmxDir.lastIndexOf(File.separator) + 1) + StressTestUtils.getSuffix4() + "." + suffix;
+        // 测试结果文件csv文件的真实路径，如D:\E\stressTestCases\20180504172207568\case20180504172207607\case20180504172207607_4444.csv
         String csvPath = casePath + File.separator + jmxDir + File.separator + csvName;
         String fileOriginName = stressTestFile.getOriginName();
         String reportOirginName = fileOriginName.substring(0, fileOriginName.lastIndexOf(".")) + "_" + StressTestUtils.getSuffix4();
@@ -327,7 +333,13 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
         StressTestReportsEntity stressTestReports = null;
         if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())) {
-            stressTestReports = new StressTestReportsEntity();
+            // 如果是需要调试的情况下
+            if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
+                stressTestReports = new DebugTestReportsEntity();
+            } else {
+                stressTestReports = new StressTestReportsEntity();
+            }
+
             //保存测试报告stressTestReportsDao
             stressTestReports.setCaseId(stressTestFile.getCaseId());
             stressTestReports.setFileId(fileId);
@@ -352,7 +364,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         update(stressTestFile);
 
         if (stressTestReports != null) {
-            stressTestReportsDao.save(stressTestReports);
+            // 将调试测试报告放到调试的数据表中记录
+            if (stressTestReports instanceof DebugTestReportsEntity) {
+                debugTestReportsDao.save((DebugTestReportsEntity)stressTestReports);
+            } else {
+                stressTestReportsDao.save(stressTestReports);
+            }
         }
     }
 
@@ -361,6 +378,13 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     public void excuteJmeterRunByScript(StressTestFileEntity stressTestFile,
                                         StressTestReportsEntity stressTestReports, Map map) {
+        // 由于调试模式需要动态修改测试结果保存样式为JTL，而性能测试报告需要的格式为CSV（压测系统默认模式）。
+        // 所以调试模式下如果运行脚本则无法生成测试报告，造成系统功能缺失。
+        // 为避免后续问题，jmx如果使用了调试，则无法使用脚本方式运行。
+        if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
+            throw new RRException("请禁用调试模式！");
+        }
+
         String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
         String jmeterExc = stressTestUtils.getJmeterExc();
         CommandLine cmdLine = new CommandLine(jmeterHomeBin + File.separator + jmeterExc);
@@ -420,6 +444,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
         try {
             stressTestUtils.setJmeterProperties();
+            if (StressTestUtils.NO_NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
+                stressTestUtils.setJmeterOutputFormat();
+            } else {
+                stressTestUtils.setJmeterOutputFormat();
+            }
 
             // 默认的FileServer.getFileServer().setBaseForScript(jmxFile); 方法无法支持单进程内
             // 的多脚本的同时进行，是Jmeter源生的对单进程内多执行脚本支持就不好。
@@ -452,6 +481,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
                 // 使用自定义的Collector，用于前端绘图的数据收集和日志收集等。
                 jmeterResultCollector = new JmeterResultCollector(stressTestFile);
+
+                // 对调试模式的处理，让结果文件保存为xml格式
+                if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
+                    jmeterResultCollector.getSaveConfig().setAsXml(true);
+                }
+
                 jmeterResultCollector.setFilename(csvFile.getPath());
                 jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
             }
@@ -506,14 +541,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                     JMeterEngine engine = new LocalStandardJMeterEngine(stressTestFile);
                     engine.configure(jmxTree);
                     engine.runTest();
-
 //                    Object engine = engineRun(stressTestFile, jmxTree);
                     engines.add((JMeterEngine) engine);
                 }
             } else {//本机运行
                 // JMeterEngine 本身就是线程，启动即为异步执行，resultCollector会监听保存csv文件。
 //                Object engine = engineRun(stressTestFile, jmxTree);
-
                 JMeterEngine engine = new LocalStandardJMeterEngine(stressTestFile);
                 engine.configure(jmxTree);
                 engine.runTest();
@@ -715,6 +748,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 向子节点同步参数化文件
      */
     @Override
+    @Transactional
     public void synchronizeFile(Long[] fileIds) {
         //当前是向所有的分布式节点推送这个，阻塞操作+轮询，并非多线程，因为本地同步网卡会是瓶颈。
         Map query = new HashMap<>();
@@ -761,7 +795,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     /**
      * 将文件上传到节点机目录上。
      */
-    @Transactional
     public void putFileToSlave(StressTestSlaveEntity slave, SSH2Utils ssh2Util, StressTestFileEntity stressTestFile) {
         String casePath = stressTestUtils.getCasePath();
         String fileNameSave = stressTestFile.getFileName();

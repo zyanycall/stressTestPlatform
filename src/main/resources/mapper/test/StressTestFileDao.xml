@@ -95,7 +95,7 @@
             <if test="status != null">`status` = #{status},</if>
             <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
             <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
-            <if test="weblogStatus != null">`weblog_status` = #{weblogStatus},</if>
+            <if test="debugStatus != null">`debug_status` = #{debugStatus},</if>
             <if test="updateBy != null">`update_by` = #{updateBy}</if>
             <if test="addTime != null">`add_time` = #{addTime}</if>
         </set>

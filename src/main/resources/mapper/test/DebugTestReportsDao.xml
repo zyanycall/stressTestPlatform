@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.test.dao.DebugTestReportsDao">
+
+    <select id="queryObject" resultType="io.renren.modules.test.entity.DebugTestReportsEntity" >
+        select * from test_debug_case_reports where report_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="io.renren.modules.test.entity.DebugTestReportsEntity" >
+        select * from test_debug_case_reports
+        <where>
+            <if test="caseId != null and caseId.trim() != ''">
+                case_id = #{caseId}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                order by ${sidx} ${order}
+            </when>
+            <otherwise>
+                order by add_time desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null ">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(1) from test_debug_case_reports
+        <where>
+            <if test="caseId != null and caseId.trim() != ''">
+                case_id = #{caseId}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteBatchByCaseIds">
+        delete from test_debug_case_reports where case_id in
+        <foreach item="caseIds" collection="array" open="(" separator="," close=")">
+            #{caseIds}
+        </foreach>
+    </delete>
+
+    <insert id="save" parameterType="io.renren.modules.test.entity.DebugTestReportsEntity" useGeneratedKeys="true" keyProperty="reportId">
+        insert into test_debug_case_reports
+        (
+        `case_id`,
+        `file_id`,
+        `origin_name`,
+        `report_name`,
+        `file_size`,
+        `remark`,
+        `add_by`
+        )
+        values
+        (
+        #{caseId},
+        #{fileId},
+        #{originName},
+        #{reportName},
+        #{fileSize},
+        #{remark},
+        #{addBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="io.renren.modules.test.entity.DebugTestReportsEntity">
+        update test_debug_case_reports
+        <set>
+            <if test="caseId != null">`case_id` = #{caseId}, </if>
+            <if test="fileId != null">`file_id` = #{fileId}, </if>
+            <if test="originName != null">`origin_name` = #{originName}, </if>
+            <if test="reportName != null">`report_name` = #{reportName}, </if>
+            <if test="fileSize != null">`file_size` = #{fileSize}, </if>
+            <if test="status != null">`status` = #{status}, </if>
+            <if test="remark != null">`remark` = #{remark}, </if>
+            <if test="updateBy != null">`update_by` = #{updateBy} </if>
+        </set>
+        where report_id = #{reportId}
+    </update>
+
+    <delete id="deleteBatch">
+        delete from test_debug_case_reports where report_id in
+        <foreach item="reportIds" collection="array" open="(" separator="," close=")">
+            #{reportIds}
+        </foreach>
+    </delete>
+
+    <delete id="delete">
+        delete from test_debug_case_reports where report_id = #{reportId}
+    </delete>
+
+</mapper>
