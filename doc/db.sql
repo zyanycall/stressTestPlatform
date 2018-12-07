@@ -471,4 +471,4 @@ INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('5',
 
 
 -- 还没有完全实现的测试场景组装功能
-INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('37', '31', '测试场景组装', 'modules/test/stressTestAssembly.html', 'test:stress', '1', 'fa fa-clipboard', '6');
+-- INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('37', '31', '测试场景组装', 'modules/test/stressTestAssembly.html', 'test:stress', '1', 'fa fa-clipboard', '6');
