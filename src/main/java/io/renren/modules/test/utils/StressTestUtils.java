@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -36,19 +35,8 @@ public class StressTestUtils {
 
     Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static SysConfigService sysConfigService;
-    public static File xslFile;
-
-
-    static {
-        StressTestUtils.sysConfigService = (SysConfigService) SpringContextUtils.getBean("sysConfigService");
-        try {
-            xslFile = ResourceUtils.getFile("classpath:config/jmeter.results.zyanycall.xsl");
-        } catch (FileNotFoundException e) {
-            throw new RRException("xsl文件加载失败！", e);
-        }
-    }
-
+    private static SysConfigService sysConfigService = (SysConfigService) SpringContextUtils.getBean("sysConfigService");
+    public static String xslFilePath = "classpath:config/jmeter.results.zyanycall.xsl";
 
     //0：初始状态  1：正在运行  2：成功执行  3：运行出现异常
     public static final Integer INITIAL = 0;

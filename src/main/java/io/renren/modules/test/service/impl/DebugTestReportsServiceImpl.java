@@ -13,6 +13,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ResourceUtils;
 
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
@@ -23,6 +24,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -168,7 +170,12 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
 
             Source srcJtl = new StreamSource(new File(jtlPath));
             Result destResult = new StreamResult(reportDir);
-            Source xsltSource = new StreamSource(StressTestUtils.xslFile);
+            Source xsltSource;
+            try {
+                xsltSource = new StreamSource(ResourceUtils.getURL(StressTestUtils.xslFilePath).toURI().toASCIIString());
+            } catch (FileNotFoundException | URISyntaxException e) {
+                throw new RRException("xsl文件加载失败！", e);
+            }
 
             try {
                 TransformerFactory tFactory = TransformerFactory.newInstance();
