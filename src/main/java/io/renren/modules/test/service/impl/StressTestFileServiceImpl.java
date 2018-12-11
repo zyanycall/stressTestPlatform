@@ -35,6 +35,7 @@ import org.apache.jorphan.collections.HashTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -295,10 +296,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     @Override
     @Transactional
-    public void run(Long[] fileIds) {
-        Arrays.asList(fileIds).stream().forEach(fileId -> {
-            runSingle(fileId);
-        });
+    public String run(Long[] fileIds) {
+        StringBuilder sb = new StringBuilder();
+        for (Long fileId : fileIds) {
+            sb.append(runSingle(fileId));
+        }
+        return sb.toString();
     }
 
 
@@ -306,9 +309,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 脚本的启动都是新的线程，其中的SQL是不和启动是同一个事务的。
      * 同理，也不会回滚这一事务。
      */
-    public void runSingle(Long fileId) {
+    public String runSingle(Long fileId) {
         StressTestFileEntity stressTestFile = queryObject(fileId);
-        if (stressTestFile.getStatus() == StressTestUtils.RUNNING) {
+        if (StressTestUtils.RUNNING.equals(stressTestFile.getStatus())) {
             throw new RRException("脚本正在运行");
         }
 
@@ -352,6 +355,10 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         map.put("jmxFile", jmxFile);
         map.put("csvFile", csvFile);
 
+        String slaveStr = getSlaveIPPort();
+        // slaveStr用来做脚本是否是分布式执行的判断，不入库。
+        stressTestFile.setSlaveStr(slaveStr);
+
         if (stressTestUtils.isUseJmeterScript()) {
             excuteJmeterRunByScript(stressTestFile, stressTestReports, map);
         } else {
@@ -366,11 +373,16 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         if (stressTestReports != null) {
             // 将调试测试报告放到调试的数据表中记录
             if (stressTestReports instanceof DebugTestReportsEntity) {
-                debugTestReportsDao.save((DebugTestReportsEntity)stressTestReports);
+                debugTestReportsDao.save((DebugTestReportsEntity) stressTestReports);
             } else {
                 stressTestReportsDao.save(stressTestReports);
             }
         }
+
+        if (StringUtils.isNotEmpty(slaveStr)) {
+            return "分布式压测开始！节点机为：" + slaveStr;
+        }
+        return "master主机压测开始！";
     }
 
     /**
@@ -394,7 +406,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         cmdLine.addArgument("-t");
         cmdLine.addArgument("${jmxFile}");
 
-        String slaveStr = getSlaveIPPort();
+        String slaveStr = stressTestFile.getSlaveStr();
         if (StringUtils.isNotEmpty(slaveStr)) {
             cmdLine.addArgument("-R");
             cmdLine.addArgument(slaveStr);
@@ -443,10 +455,13 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         File csvFile = (File) map.get("csvFile");
 
         try {
+            String slaveStr = stressTestFile.getSlaveStr();
+
             stressTestUtils.setJmeterProperties();
-            if (StressTestUtils.NO_NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
-                stressTestUtils.setJmeterOutputFormat();
-            } else {
+            if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
+                if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
+                    throw new RRException("不支持分布式slave节点的调试！请关闭此脚本的分布式再试一试！");
+                }
                 stressTestUtils.setJmeterOutputFormat();
             }
 
@@ -468,10 +483,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
             HashTree jmxTree = SaveService.loadTree(jmxFile);
             JMeter.convertSubTree(jmxTree);
-
-            String slaveStr = getSlaveIPPort();
-            // slaveStr用来做脚本是否是分布式执行的判断，不入库。
-            stressTestFile.setSlaveStr(slaveStr);
 
             JmeterResultCollector jmeterResultCollector = null;
             // 如果不要监控也不要测试报告，则不加自定义的Collector到文件里，让性能最大化。

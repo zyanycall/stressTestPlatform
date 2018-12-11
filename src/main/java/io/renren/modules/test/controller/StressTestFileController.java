@@ -90,9 +90,7 @@ public class StressTestFileController {
     @RequestMapping("/runOnce")
     @RequiresPermissions("test:stress:runOnce")
     public R run(@RequestBody Long[] fileIds) {
-
-        stressTestFileService.run(fileIds);
-        return R.ok();
+        return R.ok(stressTestFileService.run(fileIds));
     }
 
     /**

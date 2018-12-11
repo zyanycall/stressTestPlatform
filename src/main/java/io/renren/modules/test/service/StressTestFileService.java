@@ -68,7 +68,7 @@ public interface StressTestFileService {
     /**
      * 立即执行
      */
-    void run(Long[] fileIds);
+    String run(Long[] fileIds);
 
     /**
      * 立即停止

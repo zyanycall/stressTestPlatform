@@ -283,7 +283,7 @@ function runOnce(fileIds) {
         success: function (r) {
             if (r.code == 0) {
                 vm.reload();
-                alert('操作成功', function () {
+                alert(r.msg, function () {
                 });
             } else {
                 alert(r.msg);
