@@ -53,6 +53,11 @@ public interface DebugTestReportsService {
     void createReport(Long[] reportIds);
 
     /**
+     * 生成测试报告
+     */
+    void createReport(Long reportId);
+
+    /**
      * 批量删除测试报告的来源JTL文件
      */
     void deleteReportJTL(DebugTestReportsEntity debugCaseReports);

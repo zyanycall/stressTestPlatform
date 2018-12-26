@@ -776,21 +776,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
             SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
                     slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
-            try {
-                ssh2Util.initialSession();
-
-                for (Long fileId : fileIds) {
-                    StressTestFileEntity stressTestFile = queryObject(fileId);
-                    putFileToSlave(slave, ssh2Util, stressTestFile);
-                }
-            } catch (JSchException e) {
-                throw new RRException(slave.getSlaveName() + "节点机远程链接初始化时失败！请核对节点机信息路径", e);
-            } finally {
-                try {
-                    ssh2Util.close();
-                } catch (Exception e) {
-                    throw new RRException(slave.getSlaveName() + "节点机远程链接关闭时失败！", e);
-                }
+            for (Long fileId : fileIds) {
+                StressTestFileEntity stressTestFile = queryObject(fileId);
+                putFileToSlave(slave, ssh2Util, stressTestFile);
             }
         }
 
@@ -819,22 +807,13 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
         // 避免跨系统的问题，远端由于都时linux服务器，则文件分隔符统一为/，不然同步文件会报错。
         String caseFileHome = slave.getHomeDir() + "/bin/stressTestCases";
-        try {
-            String MD5 = ssh2Util.runCommand("md5sum " + getSlaveFileName(stressTestFile, slave) + "|cut -d ' ' -f1");
-            if (fileSaveMD5.equals(MD5)) {//说明目标服务器已经存在相同文件不再重复上传
-                return;
-            }
-
-            //上传文件
-            ssh2Util.scpPutFile(filePath, caseFileHome);
-        } catch (JSchException e) {
-            throw new RRException(stressTestFile.getOriginName() + "校验节点机文件MD5时失败！", e);
-        } catch (IOException e) {
-            throw new RRException(stressTestFile.getOriginName() + "IO传输失败！", e);
+        String MD5 = ssh2Util.runCommand("md5sum " + getSlaveFileName(stressTestFile, slave) + "|cut -d ' ' -f1");
+        if (fileSaveMD5.equals(MD5)) {//说明目标服务器已经存在相同文件不再重复上传
+            return;
         }
-//        catch (SftpException e) {
-//            throw new RRException(stressTestFile.getOriginName() + "上传到节点机文件时失败！", e);
-//        }
+
+        //上传文件
+        ssh2Util.scpPutFile(filePath, caseFileHome);
 
         stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
         //由于事务性，这个地方不好批量更新。
@@ -903,21 +882,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
             SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
                     slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
-
-            try {
-                ssh2Util.initialSession();
-                ssh2Util.runCommand("rm -f " + getSlaveFileName(stressTestFile, slave));
-            } catch (JSchException e) {
-                throw new RRException(slave.getSlaveName() + "节点机远程链接初始化时失败！请核对节点机信息路径", e);
-            } catch (IOException e) {
-                throw new RRException(slave.getSlaveName() + "删除远程文件命令执行失败!", e);
-            } finally {
-                try {
-                    ssh2Util.close();
-                } catch (Exception e) {
-                    throw new RRException(slave.getSlaveName() + "节点机远程链接关闭时失败！", e);
-                }
-            }
+            ssh2Util.runCommand("rm -f " + getSlaveFileName(stressTestFile, slave));
         }
 
         stressTestFileDao.deleteBatch(fileDeleteIds.toArray());

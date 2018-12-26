@@ -140,57 +140,66 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
 
     /**
      * 采用异步线程池来实现。
-     * 当前是
      */
     @Override
     @Transactional
     @Async("asyncServiceExecutor")
     public void createReport(Long[] reportIds) {
         for (Long reportId : reportIds) {
-            DebugTestReportsEntity debugTestReport = queryObject(reportId);
-
-            //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
-            if (debugTestReport.getFileSize() == 0L || debugTestReport.getFileSize() == null) {
-                throw new RRException("找不到调试测试结果文件，无法生成测试报告！");
-            }
-
-            String casePath = stressTestUtils.getCasePath();
-            String reportName = debugTestReport.getReportName();
-
-            //jtl结果文件路径
-            String jtlPath = casePath + File.separator + reportName;
-            //测试报告文件
-            String reportPath = jtlPath.substring(0, jtlPath.lastIndexOf(".")) + ".html";
-
-            //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
-            File reportDir = new File(reportPath);
-            if (reportDir.exists()) {
-                throw new RRException("已经存在测试报告不要重复创建！");
-            }
-
-            Source srcJtl = new StreamSource(new File(jtlPath));
-            Result destResult = new StreamResult(reportDir);
-            Source xsltSource;
-            try {
-                xsltSource = new StreamSource(ResourceUtils.getURL(StressTestUtils.xslFilePath).toURI().toASCIIString());
-            } catch (FileNotFoundException | URISyntaxException e) {
-                throw new RRException("xsl文件加载失败！", e);
-            }
-
-            try {
-                TransformerFactory tFactory = TransformerFactory.newInstance();
-                Transformer transformer = tFactory.newTransformer(xsltSource);
-                transformer.transform(srcJtl, destResult);
-            } catch (Exception e) {
-                //保存状态，执行出现异常
-                debugTestReport.setStatus(StressTestUtils.RUN_ERROR);
-                update(debugTestReport);
-                throw new RRException("执行生成测试报告脚本异常！", e);
-            }
-
-            //设置开始执行命令生成报告
-            debugTestReport.setStatus(StressTestUtils.RUN_SUCCESS);
-            update(debugTestReport);
+            createReport(reportId);
         }
+    }
+
+    /**
+     * 采用异步线程池来实现。
+     */
+    @Override
+    @Transactional
+    @Async("asyncServiceExecutor")
+    public void createReport(Long reportId) {
+        DebugTestReportsEntity debugTestReport = queryObject(reportId);
+
+        //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
+        if (debugTestReport.getFileSize() == 0L || debugTestReport.getFileSize() == null) {
+            throw new RRException("找不到调试测试结果文件，无法生成测试报告！");
+        }
+
+        String casePath = stressTestUtils.getCasePath();
+        String reportName = debugTestReport.getReportName();
+
+        //jtl结果文件路径
+        String jtlPath = casePath + File.separator + reportName;
+        //测试报告文件
+        String reportPath = jtlPath.substring(0, jtlPath.lastIndexOf(".")) + ".html";
+
+        //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
+        File reportDir = new File(reportPath);
+        if (reportDir.exists()) {
+            throw new RRException("已经存在测试报告不要重复创建！");
+        }
+
+        Source srcJtl = new StreamSource(new File(jtlPath));
+        Result destResult = new StreamResult(reportDir);
+        Source xsltSource;
+        try {
+            xsltSource = new StreamSource(ResourceUtils.getURL(StressTestUtils.xslFilePath).toURI().toASCIIString());
+        } catch (FileNotFoundException | URISyntaxException e) {
+            throw new RRException("xsl文件加载失败！", e);
+        }
+
+        try {
+            TransformerFactory tFactory = TransformerFactory.newInstance();
+            Transformer transformer = tFactory.newTransformer(xsltSource);
+            transformer.transform(srcJtl, destResult);
+        } catch (Exception e) {
+            //保存状态，执行出现异常
+            debugTestReport.setStatus(StressTestUtils.RUN_ERROR);
+            update(debugTestReport);
+            throw new RRException("执行生成测试报告脚本异常！", e);
+        }
+
+        //设置开始执行命令生成报告
+        debugTestReport.setStatus(StressTestUtils.RUN_SUCCESS);
+        update(debugTestReport);
     }
 }

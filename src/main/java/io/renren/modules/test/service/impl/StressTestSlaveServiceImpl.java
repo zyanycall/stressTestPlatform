@@ -1,7 +1,5 @@
 package io.renren.modules.test.service.impl;
 
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 import io.renren.common.exception.RRException;
 import io.renren.modules.test.dao.StressTestSlaveDao;
 import io.renren.modules.test.entity.StressTestSlaveEntity;
@@ -13,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -89,55 +85,38 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
     private void runOrDownSlave(StressTestSlaveEntity slave, Integer status) {
         SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
                 slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
-        try {
-            Session session = null;
-            try {
-                session = ssh2Util.initialSession();
-            } catch (JSchException e){
-                throw new RRException(slave.getSlaveName() + "初始化远程节点机链接失败！请查看用户名密码！", e);
+        //如果是启用节点
+        if (StressTestUtils.ENABLE.equals(status)) {
+
+            if (StressTestUtils.ENABLE.equals(slave.getStatus())) {
+                //本身已经是启用状态
+                throw new RRException(slave.getSlaveName() + " 已经启动不要重复启动！");
             }
 
-            //如果是启用节点
-            if (StressTestUtils.ENABLE.equals(status)) {
-
-                if (StressTestUtils.ENABLE.equals(slave.getStatus())) {
-                    //本身已经是启用状态
-                    throw new RRException(slave.getSlaveName() + " 已经启动不要重复启动！");
-                }
-
-                // 避免跨系统的问题，远端由于都时linux服务器，则文件分隔符统一为/，不然同步文件会报错。
-                String jmeterServer = slave.getHomeDir() + "/bin/jmeter-server";
-                String md5Str = ssh2Util.runCommand("md5sum " + jmeterServer + " | cut -d ' ' -f1");
-                if (!checkMD5(md5Str)) {
-                    throw new RRException(slave.getSlaveName() + " 节点路径错误！找不到jmeter-server启动文件！");
-                }
-                //启动节点
-                String enableResult = ssh2Util.runCommand(
-                        "cd " + slave.getHomeDir() + "/bin/stressTestCases/" + "\n" +
-                        "sh " + "../jmeter-server");
-
-                logger.error(enableResult);
-
-                if (!enableResult.contains("remote")) {
-                    throw new RRException(slave.getSlaveName() + " jmeter-server启动节点失败！请先尝试在节点机命令执行");
-                }
+            // 避免跨系统的问题，远端由于都时linux服务器，则文件分隔符统一为/，不然同步文件会报错。
+            String jmeterServer = slave.getHomeDir() + "/bin/jmeter-server";
+            String md5Str = ssh2Util.runCommand("md5sum " + jmeterServer + " | cut -d ' ' -f1");
+            if (!checkMD5(md5Str)) {
+                throw new RRException(slave.getSlaveName() + " 节点路径错误！找不到jmeter-server启动文件！");
             }
-            // 禁用节点
-            if (StressTestUtils.DISABLE.equals(status)) {
-                //禁用远程节点，当前是直接kill掉
-                //kill掉就不用判断结果了，不抛异常即OK
-                ssh2Util.runCommand("ps -efww|grep -w 'jmeter-server'|grep -v grep|cut -c 9-15|xargs kill -9");
+            //首先创建目录，会遇到重复创建
+            ssh2Util.runCommand("mkdir " + slave.getHomeDir() + "/bin/stressTestCases");
+            //启动节点
+            String enableResult = ssh2Util.runCommand(
+                    "cd " + slave.getHomeDir() + "/bin/stressTestCases/" + "\n" +
+                    "sh " + "../jmeter-server -Djava.rmi.server.hostname=" + slave.getIp());
+
+            logger.error(enableResult);
+
+            if (!enableResult.contains("remote")) {
+                throw new RRException(slave.getSlaveName() + " jmeter-server启动节点失败！请先尝试在节点机命令执行");
             }
-        } catch (JSchException e) {
-            throw new RRException(slave.getSlaveName() + "节点机远程执行命令失败！", e);
-        } catch (IOException e) {
-            throw new RRException(slave.getSlaveName() + "节点机传输数据失败！", e);
-        } finally {
-            try {
-                ssh2Util.close();
-            } catch (Exception e) {
-                throw new RRException(slave.getSlaveName() + "节点机远程链接关闭时失败！", e);
-            }
+        }
+        // 禁用节点
+        if (StressTestUtils.DISABLE.equals(status)) {
+            //禁用远程节点，当前是直接kill掉
+            //kill掉就不用判断结果了，不抛异常即OK
+            ssh2Util.runCommand("ps -efww|grep -w 'jmeter-server'|grep -v grep|cut -c 9-15|xargs kill -9");
         }
     }
 
