@@ -1,6 +1,5 @@
 package io.renren.modules.test.service.impl;
 
-import com.jcraft.jsch.JSchException;
 import io.renren.common.exception.RRException;
 import io.renren.modules.test.dao.*;
 import io.renren.modules.test.entity.*;
@@ -35,7 +34,6 @@ import org.apache.jorphan.collections.HashTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;

@@ -62,7 +62,7 @@ renren-fast
 - 前端监控：ECharts 3.8
 - 压测内核：Apache JMeter 4.0
 - 脚本调用内核：Apache Commons Exec 1.3
-- 远程执行命令：Jcraft 0.1.54
+- 远程执行命令：Ganymed build210
 <br> 
 
 
@@ -75,5 +75,10 @@ renren-fast
 - 项目访问路径：http://localhost:8080/renren-fast
 - 账号密码：admin/admin
 - Swagger路径：http://localhost:8080/renren-fast/swagger/index.html
+
+<br> 
+
+如果有需要，请帮忙支持一下：https://www.jianshu.com/p/cd6388627f64
+互帮互助，感谢。
 
 <br> 
