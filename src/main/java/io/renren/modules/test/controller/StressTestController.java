@@ -1,7 +1,6 @@
 package io.renren.modules.test.controller;
 
 import io.renren.common.annotation.SysLog;
-import io.renren.common.exception.RRException;
 import io.renren.common.utils.DateUtils;
 import io.renren.common.utils.PageUtils;
 import io.renren.common.utils.Query;
@@ -17,8 +16,8 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.*;
 
@@ -67,13 +66,19 @@ public class StressTestController {
 
     /**
      * 上传文件
+     * fileInput组件无论是同步上传还是异步上传，
+     * 都是一个线程处理一个文件，所以接收的文件类型为 MultipartFile, 用MultipartFile[] 也可以
+     * 但接收到的也仅是一个文件，
+     * List<MultipartFile>则不可以。
      */
     @RequestMapping("/upload")
     @RequiresPermissions("test:stress:upload")
-    public R upload(@RequestParam("file") MultipartFile multipartFile, HttpServletRequest request) throws Exception {
+    public R upload(@RequestParam("files") MultipartFile multipartFile, MultipartHttpServletRequest request) {
 
         if (multipartFile.isEmpty()) {
-            throw new RRException("上传文件不能为空");
+            // 为了前端fileinput组件提示使用。
+            return R.ok().put("error","上传文件不能为空");
+//            throw new RRException("上传文件不能为空");
         }
 
         String originName = multipartFile.getOriginalFilename();
@@ -81,7 +86,8 @@ public class StressTestController {
         //用例的参数化文件不允许包含汉字,避免Linux系统读取文件报错.
         String suffix = originName.substring(originName.lastIndexOf("."));
         if (!".jmx".equalsIgnoreCase(suffix) && originName.length() != originName.getBytes().length) {
-            throw new RRException("非脚本文件名不能包含汉字");
+            return R.ok().put("error","非脚本文件名不能包含汉字");
+//            throw new RRException("非脚本文件名不能包含汉字");
         }
 
         String caseId = request.getParameter("caseIds");
@@ -98,12 +104,14 @@ public class StressTestController {
         if (!fileList.isEmpty()) {
             // 不允许上传同名文件
             if (!stressTestUtils.isReplaceFile()) {
-                throw new RRException("系统中已经存在此文件记录！不允许上传同名文件！");
+                return R.ok().put("error","系统中已经存在此文件记录！不允许上传同名文件！");
+//                throw new RRException("系统中已经存在此文件记录！不允许上传同名文件！");
             } else {// 允许上传同名文件方式是覆盖。
                 for (StressTestFileEntity stressCaseFile : fileList) {
                     // 如果是不同用例，但是要上传同名文件，是不允许的，这是数据库的唯一索引要求的。
                     if (Long.valueOf(caseId) != stressCaseFile.getCaseId()) {
-                        throw new RRException("其他用例已经包含此同名文件！");
+                        return R.ok().put("error","其他用例已经包含此同名文件！");
+//                        throw new RRException("其他用例已经包含此同名文件！");
                     }
                     // 目的是从名称上严格区分脚本。而同名脚本不同项目模块甚至标签
                     String filePath = casePath + File.separator + stressCaseFile.getFileName();

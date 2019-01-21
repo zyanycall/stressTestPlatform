@@ -63,6 +63,7 @@ renren-fast
 - 压测内核：Apache JMeter 4.0
 - 脚本调用内核：Apache Commons Exec 1.3
 - 远程执行命令：Ganymed build210
+- 批量上传组件：bootstrap-fileinput v4.5.2
 <br> 
 
 

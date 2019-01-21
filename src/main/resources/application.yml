@@ -19,6 +19,7 @@ spring:
     http:
         multipart:
             max-file-size: 2000MB
+            # 一次请求最多上传
             max-request-size: 2000MB
             enabled: true
     resources: # 指定静态资源的路径

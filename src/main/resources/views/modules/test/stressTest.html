@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../../plugins/jqgrid/ui.jqgrid-bootstrap.css">
     <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
     <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/fileinput/css/fileinput.min.css"/>
     <script src="../../libs/jquery.min.js"></script>
     <script src="../../plugins/layer/layer.js"></script>
     <script src="../../libs/bootstrap.min.js"></script>
@@ -19,6 +20,8 @@
     <script src="../../plugins/ztree/jquery.ztree.all.min.js"></script>
     <script src="../../libs/ajaxupload.js"></script>
     <script src="../../js/common.js"></script>
+    <script type="text/javascript" src="../../plugins/fileinput/js/fileinput.min.js"></script>
+    <script type="text/javascript" src="../../plugins/fileinput/js/locales/zh.js"></script>
 </head>
 <body>
 <div id="rrapp" v-cloak>
@@ -29,7 +32,7 @@
             </div>
             <a class="btn btn-default" @click="query">查询</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="add"><i class="fa fa-plus"></i>&nbsp;新增</a>
-            <a v-if="hasPermission('test:stress')" class="btn btn-primary" id="upload"><i class="fa fa-plus"></i>&nbsp;上传文件</a>
+            <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="upload"><i class="fa fa-plus"></i>&nbsp;上传文件</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="update"><i class="fa fa-pencil-square-o"></i>&nbsp;修改</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="del"><i class="fa fa-trash-o"></i>&nbsp;删除</a>
             <!--<a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="runOnce"><i class="fa fa-arrow-circle-right"></i>&nbsp;启动</a>-->
@@ -43,7 +46,7 @@
         <div id="jqGridPager"></div>
     </div>
 
-    <div v-show="!showList" class="panel panel-default">
+    <div v-show="showEdit" class="panel panel-default">
         <div class="panel-heading">{{title}}</div>
         <form class="form-horizontal">
             <div class="form-group">
@@ -81,6 +84,17 @@
                 <div class="col-sm-2 control-label"></div>
                 <input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定"/>
                 &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+            </div>
+        </form>
+    </div>
+    <div v-show="showUpload" class="panel panel-default">
+        <div class="panel-heading">{{title}}</div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <input id="files" name="files" class="file-loading" type="file" multiple data-show-caption="true"/>
+            </div>
+            <div class="form-group">
+                <input type="button" class="btn btn-warning" @click="reload" value="结束返回"/>
             </div>
         </form>
     </div>
