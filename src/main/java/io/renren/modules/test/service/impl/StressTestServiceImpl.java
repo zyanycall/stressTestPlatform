@@ -1,6 +1,7 @@
 package io.renren.modules.test.service.impl;
 
 import io.renren.common.exception.RRException;
+import io.renren.modules.test.dao.DebugTestReportsDao;
 import io.renren.modules.test.dao.StressTestDao;
 import io.renren.modules.test.dao.StressTestFileDao;
 import io.renren.modules.test.dao.StressTestReportsDao;
@@ -30,6 +31,9 @@ public class StressTestServiceImpl implements StressTestService {
 
     @Autowired
     private StressTestReportsDao stressTestReportsDao;
+
+    @Autowired
+    private DebugTestReportsDao debugTestReportsDao;
 
     @Autowired
     private StressTestUtils stressTestUtils;
@@ -79,6 +83,7 @@ public class StressTestServiceImpl implements StressTestService {
         // 脚本文件的删除调用file的自身方法，在controller中调用。因为file包含了分布式节点的数据。
         // 测试报告的内容都在master服务器端，所以直接删除case文件夹即可。
         stressTestReportsDao.deleteBatchByCaseIds(caseIds);
+        debugTestReportsDao.deleteBatchByCaseIds(caseIds);
         stressTestDao.deleteBatch(caseIds);
     }
 

@@ -199,10 +199,14 @@ public class StressTestController {
             for (StressTestFileEntity stressTestFile : fileList) {
                 fileIdList.add(stressTestFile.getFileId());
             }
-            stressTestFileService.deleteBatch(fileIdList.toArray());
+            if (!fileIdList.isEmpty()) {
+                stressTestFileService.deleteBatch(fileIdList.toArray());
+            }
         }
         // 后删除用例
-        stressTestService.deleteBatch(caseIds);
+        if (caseIds.length > 0) {
+            stressTestService.deleteBatch(caseIds);
+        }
         return R.ok();
     }
 }

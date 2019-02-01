@@ -102,6 +102,20 @@
         where file_id = #{fileId}
     </update>
 
+    <update id="updateStatusBatch">
+        update test_stress_case_file
+        <set>
+            <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
+            <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
+            <if test="debugStatus != null">`debug_status` = #{debugStatus},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy}</if>
+        </set>
+        where file_id in
+        <foreach item="fileIdList" collection="fileIdList" open="(" separator="," close=")">
+            #{fileIdList}
+        </foreach>
+    </update>
+
     <!--&lt;!&ndash; 批量更新xx &ndash;&gt;-->
     <!--<update id="updateBatch">-->
     <!--update test_stress_case set status = #{status} where case_id in-->

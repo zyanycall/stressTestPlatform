@@ -247,6 +247,19 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     }
 
     /**
+     * 批量更新性能测试用例状态
+     */
+    @Override
+    public void updateStatusBatch(StressTestFileEntity stressTestFile) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("fileIdList", stressTestFile.getFileIdList());
+        map.put("reportStatus", stressTestFile.getReportStatus());
+        map.put("webchartStatus", stressTestFile.getWebchartStatus());
+        map.put("debugStatus", stressTestFile.getDebugStatus());
+        stressTestFileDao.updateStatusBatch(map);
+    }
+
+    /**
      * 批量删除
      * 删除所有缓存 + 方法只要调用即删除所有缓存。
      */
@@ -657,7 +670,10 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
         // 全面停止之前将测试报告文件从缓存刷到磁盘上去。
         // 避免多脚本执行时停止其中一个脚本而测试报告文件不完整。
-        jmeterResultCollector.flushFile();
+        if (jmeterResultCollector != null) {
+            // 如果关闭报告，则为null
+            jmeterResultCollector.flushFile();
+        }
         if (stressTestReports != null && stressTestReports.getFile().exists()) {
             stressTestReports.setFileSize(FileUtils.sizeOf(stressTestReports.getFile()));
         }

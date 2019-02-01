@@ -61,6 +61,11 @@ public interface StressTestFileService {
     void update(MultipartFile file, String filePath, StressTestEntity stressCase, StressTestFileEntity stressCaseFile);
 
     /**
+     * 批量更新性能测试用例状态
+     */
+    void updateStatusBatch(StressTestFileEntity stressTestFile);
+
+    /**
      * 批量删除
      */
     void deleteBatch(Object[] fileIds);
@@ -104,4 +109,5 @@ public interface StressTestFileService {
      * 相同进程内执行的脚本，可以使用这个方法停止
      */
     void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity);
+
 }

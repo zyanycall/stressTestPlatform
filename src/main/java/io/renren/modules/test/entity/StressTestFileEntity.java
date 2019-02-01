@@ -1,7 +1,5 @@
 package io.renren.modules.test.entity;
 
-import org.hibernate.validator.constraints.NotBlank;
-
 import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.Date;
@@ -17,6 +15,11 @@ public class StressTestFileEntity implements Serializable {
      * 主键id
      */
     private Long fileId;
+
+    /**
+     * 批量更新时，用于更新的fileId集合
+     */
+    private Long[] fileIdList;
 
     /**
      * 用例id
@@ -37,7 +40,7 @@ public class StressTestFileEntity implements Serializable {
     /**
      * 用例文件名
      */
-    @NotBlank(message="文件名不能为空")
+//    @NotBlank(message="文件名不能为空")
     private String originName;
 
     /**
@@ -227,6 +230,17 @@ public class StressTestFileEntity implements Serializable {
         this.debugStatus = debugStatus;
     }
 
+    public Long[] getFileIdList() {
+        return fileIdList;
+    }
+
+    public void setFileIdList(Long[] fileIdList) {
+        this.fileIdList = fileIdList;
+    }
+
+    /**
+     * 深度clone
+     */
     public StressTestFileEntity clone() {
         StressTestFileEntity clone = new StressTestFileEntity();
         clone.setCaseId(this.getCaseId());
@@ -239,6 +253,7 @@ public class StressTestFileEntity implements Serializable {
         clone.setWebchartStatus(this.getWebchartStatus());
         clone.setDebugStatus(this.getDebugStatus());
         clone.setSlaveId(this.getSlaveId());
+        clone.setFileIdList(this.getFileIdList());
         return clone;
     }
 }

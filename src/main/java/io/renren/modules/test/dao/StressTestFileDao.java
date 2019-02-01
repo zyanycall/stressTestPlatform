@@ -15,4 +15,7 @@ public interface StressTestFileDao extends BaseDao<StressTestFileEntity> {
     List<StressTestFileEntity> queryListForDelete(Map<String, Object> map);
 
     StressTestFileEntity queryObjectForClone(Map<String, Object> map);
+
+    int updateStatusBatch(Map<String, Object> map);
+
 }
