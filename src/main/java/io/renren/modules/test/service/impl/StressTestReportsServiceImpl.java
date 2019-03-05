@@ -4,16 +4,23 @@ import io.renren.common.exception.RRException;
 import io.renren.modules.test.dao.StressTestReportsDao;
 import io.renren.modules.test.entity.StressTestReportsEntity;
 import io.renren.modules.test.handler.ReportCreateResultHandler;
+import io.renren.modules.test.jmeter.report.LocalReportGenerator;
 import io.renren.modules.test.service.StressTestReportsService;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
+import org.apache.jmeter.JMeter;
+import org.apache.jmeter.report.config.ConfigurationException;
+import org.apache.jmeter.report.dashboard.GenerationException;
+import org.apache.jmeter.report.dashboard.ReportGenerator;
+import org.apache.jmeter.util.JMeterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,18 +107,6 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         });
     }
 
-    /**
-     * 实际上Jmeter自身的生成测试报告无法批量进行
-     * 未来如果自己实现生成测试报告，可以尝试改变。
-     */
-    @Override
-    @Transactional
-    public void createReport(Long[] reportIds) {
-        for (Long reportId : reportIds) {
-            excuteJmeterCreateReport(reportId);
-        }
-    }
-
     @Override
     public void deleteReportCSV(StressTestReportsEntity stressCaseReports) {
         String casePath = stressTestUtils.getCasePath();
@@ -189,40 +184,49 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      * 递归打包文件夹/文件
      */
     public void zip(ZipOutputStream zOut, File file, String name) throws IOException {
-            if (file.isDirectory()) {
-                File[] listFiles = file.listFiles();
-                name += "/";
-                zOut.putNextEntry(new ZipEntry(name));
-                for (File listFile : listFiles) {
-                    zip(zOut, listFile, name + listFile.getName());
-                }
-            } else {
-                FileInputStream in = new FileInputStream(file);
-                try{
-                    zOut.putNextEntry(new ZipEntry(name));
-                    byte[] buffer = new byte[8192];
-                    int len;
-                    while ((len = in.read(buffer)) > 0) {
-                        zOut.write(buffer, 0, len);
-                        zOut.flush();
-                    }
-                } finally {
-                    in.close();
-                }
+        if (file.isDirectory()) {
+            File[] listFiles = file.listFiles();
+            name += "/";
+            zOut.putNextEntry(new ZipEntry(name));
+            for (File listFile : listFiles) {
+                zip(zOut, listFile, name + listFile.getName());
             }
+        } else {
+            FileInputStream in = new FileInputStream(file);
+            try {
+                zOut.putNextEntry(new ZipEntry(name));
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = in.read(buffer)) > 0) {
+                    zOut.write(buffer, 0, len);
+                    zOut.flush();
+                }
+            } finally {
+                in.close();
+            }
+        }
     }
 
     /**
-     * 使用Jmeter自带的生成测试报告脚本
+     * 实际上Jmeter自身的生成测试报告无法批量进行，命令行会报错，跟这里是否异步执行没关系。
+     * 默认是自己本进程内实现生成测试报告。
      */
-    public void excuteJmeterCreateReport(Long reportId) {
-        StressTestReportsEntity stressTestReport = queryObject(reportId);
-
-        //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
-        if (stressTestReport.getFileSize() == 0L || stressTestReport.getFileSize() == null) {
-            throw new RRException("找不到测试结果文件，无法生成测试报告！");
+    @Override
+    @Transactional
+    @Async("asyncServiceExecutor")
+    public void createReport(Long[] reportIds) {
+        for (Long reportId : reportIds) {
+            StressTestReportsEntity stressTestReport = queryObject(reportId);
+            createReport(stressTestReport);
         }
+    }
 
+    /**
+     * 生成测试报告
+     */
+    @Override
+    @Async("asyncServiceExecutor")
+    public void createReport(StressTestReportsEntity stressTestReport) {
         String casePath = stressTestUtils.getCasePath();
         String reportName = stressTestReport.getReportName();
 
@@ -231,12 +235,6 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         //测试报告文件目录
         String reportPathDir = csvPath.substring(0, csvPath.lastIndexOf("."));
 
-        //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
-        File reportDir = new File(reportPathDir);
-        if (reportDir.exists()) {
-            throw new RRException("已经存在测试报告不要重复创建！");
-        }
-
         //修复csv文件
         fixReportFile(csvPath);
 
@@ -244,6 +242,36 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         stressTestReport.setStatus(StressTestUtils.RUNNING);
         update(stressTestReport);
 
+        if (stressTestUtils.isMasterGenerateReport()) {
+            generateReportLocal(stressTestReport, csvPath, reportPathDir);
+        } else {
+            generateReportByScript(stressTestReport, csvPath, reportPathDir);
+        }
+    }
+
+    /**
+     * 使用本进程多线程生成测试报告。
+     */
+    public void generateReportLocal(StressTestReportsEntity stressTestReport, String csvPath, String reportPathDir) {
+        stressTestUtils.setJmeterProperties();
+        LocalReportGenerator generator = null;
+        try {
+            generator = new LocalReportGenerator(csvPath, null);
+            generator.generate(reportPathDir);
+            stressTestReport.setStatus(StressTestUtils.RUN_SUCCESS);
+            update(stressTestReport);
+        } catch (GenerationException | ConfigurationException e) {
+            //保存状态，执行出现异常
+            stressTestReport.setStatus(StressTestUtils.RUN_ERROR);
+            update(stressTestReport);
+            throw new RRException("执行生成测试报告脚本异常！", e);
+        }
+    }
+
+    /**
+     * 使用Jmeter_home中的命令生成测试报告。
+     */
+    public void generateReportByScript(StressTestReportsEntity stressTestReport, String csvPath, String reportPathDir) {
         //开始执行命令行
         String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
         String jmeterExc = stressTestUtils.getJmeterExc();
@@ -253,6 +281,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         cmdLine.addArgument("-g");
         Map map = new HashMap();
         map.put("csvFile", new File(csvPath));
+        File reportDir = new File(reportPathDir);
         map.put("reportDir", reportDir);
         cmdLine.addArgument("${csvFile}");
         // -o 指定测试报告生成文件夹必须为空或者不存在，这里必须为不存在。
@@ -291,11 +320,11 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      *
      * @param fileName csv 文件
      */
-    public void fixReportFile(String fileName){
+    public void fixReportFile(String fileName) {
         // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
         // 如果是完整的，则直接跳出不执行删除操作。
         try {
-            RandomAccessFile raf = new RandomAccessFile(fileName,"rw");
+            RandomAccessFile raf = new RandomAccessFile(fileName, "rw");
             if (raf.length() == 0L) {
                 logger.error("测试报告原始csv文件为空，可以删除！");
                 throw new RRException("测试报告原始文件找不到，请删除！");
@@ -339,10 +368,10 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      * 本身文件是从后向前做循环，所以多次调用并不会增加过多的性能时间损耗。
      * 默认是UTF-8的编码
      *
-     * @param raf  原始文件
-     * @param posEnd 要截取数据行的在文件中结束的位置
-     * @param posStart  要截取数据行的开始的位置
-     * @return  返回一行数据
+     * @param raf      原始文件
+     * @param posEnd   要截取数据行的在文件中结束的位置
+     * @param posStart 要截取数据行的开始的位置
+     * @return 返回一行数据
      * @throws IOException
      */
     public String getLineStr(RandomAccessFile raf, long posEnd, long posStart) throws IOException {
@@ -355,7 +384,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      * 获取要截取数据行的开始的位置
      * 是从文本的最后开始向前找，找到换行符\n之后即停止，返回位置。
      * 该位置其他调用方法会遇到，会作为起点。
-     *
+     * <p>
      * 同时由于是从文本的最后向前寻找，所以csv文本是脏数据，最后一行不包含\n，也会找到最后一行。
      */
     public long getPos(RandomAccessFile raf, long posStart) throws IOException {

@@ -1,6 +1,7 @@
 package io.renren.modules.test.controller;
 
 import io.renren.common.annotation.SysLog;
+import io.renren.common.exception.RRException;
 import io.renren.common.utils.PageUtils;
 import io.renren.common.utils.Query;
 import io.renren.common.utils.R;
@@ -29,6 +30,8 @@ import java.util.Map;
 public class StressTestReportsController {
     @Autowired
     private StressTestReportsService stressTestReportsService;
+    @Autowired
+    private StressTestUtils stressTestUtils;
 
     /**
      * 测试报告列表
@@ -97,7 +100,19 @@ public class StressTestReportsController {
     @RequestMapping("/createReport")
     @RequiresPermissions("test:stress:reportCreate")
     public R createReport(@RequestBody Long[] reportIds) {
-        stressTestReportsService.createReport(reportIds);
+        for (Long reportId : reportIds) {
+            StressTestReportsEntity stressTestReport = stressTestReportsService.queryObject(reportId);
+
+            //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
+            if (stressTestReport.getFileSize() == 0L || stressTestReport.getFileSize() == null) {
+                throw new RRException("找不到测试结果文件，无法生成测试报告！");
+            }
+            //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
+            if (StressTestUtils.RUN_SUCCESS.equals(stressTestReport.getStatus())) {
+                throw new RRException("已经存在测试报告不要重复创建！");
+            }
+            stressTestReportsService.createReport(stressTestReport);
+        }
         return R.ok();
     }
 

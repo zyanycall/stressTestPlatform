@@ -117,6 +117,13 @@ public class StressTestUtils {
     public final static String MASTER_JMETER_USE_SCRIPT_KEY = "MASTER_JMETER_USE_SCRIPT_KEY";
 
     /**
+     * 如果配置了本地生成测试报告（不包括调试报告），则使用web程序进程生成测试报告。
+     * 默认是true，即配置为本地web程序进程，好处是可以多线程并发生成测试报告。
+     * 对应的，如果为false则使用Jmeter_home的脚本生成测试报告，无法同时生成多个测试报告。
+     */
+    public final static String MASTER_JMETER_GENERATE_REPORT_KEY = "MASTER_JMETER_GENERATE_REPORT_KEY";
+
+    /**
      * 上传文件时，遇到同名文件是替换还是报错，默认是替换为true
      */
     public final static String MASTER_JMETER_REPLACE_FILE_KEY = "MASTER_JMETER_REPLACE_FILE_KEY";
@@ -135,6 +142,10 @@ public class StressTestUtils {
 
     public boolean isReplaceFile() {
         return Boolean.valueOf(sysConfigService.getValue(MASTER_JMETER_REPLACE_FILE_KEY));
+    }
+
+    public boolean isMasterGenerateReport() {
+        return Boolean.valueOf(sysConfigService.getValue(MASTER_JMETER_GENERATE_REPORT_KEY));
     }
 
     public static String getSuffix4() {
