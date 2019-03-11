@@ -165,6 +165,14 @@ public class StressTestController {
     @RequiresPermissions("test:stress:save")
     public R save(@RequestBody StressTestEntity stressTestCase) {
         ValidatorUtils.validateEntity(stressTestCase);
+        // 生成用例时即生成用例的文件夹名，上传附件时才会将此名称落地成为文件夹。
+        if (StringUtils.isEmpty(stressTestCase.getCaseDir())) {
+            Date caseAddTime = new Date();
+            String caseAddTimeStr = DateUtils.format(caseAddTime, DateUtils.DATE_TIME_PATTERN_4DIR);
+            //random使用时间种子的随机数,避免了轻度并发造成文件夹重名.
+            String caseFilePath = caseAddTimeStr + new Random(System.nanoTime()).nextInt(1000);
+            stressTestCase.setCaseDir(caseFilePath);
+        }
 
         stressTestService.save(stressTestCase);
 
