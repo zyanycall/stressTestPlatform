@@ -28,10 +28,13 @@ public class JmeterResultCollector extends ResultCollector {
     public static final String SLAVE_NEED_REPORT = "slave_need_report";
     public static final String SLAVE_NEED_CHART = "slave_need_chart";
 
-    StressTestFileEntity stressTestFile;
+    private StressTestFileEntity stressTestFile;
 
-    Map<String, SamplingStatCalculator> samplingStatCalculatorMap;
+    private Map<String, SamplingStatCalculator> samplingStatCalculatorMap;
 
+    /**
+     * 为分布式反射使用
+     */
     public JmeterResultCollector() {
     }
 
@@ -46,7 +49,6 @@ public class JmeterResultCollector extends ResultCollector {
         } else {
             StressTestUtils.samplingStatCalculator4File.put(stressTestFile.getFileId(), samplingStatCalculatorMap);
         }
-
     }
 
     /**
@@ -58,7 +60,7 @@ public class JmeterResultCollector extends ResultCollector {
      */
     @Override
     public void sampleOccurred(SampleEvent sampleEvent) {
-        if (stressTestFile != null){ //单节点压测
+        if (stressTestFile != null && StringUtils.isEmpty(stressTestFile.getSlaveStr())){ //单节点压测
             // 使用父类默认的保存csv/xml结果的方法。未来可能会优化，保存到性能更高的地方。
             // csv最终的实现是来一个结果，使用PrintWriter写一行(有锁)，保证时序性。
             // 本质是将信息保存到操作系统的文件内存里，默认是不实时刷新操作系统的文件buffer（Jmeter源码写的）。
@@ -68,18 +70,7 @@ public class JmeterResultCollector extends ResultCollector {
             }
 
             if (StressTestUtils.NEED_WEB_CHART.equals(stressTestFile.getWebchartStatus())) {
-                //获取到请求的label，注意不是jmx脚本文件的label，是其中的请求的label，可能包含汉字。
-                SampleResult sampleResult = sampleEvent.getResult();
-                String label = sampleResult.getSampleLabel();
-
-                // label不会很多。
-                if (samplingStatCalculatorMap.get(label) == null) {
-                    samplingStatCalculatorMap.put(label, new SamplingStatCalculator(label));
-                }
-                SamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
-
-                // 这个计算的过程会消耗CPU，一切为了前端绘图。
-                samplingStatCalculator.addSample(sampleResult);
+                addSample(sampleEvent);
             }
         } else {//分布式压测
             if (StressTestUtils.NEED_REPORT.toString().
@@ -88,20 +79,32 @@ public class JmeterResultCollector extends ResultCollector {
             }
             if (StressTestUtils.NEED_WEB_CHART.toString().
                     equals(StressTestUtils.jMeterStatuses.get(SLAVE_NEED_CHART))) {
-                //获取到请求的label，注意不是jmx脚本文件的label，是其中的请求的label，可能包含汉字。
-                SampleResult sampleResult = sampleEvent.getResult();
-                String label = sampleResult.getSampleLabel();
 
-                // label不会很多。
                 samplingStatCalculatorMap = StressTestUtils.samplingStatCalculator4File.get(0L);
-                if (samplingStatCalculatorMap.get(label) == null) {
-                    samplingStatCalculatorMap.put(label, new SamplingStatCalculator(label));
-                }
-                SamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
-
-                // 这个计算的过程会消耗CPU，一切为了前端绘图。
-                samplingStatCalculator.addSample(sampleResult);
+                // 全部停止脚本后，samplingStatCalculator4File整个会被清空。
+                addSample(sampleEvent);
             }
+        }
+    }
+
+    /**
+     * 添加sampleResult到监控计算中
+     * 请求的标题，如果压测的项目很多，那么label的数量也一样很多。
+     */
+    private void addSample(SampleEvent sampleEvent) {
+        //获取到请求的label，注意不是jmx脚本文件的label，是其中的请求的label，可能包含汉字。
+        SampleResult sampleResult = sampleEvent.getResult();
+        String label = sampleResult.getSampleLabel();
+
+        // 全部停止脚本后，samplingStatCalculator4File整个会被清空。
+        if (samplingStatCalculatorMap != null) {
+            if (samplingStatCalculatorMap.get(label) == null) {
+                samplingStatCalculatorMap.put(label, new SamplingStatCalculator(label));
+            }
+            SamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
+
+            // 这个计算的过程会消耗CPU，一切为了前端绘图。
+            samplingStatCalculator.addSample(sampleResult);
         }
     }
 }

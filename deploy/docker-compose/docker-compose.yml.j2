@@ -1,0 +1,21 @@
+version: '2'
+services:
+  stress-test-platform:
+    image: {{IMAGE_FULL_NAME}}
+    container_name: {{CONTAINER_NAME}}
+    ports:
+      - "8080:8080"
+    environment:
+      - spring.profiles.active=dev
+      - JAVA_OPTS=-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dump -XX:ErrorFile=/dump/crash.log -Xmx256m
+    volumes:
+      - ./application-config.yml:/stresstest/config/application-dev.yml
+      - ./dump:/dump
+      - ./tmp:/tmp
+      - /jmeter_data/testcases:/stresstest/apache-jmeter/bin/stressTestCases
+    network_mode: host
+    restart: {{CONTAINER_RESTART_POLICY}}
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m

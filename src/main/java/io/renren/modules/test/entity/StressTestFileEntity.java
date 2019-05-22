@@ -1,10 +1,9 @@
 package io.renren.modules.test.entity;
 
-import org.hibernate.validator.constraints.NotBlank;
-
 import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 性能测试用例文件
@@ -19,15 +18,30 @@ public class StressTestFileEntity implements Serializable {
     private Long fileId;
 
     /**
-     * 用例名称
+     * 批量更新时，用于更新的fileId集合
+     */
+    private Long[] fileIdList;
+
+    /**
+     * 用例id
      */
     @Min(value= 1)
     private Long caseId;
 
     /**
+     * 用例名称
+     */
+    private String caseName;
+
+    /**
+     * 用例名称
+     */
+    private Long slaveId;
+
+    /**
      * 用例文件名
      */
-    @NotBlank(message="文件名不能为空")
+//    @NotBlank(message="文件名不能为空")
     private String originName;
 
     /**
@@ -43,7 +57,7 @@ public class StressTestFileEntity implements Serializable {
     /**
      * 任务状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常
      */
-    private Integer status;
+    private Integer status = 0;
 
     /**
      * 状态  0：保存测试报告原始文件  1：不需要测试报告
@@ -58,11 +72,10 @@ public class StressTestFileEntity implements Serializable {
     private Integer webchartStatus;
 
     /**
-     * 状态  0：不需要前端显示日志  1：前端仅显示错误日志
-     *      2：前端仅显示正确日志   3：前端正确和错误日志都显示
+     * 状态 0：关闭debug  1：开始debug调试模式
      * 默认 0
      */
-    private Integer weblogStatus;
+    private Integer debugStatus;
 
     /**
      * 提交的用户
@@ -90,6 +103,79 @@ public class StressTestFileEntity implements Serializable {
      */
     private String slaveStr;
 
+    
+    /**
+     * ----------------------------------------------------------------------------
+     */
+    
+    /**
+     * 是否是参数化文件 0：非参数化文件 1：参数化文件
+     */
+    private Integer iscsvdata;    
+
+	/**
+     * slave参数化文件标记所属Fileid
+     */
+    private Long membershipfileid;
+    
+    /**
+     * slave服务器名称
+     */
+    private String slaveName;
+    
+	/**
+	 * 参数化文件在slave服务器的子集文件
+	 */
+    private List<StressTestFileEntity> children;
+
+    /**
+     * salve参数化文件文件名
+     */
+    private String realname;
+
+	public Integer getIscsvdata() {
+		return iscsvdata;
+	}
+    
+	public void setIscsvdata(Integer iscsvdata) {
+		this.iscsvdata = iscsvdata;
+	}
+
+	public Long getMembershipfileid() {
+		return membershipfileid;
+	}
+
+	public void setMembershipfileid(Long membershipfileid) {
+		this.membershipfileid = membershipfileid;
+	}
+	
+    public String getSlaveName() {
+		return slaveName;
+	}
+
+	public void setSlaveName(String slaveName) {
+		this.slaveName = slaveName;
+	}
+
+	public List<StressTestFileEntity> getchildren() {
+		return children;
+	}
+
+	public void setchildren(List<StressTestFileEntity> children) {
+		this.children = children;
+	}
+
+	public String getRealname() {
+		return realname;
+	}
+
+	public void setRealname(String realname) {
+		this.realname = realname;
+	}
+    /**
+     * ----------------------------------------------------------------------------
+     */
+    
     public Long getFileId() {
         return fileId;
     }
@@ -178,14 +264,6 @@ public class StressTestFileEntity implements Serializable {
         this.webchartStatus = webchartStatus;
     }
 
-    public Integer getWeblogStatus() {
-        return weblogStatus;
-    }
-
-    public void setWeblogStatus(Integer weblogStatus) {
-        this.weblogStatus = weblogStatus;
-    }
-
     public String getSlaveStr() {
         return slaveStr;
     }
@@ -200,5 +278,59 @@ public class StressTestFileEntity implements Serializable {
 
     public void setFileMd5(String fileMd5) {
         this.fileMd5 = fileMd5;
+    }
+
+    public Long getSlaveId() {
+        return slaveId;
+    }
+
+    public void setSlaveId(Long slaveId) {
+        this.slaveId = slaveId;
+    }
+
+    public String getCaseName() {
+        return caseName;
+    }
+
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
+    }
+
+    public Integer getDebugStatus() {
+        return debugStatus;
+    }
+
+    public void setDebugStatus(Integer debugStatus) {
+        this.debugStatus = debugStatus;
+    }
+
+    public Long[] getFileIdList() {
+        return fileIdList;
+    }
+
+    public void setFileIdList(Long[] fileIdList) {
+        this.fileIdList = fileIdList;
+    }
+
+    /**
+     * 深度clone
+     */
+    public StressTestFileEntity clone() {
+        StressTestFileEntity clone = new StressTestFileEntity();
+        clone.setCaseId(this.getCaseId());
+        clone.setStatus(this.getStatus());
+        clone.setFileMd5(this.getFileMd5());
+        clone.setFileName(this.getFileName());
+        clone.setOriginName(this.getOriginName());
+        clone.setSlaveStr(this.getSlaveStr());
+        clone.setReportStatus(this.getReportStatus());
+        clone.setWebchartStatus(this.getWebchartStatus());
+        clone.setDebugStatus(this.getDebugStatus());
+        clone.setSlaveId(this.getSlaveId());
+        clone.setFileIdList(this.getFileIdList());
+        clone.setIscsvdata(this.getIscsvdata());
+        clone.setMembershipfileid(this.getMembershipfileid());
+        clone.setSlaveName(this.getSlaveName());
+        return clone;
     }
 }

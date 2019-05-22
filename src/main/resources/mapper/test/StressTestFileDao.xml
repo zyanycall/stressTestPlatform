@@ -7,25 +7,57 @@
         select * from test_stress_case_file where file_id = #{value}
     </select>
 
+    <select id="queryObjectForClone" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+        select * from test_stress_case_file where status = -1
+        <if test="slaveId != null">
+            and slave_id = #{slaveId}
+        </if>
+        <if test="originName != null and originName.trim() != ''">
+            and origin_name like concat('', #{originName}, '%')
+        </if>
+    </select>
+
     <select id="queryList" resultType="io.renren.modules.test.entity.StressTestFileEntity">
-        select * from test_stress_case_file
-        <where>
-            <if test="caseId != null and caseId.trim() != ''">
-                case_id = #{caseId}
-            </if>
-        </where>
+--         select * from test_stress_case_file where status > -1
+        SELECT t1.*, t2.case_name FROM test_stress_case_file t1, test_stress_case t2 where t1.status > -1 and t1.case_id = t2.case_id
+        <if test="caseId != null and caseId.trim() != ''">
+            and t1.case_id = #{caseId}
+        </if>
+        <if test="originName != null and originName.trim() != ''">
+            and t1.origin_name = #{originName}
+        </if>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                order by ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY
+				    CASE 
+				      WHEN t1.status ='1' THEN 1
+				      WHEN t1.status ='0' THEN 2
+				      WHEN t1.status ='2' THEN 2
+				      WHEN t1.status ='3' THEN 2
+				    END ,
+				     t1.add_time DESC 
+            </otherwise>
+        </choose>
         <if test="offset != null and limit != null ">
             limit #{offset}, #{limit}
         </if>
     </select>
 
+    <select id="queryListForDelete" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+        select * from test_stress_case_file where status = -1
+        <if test="originName != null and originName.trim() != ''">
+            and origin_name like concat('', #{originName}, '%')
+        </if>
+    </select>
+
     <select id="queryTotal" resultType="int">
-        select count(1) from test_stress_case_file
-        <where>
-            <if test="caseId != null and caseId.trim() != ''">
-                case_id = #{caseId}
-            </if>
-        </where>
+        select count(1) from test_stress_case_file where status > -1
+        <if test="caseId != null and caseId.trim() != ''">
+            and case_id = #{caseId}
+        </if>
     </select>
 
     <delete id="deleteBatchByCaseIds">
@@ -40,18 +72,26 @@
         insert into test_stress_case_file
         (
         `case_id`,
+        `slave_id`,
+        `status`,
         `origin_name`,
         `file_name`,
         `file_md5`,
-        `add_by`
+        `add_by`,
+        `iscsvdata`,
+        `membership_fileid`
         )
         values
         (
         #{caseId},
+        #{slaveId},
+        #{status},
         #{originName},
         #{fileName},
         #{fileMd5},
-        #{addBy}
+        #{addBy},
+        #{iscsvdata},
+        #{membershipfileid}
         )
     </insert>
 
@@ -59,16 +99,33 @@
         update test_stress_case_file
         <set>
             <if test="caseId != null">`case_id` = #{caseId},</if>
+            <if test="slaveId != null">`slave_id` = #{slaveId},</if>
             <if test="originName != null">`origin_name` = #{originName},</if>
             <if test="fileName != null">`file_name` = #{fileName},</if>
             <if test="fileMd5 != null">`file_md5` = #{fileMd5},</if>
             <if test="status != null">`status` = #{status},</if>
             <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
             <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
-            <if test="weblogStatus != null">`weblog_status` = #{weblogStatus},</if>
+            <if test="debugStatus != null">`debug_status` = #{debugStatus},</if>
+            <if test="membershipfileid != null">`membership_fileid` = #{membershipfileid},</if>
             <if test="updateBy != null">`update_by` = #{updateBy}</if>
+            <if test="addTime != null">`add_time` = #{addTime}</if>
         </set>
         where file_id = #{fileId}
+    </update>
+
+    <update id="updateStatusBatch">
+        update test_stress_case_file
+        <set>
+            <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
+            <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
+            <if test="debugStatus != null">`debug_status` = #{debugStatus},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy}</if>
+        </set>
+        where file_id in
+        <foreach item="fileIdList" collection="fileIdList" open="(" separator="," close=")">
+            #{fileIdList}
+        </foreach>
     </update>
 
     <!--&lt;!&ndash; 批量更新xx &ndash;&gt;-->
@@ -85,5 +142,24 @@
             #{fileIds}
         </foreach>
     </delete>
+
+    <select id="querycsvdata" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+        SELECT t1.*,t2.slave_name FROM test_stress_case_file t1
+			LEFT JOIN test_stress_slave t2 ON t1.`slave_id` = t2.`slave_id`
+			WHERE t1.iscsvdata = #{iscsvdata}
+			ORDER BY t1.file_id desc
+    </select>
+    
+    <select id="querycsvdataTotal" resultType="int">
+        select count(1) from test_stress_case_file where iscsvdata = 1 
+        	and membership_fileid = 0
+    </select>
+    
+    <select id="queryslaveFile" resultType="io.renren.modules.test.entity.StressTestFileEntity">
+		SELECT * FROM test_stress_case_file WHERE membership_fileid in 
+	        <foreach item="membershipfileid" collection="array" open="(" separator="," close=")">
+	            #{membershipfileid}
+	        </foreach>
+    </select>
 
 </mapper>

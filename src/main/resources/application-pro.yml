@@ -3,14 +3,14 @@ spring:
         type: com.alibaba.druid.pool.DruidDataSource
         driverClassName: com.mysql.jdbc.Driver
         druid:
-            first:
-                url: jdbc:mysql://172.16.0.20:3307/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
-                username: root
-                password: 123456
-            second:
-                url: jdbc:mysql://172.16.0.20:3307/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
-                username: root
-                password: 123456
+            first:  #数据源1
+                url: jdbc:mysql://xxx:3306/yit_t1_performance?characterset=utf-8&useUnicode=true&allowMultiQueries=true&autoReconnect=true
+                username: yit_dev
+                password: pwd123
+            second:  #数据源2
+                url: jdbc:mysql://xxx:3306/yit_t1_performance?characterset=utf-8&useUnicode=true&allowMultiQueries=true&autoReconnect=true
+                username: yit_dev
+                password: pwd123
             initial-size: 10
             max-active: 100
             min-idle: 10
@@ -21,8 +21,10 @@ spring:
             min-evictable-idle-time-millis: 300000
             validation-query: SELECT 1 FROM DUAL
             test-while-idle: true
-            test-on-borrow: false
+#            总遇到链接超时问题，故将on-borrow打开，如有需要请关闭。
+            test-on-borrow: true
             test-on-return: false
+#            removeAbandoned: false
             stat-view-servlet:
                 enabled: true
                 url-pattern: /druid/*

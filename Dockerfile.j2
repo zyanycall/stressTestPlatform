@@ -1,0 +1,9 @@
+FROM {{DOCKER_REGISTRY}}/base/stresshtest:8u162-jdk-stretch
+EXPOSE 8080
+
+ENV JAVA_OPTS="-Xmx512m"
+
+ADD target/renren-fast.jar $PROJECT_PATH/app.jar
+
+WORKDIR $PROJECT_PATH
+CMD exec java ${JAVA_OPTS} -cp $PROJECT_PATH/config:$PROJECT_PATH/*:$PROJECT_PATH/config:$JMETER_HOME/lib/ext/ApacheJMeter_core.jar:$JMETER_HOME/lib/jorphan.jar:$JMETER_HOME/lib/logkit-2.0.jar -jar app.jar

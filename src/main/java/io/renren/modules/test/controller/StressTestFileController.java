@@ -6,8 +6,10 @@ import io.renren.common.utils.Query;
 import io.renren.common.utils.R;
 import io.renren.common.validator.ValidatorUtils;
 import io.renren.modules.test.entity.StressTestFileEntity;
+import io.renren.modules.test.entity.SynchronizeFile;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.service.StressTestFileService;
+import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -38,7 +40,7 @@ public class StressTestFileController {
     @RequiresPermissions("test:stress:fileList")
     public R list(@RequestParam Map<String, Object> params){
         //查询列表数据
-        Query query = new Query(params);
+        Query query = new Query(StressTestUtils.filterParms(params));
         List<StressTestFileEntity> jobList = stressTestFileService.queryList(query);
         int total = stressTestFileService.queryTotal(query);
 
@@ -59,13 +61,17 @@ public class StressTestFileController {
     /**
      * 修改性能测试用例脚本文件
      */
-    @SysLog("修改性能测试用例")
+    @SysLog("修改性能测试用例脚本文件")
     @RequestMapping("/update")
     @RequiresPermissions("test:stress:fileUpdate")
     public R update(@RequestBody StressTestFileEntity stressTestFile) {
         ValidatorUtils.validateEntity(stressTestFile);
 
-        stressTestFileService.update(stressTestFile);
+        if (stressTestFile.getFileIdList() != null && stressTestFile.getFileIdList().length > 0) {
+            stressTestFileService.updateStatusBatch(stressTestFile);
+        } else {
+            stressTestFileService.update(stressTestFile);
+        }
 
         return R.ok();
     }
@@ -83,14 +89,24 @@ public class StressTestFileController {
     }
 
     /**
-     * 立即执行性能测试用例，当前仅支持同一时间执行一个性能测试用例。
+     * 立即执行性能测试脚本。
      */
     @SysLog("立即执行性能测试用例脚本文件")
     @RequestMapping("/runOnce")
     @RequiresPermissions("test:stress:runOnce")
     public R run(@RequestBody Long[] fileIds) {
+        return R.ok(stressTestFileService.run(fileIds));
+    }
 
-        stressTestFileService.run(fileIds);
+    /**
+     * 立即停止性能测试脚本，仅有使用api方式时，才可以单独停止。
+     */
+    @SysLog("立即停止性能测试用例脚本文件")
+    @RequestMapping("/stopOnce")
+    @RequiresPermissions("test:stress:stopOnce")
+    public R stop(@RequestBody Long[] fileIds) {
+
+        stressTestFileService.stop(fileIds);
         return R.ok();
     }
 
@@ -137,9 +153,35 @@ public class StressTestFileController {
     @RequestMapping("/synchronizeFile")
     @RequiresPermissions("test:stress:synchronizeFile")
     public R synchronizeFile(@RequestBody Long[] fileIds) {
-        stressTestFileService.synchronizeFile(fileIds);
-        return R.ok();
+    	
+        //如果已有子文件，则不允许上传
+        int count = stressTestFileService.queryslaveFile(fileIds).size();
+        if (count == 0) {
+            stressTestFileService.synchronizeFile(fileIds);
+            return R.ok();
+		}else {
+			return R.error("slave已有该文件，请先删除后再同步");
+		}
     }
+    
+    
+    @SysLog("同步单个文件至指定savle服务器")
+    @RequestMapping("/synchronizeSingleSalve")
+    @RequiresPermissions("test:stress:fileUpdate")
+    public R synchronizeSingleSalve(@RequestBody SynchronizeFile synchronizeFile) {
+
+    	Long[] fileids = {synchronizeFile.getFileId()};
+
+        //如果已有子文件，则不允许上传
+        int count = stressTestFileService.queryslaveFile(fileids).size();
+        if (count == 0) {
+        	stressTestFileService.synchronizeSingleSalve(fileids, synchronizeFile.getSlaveId());
+            return R.ok();
+		}else {
+			return R.error("slave已有该文件，请先删除后再同步");
+		}
+    }
+    
 
     /**
      * 下载文件

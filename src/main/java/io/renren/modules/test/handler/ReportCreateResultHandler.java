@@ -36,6 +36,10 @@ public class ReportCreateResultHandler extends FileResultHandler {
     public void onProcessComplete(final int exitValue) {
         stressTestReports.setStatus(StressTestUtils.RUN_SUCCESS);
         stressTestReportsService.update(stressTestReports);
+        
+        //----报告生成完成之后删除源csv文件 2019-05-07----
+        stressTestReportsService.deleteReportCSV(stressTestReports);
+        
         super.onProcessComplete(exitValue);
         //保存状态，执行完毕
     }

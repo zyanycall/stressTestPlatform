@@ -53,6 +53,11 @@ public class StressTestReportsEntity implements Serializable {
     private Integer status;
 
     /**
+     * 描述
+     */
+    private String remark;
+
+    /**
      * 提交的用户
      */
     private String addBy;
@@ -172,5 +177,13 @@ public class StressTestReportsEntity implements Serializable {
 
     public void setFileSize(Long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 }

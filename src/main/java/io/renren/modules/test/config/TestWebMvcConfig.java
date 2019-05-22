@@ -18,8 +18,14 @@ import java.io.File;
 public class TestWebMvcConfig extends WebMvcConfigurerAdapter {
 
     @Autowired
-    StressTestUtils stressTestUtils;
-
+    private static StressTestUtils stressTestUtils;
+    
+	@Autowired
+	public TestWebMvcConfig(StressTestUtils stressTestUtils) {
+		TestWebMvcConfig.stressTestUtils = stressTestUtils;
+	}
+    
+    
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/testReport/**")

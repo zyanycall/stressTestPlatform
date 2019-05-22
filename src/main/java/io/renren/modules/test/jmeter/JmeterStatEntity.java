@@ -1,7 +1,6 @@
 package io.renren.modules.test.jmeter;
 
 import io.renren.modules.test.utils.StressTestUtils;
-import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.visualizers.SamplingStatCalculator;
 
 import java.util.HashMap;
@@ -16,6 +15,11 @@ public class JmeterStatEntity {
 
     private Long fileId;
 
+    /**
+     * key值是label，即每个请求的名称。
+     * value值是计算值的对象，里面包含每个label所对应的监控计算数据。
+     * statMap是在回调时，填充数据
+     */
     private Map<String, SamplingStatCalculator> statMap;
 
     /**
@@ -39,26 +43,55 @@ public class JmeterStatEntity {
     private Map<String, String> networkReceiveMap = new HashMap<>();
 
     /**
-     * 正确率相关的监控数据。
+     * 正确率相关的监控数据。是总的请求数的正确率的占比，这个图在单个请求或者
+     * 每个请求的请求数量相差不大的时候，比较直观，但是除此之外，不能显现问题严重性。
      */
     private Map<String, String> successPercentageMap = new HashMap<>();
 
     /**
+     * 每个label的错误率，double类型。和successPercentageMap不同，successPercentageMap是所有
+     * 请求中，成功失败的占比。
+     */
+    private Map<String, String> errorPercentageMap = new HashMap<>();
+
+    /**
      * 虚拟用户数相关的监控数据，没有根据label/slave的名称区分。
+     * slave分布式节点的线程数，master默认统计不到。
      */
     private Map<String, String> threadCountsMap = new HashMap<>();
 
-    public JmeterStatEntity(Long fileId) {
-        this.fileId = fileId;
-        statMap = StressTestUtils.samplingStatCalculator4File.get(fileId);
+    /**
+     * 当前是否正在运行
+     */
+    private Integer runStatus = StressTestUtils.RUNNING;
+
+    private JmeterRunEntity jmeterRunEntity;
+
+    /**
+     * 对于分布式场景，取到的statMap是总的，即包含了所有脚本执行的label的数据。
+     */
+    public JmeterStatEntity(Long fileId, Long fileIdZero) {
+        if (fileIdZero != null) {// 分布式情况下
+            this.fileId = fileIdZero;
+            statMap = StressTestUtils.samplingStatCalculator4File.get(fileIdZero);
+        } else {// 单机模式下
+            this.fileId = fileId;
+            statMap = StressTestUtils.samplingStatCalculator4File.get(fileId);
+        }
+
+        // StressTestUtils.jMeterEntity4file 中保存的都是真实的脚本文件信息
+        jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);
+        if (jmeterRunEntity != null) {
+            runStatus = jmeterRunEntity.getRunStatus();
+        }
     }
 
     public Map<String, String> getResponseTimesMap() {
         if (statMap != null) {
             statMap.forEach((k, v) -> {
                 /**
-                 * 平均响应时间并非真正的一个请求响应的时间，而是一段时间内响应了多少请求而计算出的平均响应时间。
-                 * 所以，如果是被测试的服务器满负荷，这个响应时间才是接近于一个请求的真正的响应时间。
+                 * 平均响应时间算法是当前请求总共花费的时间/响应了多少请求。
+                 * 这个时间是正确的。
                  */
                 responseTimesMap.put(k + "_Avg(ms)", String.format("%.2f", v.getMean()));
 //                responseTimesMap.put(k + "_Max(ms)", String.valueOf(v.getMax()));
@@ -148,15 +181,36 @@ public class JmeterStatEntity {
         this.successPercentageMap = successPercentageMap;
     }
 
+    public Map<String, String> getErrorPercentageMap() {
+        if (statMap != null) {
+            for (String key : statMap.keySet()) {
+                SamplingStatCalculator calculator = statMap.get(key);
+                errorPercentageMap.put(key + "_ErrorPercent", String.format("%.2f", calculator.getErrorPercentage()));
+            }
+        }
+        return errorPercentageMap;
+    }
+
+    public void setErrorPercentageMap(Map<String, String> errorPercentageMap) {
+        this.errorPercentageMap = errorPercentageMap;
+    }
+
     public Map<String, String> getThreadCountsMap() {
-        JMeterContextService.ThreadCounts tc = JMeterContextService.getThreadCounts();
-        threadCountsMap.put("Active", String.valueOf(tc.activeThreads));
-        threadCountsMap.put("Started", String.valueOf(tc.startedThreads));
-        threadCountsMap.put("Finished", String.valueOf(tc.finishedThreads));
+        if (jmeterRunEntity != null) {
+            threadCountsMap.put("Active", String.valueOf(jmeterRunEntity.getNumberOfActiveThreads()));
+        }
         return threadCountsMap;
     }
 
     public void setThreadCountsMap(Map<String, String> threadCountsMap) {
         this.threadCountsMap = threadCountsMap;
+    }
+
+    public Integer getRunStatus() {
+        return runStatus;
+    }
+
+    public void setRunStatus(Integer runStatus) {
+        this.runStatus = runStatus;
     }
 }

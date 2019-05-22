@@ -81,7 +81,6 @@ public class StressTestEntity implements Serializable {
 	 */
 	private Date updateTime;
 
-
 	public Long getCaseId() {
 		return caseId;
 	}

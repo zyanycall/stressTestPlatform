@@ -364,8 +364,11 @@ CREATE INDEX IDX_QRTZ_FT_TG ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,TRIGGER_GROUP);
 INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('31', '0', '压力测试', NULL, NULL, '0', 'fa fa-bolt', '0');
 INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('32', '31', '用例管理', 'modules/test/stressTest.html', 'test:stress', '1', 'fa fa-briefcase', '1');
 INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('33', '31', '脚本文件管理', 'modules/test/stressTestFile.html', 'test:stress', '1', 'fa fa-file-text-o', '2');
-INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('34', '31', '测试报告管理', 'modules/test/stressTestReports.html', 'test:stress', '1', 'fa fa-area-chart', '3');
-INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('35', '31', '分布式节点管理', 'modules/test/stressTestSlave.html', 'test:stress', '1', 'fa fa-cloud', '4');
+INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('34', '31', '性能测试报告管理', 'modules/test/stressTestReports.html', 'test:stress', '1', 'fa fa-area-chart', '3');
+INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('35', '31', '调试报告管理', 'modules/test/debugTestReports.html', 'test:debug', '1', 'fa fa-area-chart', '4');
+INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('36', '31', '分布式节点管理', 'modules/test/stressTestSlave.html', 'test:stress', '1', 'fa fa-cloud', '5');
+INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('39', '31', '参数化文件管理', 'modules/test/stressCSVData.html', 'test:stress', '1', 'fa fa-cogs', '12');
+
 
 -- 性能测试用例表
 CREATE TABLE `test_stress_case` (
@@ -373,10 +376,10 @@ CREATE TABLE `test_stress_case` (
   `case_name` varchar(50) NOT NULL COMMENT '用例名',
   `project` varchar(50) COMMENT '所属项目',
   `module` varchar(50) COMMENT '所属模块',
-  `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：禁用   1：正常',
+  `status` int NOT NULL DEFAULT 0 COMMENT '状态  0：禁用   1：正常',
   `operator` varchar(20) COMMENT '拥有者名字',
   `remark` varchar(300) COMMENT '描述',
-  `priority` tinyint COMMENT '优先级用于过滤',
+  `priority` int COMMENT '优先级用于过滤',
   `case_dir` varchar(200) COMMENT 'master节点保存用例信息的文件夹',
   `add_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `add_by` bigint(20) COMMENT '提交用户id',
@@ -388,23 +391,29 @@ CREATE TABLE `test_stress_case` (
 
 -- 性能测试用例文件表
 CREATE TABLE `test_stress_case_file` (
-  `file_id` bigint NOT NULL AUTO_INCREMENT,
-  `case_id` bigint NOT NULL COMMENT '所关联的用例',
+  `file_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `case_id` bigint(20) NOT NULL COMMENT '所关联的用例',
+  `slave_id` bigint(20) DEFAULT NULL COMMENT '所关联的同步过的slave子节点',
   `origin_name` varchar(200) NOT NULL COMMENT '上传的文件名带后缀',
-  `file_name` varchar(200) COMMENT '防止汉字编码错误实际保存的文件名带后缀',
-  `file_md5` varchar(100) COMMENT '文件的MD5对于参数化文件有效主要用于节点的参数化文件校验',
-  `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常',
-  `report_status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：保存测试报告原始文件  1：不需要测试报告',
-  `webchart_status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：需要前端监控  1：不需要前端监控',
-  `weblog_status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：不需要前端显示日志  1：前端仅显示错误日志   2：前端仅显示正确日志   3：前端正确错误日志都显示',
+  `file_name` varchar(200) DEFAULT NULL COMMENT '防止汉字编码错误实际保存的文件名带后缀',
+  `file_md5` varchar(100) DEFAULT NULL COMMENT '文件的MD5对于参数化文件有效主要用于节点的参数化文件校验',
+  `status` int(11) NOT NULL DEFAULT '0' COMMENT '状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常   -1：不被搜索出来',
+  `report_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '状态  0：保存测试报告原始文件  1：不需要测试报告',
+  `webchart_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '状态  0：需要前端监控  1：不需要前端监控',
+  `weblog_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '状态  0：不需要前端显示日志  1：前端仅显示错误日志   2：前端仅显示正确日志   3：前端正确错误日志都显示',
   `add_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `add_by` bigint(20) COMMENT '提交用户id',
+  `add_by` bigint(20) DEFAULT NULL COMMENT '提交用户id',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  `update_by` bigint(20) COMMENT '修改用户id',
+  `update_by` bigint(20) DEFAULT NULL COMMENT '修改用户id',
+  `debug_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '状态  0：关闭debug  1：开始debug调试模式',
+  `iscsvdata` int(11) NOT NULL DEFAULT '0' COMMENT '是否参数化文件  0：非参数化文件  1：参数化文件',
+  `membership_fileid` bigint(20) DEFAULT NULL COMMENT 'slave参数化文件标记所属Fileid',
   PRIMARY KEY (`file_id`),
-  UNIQUE INDEX (`origin_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='性能测试用例文件表';
-
+  UNIQUE KEY `origin_name` (`origin_name`),
+  KEY `idx_slave_id` (`slave_id`) USING BTREE,
+  KEY `idx_membership_fileid` (`membership_fileid`) USING BTREE,
+  KEY `idx_iscsvdata` (`iscsvdata`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=266 DEFAULT CHARSET=utf8 COMMENT='性能测试用例文件表';
 
 -- 性能测试报告文件表
 CREATE TABLE `test_stress_case_reports` (
@@ -412,15 +421,33 @@ CREATE TABLE `test_stress_case_reports` (
   `case_id` bigint NOT NULL COMMENT '所关联的用例',
   `file_id` bigint NOT NULL COMMENT '所关联的用例文件',
   `origin_name` varchar(200) NOT NULL COMMENT '测试报告名称',
-  `report_name` varchar(200) NOT NULL COMMENT '避免跨系统编码错误，实际文件存储的报告名，名称和测试报告文件夹名称一致',
+  `report_name` varchar(200) NOT NULL COMMENT '避免跨系统编码错误，随机化了结果文件名，存储了相对路径',
   `file_size` bigint COMMENT '测试结果文件大小',
-  `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常',
+  `status` int NOT NULL DEFAULT 0 COMMENT '状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常',
+  `remark` varchar(300) COMMENT '描述',
   `add_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `add_by` bigint(20) COMMENT '提交用户id',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
   `update_by` bigint(20) COMMENT '修改用户id',
   PRIMARY KEY (`report_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='性能测试报告文件表';
+
+-- 调试/接口测试报告文件表
+CREATE TABLE `test_debug_case_reports` (
+  `report_id` bigint NOT NULL AUTO_INCREMENT,
+  `case_id` bigint NOT NULL COMMENT '所关联的用例',
+  `file_id` bigint NOT NULL COMMENT '所关联的用例文件',
+  `origin_name` varchar(200) NOT NULL COMMENT '测试报告名称',
+  `report_name` varchar(200) NOT NULL COMMENT '避免跨系统编码错误，随机化了结果文件名，存储了相对路径',
+  `file_size` bigint COMMENT '测试结果文件大小',
+  `status` int NOT NULL DEFAULT 0 COMMENT '状态  0：初始状态  1：正在运行  2：成功执行  3：运行出现异常',
+  `remark` varchar(300) COMMENT '描述',
+  `add_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `add_by` bigint(20) COMMENT '提交用户id',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `update_by` bigint(20) COMMENT '修改用户id',
+  PRIMARY KEY (`report_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='调试/接口测试报告文件表';
 
 -- 性能测试分布式节点表
 CREATE TABLE `test_stress_slave` (
@@ -432,7 +459,7 @@ CREATE TABLE `test_stress_slave` (
   `passwd` varchar(100) COMMENT '节点机密码',
   `ssh_port` SMALLINT NOT NULL DEFAULT 22 COMMENT 'ssh链接端口号',
   `home_dir` varchar(200) COMMENT '子节点的Jmeter路径',
-  `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：禁用   1：正常',
+  `status` int NOT NULL DEFAULT 0 COMMENT '状态  0：禁用   1：正常',
   `add_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `add_by` bigint(20) COMMENT '提交用户id',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
@@ -440,3 +467,16 @@ CREATE TABLE `test_stress_slave` (
   PRIMARY KEY (`slave_id`),
   UNIQUE INDEX (`ip`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='性能测试分布式节点表';
+
+-- 让本机master配置后也可以参与性能测试，默认是禁用master主节点
+INSERT INTO `test_stress_slave` (`slave_id`, `slave_name`, `ip`, `jmeter_port`, `user_name`, `passwd`, `ssh_port`, `home_dir`, `status`, `add_time`, `add_by`, `update_time`, `update_by`) VALUES ('1', 'LocalHost', '127.0.0.1', '0', NULL, NULL, '22', '', '0', '2018-06-18 18:18:18', NULL, '2018-06-18 18:18:18', NULL);
+
+-- 数据库中配置性能压测配置信息。key不要变。
+INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('2', 'MASTER_JMETER_HOME_KEY', 'D:\\software\\apache-jmeter-4.0', '1', '本地Jmeter_home绝对路径');
+INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('3', 'MASTER_JMETER_CASES_HOME_KEY', 'D:\\E\\stressTestCases', '1', '本地保存用例数据的绝对路径，不要随意切换会导致文件找不到错误。');
+INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('4', 'MASTER_JMETER_USE_SCRIPT_KEY', 'false', '1', 'false:在服务器进程内启动Jmeter压测。true:启动Jmeter_home中的命令压测');
+INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('5', 'MASTER_JMETER_REPLACE_FILE_KEY', 'true', '1', '上传文件时，遇到同名文件是替换还是报错，默认是替换为true');
+
+
+-- 还没有完全实现的测试场景组装功能
+-- INSERT INTO `sys_menu` (`menu_id`, `parent_id`, `name`, `url`, `perms`, `type`, `icon`, `order_num`) VALUES ('37', '31', '测试场景组装', 'modules/test/stressTestAssembly.html', 'test:stress', '1', 'fa fa-clipboard', '6');

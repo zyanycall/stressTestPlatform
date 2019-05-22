@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>单个同步文件</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../plugins/jqgrid/ui.jqgrid-bootstrap.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css"> -->
+    <script src="../../libs/jquery.min.js"></script>
+    <script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+    <script src="../../plugins/ztree/jquery.ztree.all.min.js"></script>
+    <script src="../../plugins/layer/layer.js"></script>
+    <script src="../../libs/bootstrap.min.js"></script>
+    <script src="../../libs/vue.min.js"></script>
+    <script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+    <script src="../../plugins/echarts/echarts.min.js"></script>
+    <script src="../../js/common.js"></script>
+    <script src="../../plugins/echarts/theme.js"></script>
+    <!-- VUE -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+</head>
+
+<body>
+  <div id="csvapp">
+        <el-table :data="CSVDataFile.filter(data => !search || data.originName.toLowerCase().includes(search.toLowerCase()))"
+                style="width: 100%;margin-bottom: 20px;" border row-key="fileId">
+            <el-table-column label="查询条件">
+                <template slot="header" slot-scope="scope">
+                    <el-input prefix-icon="el-icon-search" v-model="search" size="small" style="width:300px"
+                        placeholder="输入文件名进行查询" />
+                </template>
+                <el-table-column prop="fileId" label="fileId" width="90">
+                </el-table-column>
+                <el-table-column prop="originName" label="原始文件名" width="250">
+                </el-table-column>
+                <el-table-column prop="realname" label="真实文件名" width="180">
+                </el-table-column>
+                <el-table-column prop="fileName" label="文件路径" width="500">
+                </el-table-column>
+                <el-table-column prop="slaveName" label="所在服务器名称" width="170">
+                </el-table-column>
+                <el-table-column label="操作">
+                    <template slot-scope="scope">
+                        <div v-if="!scope.row.slaveName">
+                            <el-button @click="tosynSingleFile(scope.row.fileId)" type="primary" size="mini" :loading="loading">单个同步<i class="el-icon-upload el-icon--right"></i></el-button>
+                            <el-popover placement="top" title="是否确认全部同步" width="200">
+                                <div style="text-align: right; margin: 0">
+                                    <el-button type="primary" size="mini" @click="synchronizeFile(scope.row.fileId)" :loading="loading">确定</el-button>
+                                </div>
+                                <el-button slot="reference" type="primary" size="mini">全部同步<i class="el-icon-upload el-icon--right"></i></el-button>
+                            </el-popover>
+                            <el-popover placement="top" title="是否确认删除" width="200">
+                                <div style="text-align: right; margin: 0">
+                                    <el-button type="primary" size="mini" @click="deleteMasterFile(scope.row.fileId)" :loading="loading">确定</el-button>
+                                </div>
+                                <el-button slot="reference" type="danger" icon="el-icon-delete" size="mini">全部删除</el-button>
+                            </el-popover>
+                            <el-button @click="downloadFile(scope.row.fileId, scope.row.originName)" type="primary" size="mini" :loading="loading">下载</el-button>
+                        </div>
+                        <div v-else>
+                            <el-button @click="open(scope.row.realname,scope.row.fileId)" type="primary" icon="el-icon-edit" size="mini">重命名</el-button>
+                            <el-popover placement="top" title="是否确认删除" width="200">
+                                <div style="text-align: right; margin: 0">
+                                    <el-button type="primary" size="mini" @click="deleteslaveFile(scope.row.fileId)" :loading="loading">确定</el-button>
+                                </div>
+                                <el-button slot="reference" type="danger" icon="el-icon-delete" size="mini">单个删除</el-button>
+                            </el-popover>
+                        </div>
+                    </template>
+                </el-table-column>
+            </el-table-column>
+        </el-table>
+  </div>
+
+
+    <script src="../../js/modules/test/stressCSVData.js"></script>
+</body>
+
+</html>

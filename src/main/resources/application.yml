@@ -19,6 +19,7 @@ spring:
     http:
         multipart:
             max-file-size: 2000MB
+            # 一次请求最多上传
             max-request-size: 2000MB
             enabled: true
     resources: # 指定静态资源的路径
@@ -50,20 +51,3 @@ renren:
         # token有效时长，7天，单位秒
         expire: 604800
         header: token
-
-# 性能测试配置
-test:
-    stress:
-        # Jmeter主节点路径
-        # 默认是测试报告生成使用
-        jmeterHome: D:\software\apache-jmeter-4.0
-        # 存放用例的总目录，里面会细分文件存放用例及用例文件
-        # Jmeter节点机需要在/etc/bashrc中配置JAVA_HOME，同时source /etc/bashrc生效
-        casePath: D:\E\stressTestCases
-        # 如果配置了Jmeter脚本启动，则额外开启Jmeter进程运行测试用例脚本及分布式程序。
-        # 分布式程序可以取消ssl校验。
-        # 同时仅支持Jmeter+InfluxDB+Grafana的实时监控。
-        # 如果没有配置Jmeter脚本启动，则使用web本身自带的Jmeter功能。
-        # 支持自带的ECharts实时监控。
-        # 默认是false，即使用web程序进程来启动Jmeter-master程序。
-        useJmeterScript: false

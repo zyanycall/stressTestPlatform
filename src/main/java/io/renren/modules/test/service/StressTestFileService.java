@@ -3,7 +3,10 @@ package io.renren.modules.test.service;
 import io.renren.modules.test.entity.StressTestEntity;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.entity.StressTestReportsEntity;
+import io.renren.modules.test.jmeter.JmeterRunEntity;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
+
+import org.json.JSONObject;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -60,14 +63,24 @@ public interface StressTestFileService {
     void update(MultipartFile file, String filePath, StressTestEntity stressCase, StressTestFileEntity stressCaseFile);
 
     /**
+     * 批量更新性能测试用例状态
+     */
+    void updateStatusBatch(StressTestFileEntity stressTestFile);
+
+    /**
      * 批量删除
      */
-    void deleteBatch(Long[] fileIds);
+    void deleteBatch(Object[] fileIds);
 
     /**
      * 立即执行
      */
-    void run(Long[] fileIds);
+    String run(Long[] fileIds);
+
+    /**
+     * 立即停止
+     */
+    void stop(Long[] fileIds);
 
     /**
      * 停止运行
@@ -89,13 +102,57 @@ public interface StressTestFileService {
      */
     void synchronizeFile(Long[] fileIds);
 
+    /**
+     * 获取文件路径，是文件的真实绝对路径
+     */
     String getFilePath(StressTestFileEntity stressTestFile);
 
+    /**
+     * 相同进程内执行的脚本，可以使用这个方法停止
+     */
+    void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity);
 
-//    /**
-//     * 批量更新性能测试用例信息
-//     */
-//    int updateBatch(Long[] caseIds, int status);
+    /**
+     * 同步文件到单个salve服务器
+     */
+	void synchronizeSingleSalve(Long[] fileIds, Long slaveId);
 
+	/**
+	 * 查询所有参数化文件
+	 * @param iscsvdata
+	 * @return
+	 */
+	List<StressTestFileEntity> querycsvdata(Integer iscsvdata);
+
+	/**
+	 * 统计所有参数化主文件的数量
+	 * @return
+	 */
+	int querycsvdataTotal();
+
+	/**
+	 * 根据传入salve所在的具体file实体进行删除
+	 * @param fileDeleteList
+	 */
+	void deleteSlaveFile(List<StressTestFileEntity> fileDeleteList);
+
+	/**
+	 * slave 参数化文件重命名
+	 * @param stressTestFileEntity
+	 * @param finalname
+	 */
+	void updateSlaveFileName(StressTestFileEntity stressTestFileEntity, String finalname);
+
+	/**
+	 * 获取slave参数化文件的文件名
+	 */
+	String getSlaveFileName(StressTestFileEntity stressTestFileEntity);
+
+	/**
+	 * 根据主文件的fileid查询子文件
+	 * @param membershipfileid
+	 * @return
+	 */
+	List<StressTestFileEntity> queryslaveFile(Long[] membershipfileid);
 
 }
