@@ -116,7 +116,7 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
         if (StressTestUtils.DISABLE.equals(status)) {
             //禁用远程节点，当前是直接kill掉
             //kill掉就不用判断结果了，不抛异常即OK
-            ssh2Util.runCommand("ps -efww|grep -w 'jmeter-server'|grep -v grep|cut -c 9-15|xargs kill -9");
+            ssh2Util.runCommand("ps -efww|grep -w 'jmeter-server'|grep -v grep|cut -c 9-18|xargs kill -9");
         }
     }
 
