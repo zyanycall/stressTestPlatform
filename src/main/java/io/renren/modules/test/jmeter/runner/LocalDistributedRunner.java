@@ -101,7 +101,7 @@ public class LocalDistributedRunner {
                 String address = addrs.get(idx);
                 println("Configuring remote engine: " + address);
 
-                // zhaoyu add
+                // zyanycall add
                 // 在进程内存内把HashTree即脚本文件的内容修改，主要改两部分，线程数和加载虚拟用户数用时，都是按照比例增加或者缩减。
                 // 将脚本内所有的线程组都要修改。
                 Integer weight = addrWeight.get(address);
@@ -124,7 +124,7 @@ public class LocalDistributedRunner {
                         }
                     }
                 }
-                // zhaoyu add end
+                // zyanycall add end
                 JMeterEngine engine = getClientEngine(address.trim(), tree);
                 if (engine != null) {
                     engines.put(address, engine);
