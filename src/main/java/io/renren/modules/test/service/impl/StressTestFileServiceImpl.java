@@ -12,6 +12,7 @@ import io.renren.modules.test.jmeter.JmeterRunEntity;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.jmeter.engine.LocalStandardJMeterEngine;
 import io.renren.modules.test.jmeter.fix.JavassistEngine;
+import io.renren.modules.test.jmeter.runner.LocalDistributedRunner;
 import io.renren.modules.test.service.StressTestFileService;
 import io.renren.modules.test.utils.SSH2Utils;
 import io.renren.modules.test.utils.StressTestUtils;
@@ -23,7 +24,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jmeter.JMeter;
 import org.apache.jmeter.config.CSVDataSet;
-import org.apache.jmeter.engine.DistributedRunner;
 import org.apache.jmeter.engine.JMeterEngine;
 import org.apache.jmeter.engine.JMeterEngineException;
 import org.apache.jmeter.save.SaveService;
@@ -549,12 +549,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 while (st.hasMoreElements()) {
                     hosts.add((String) st.nextElement());
                 }
-                DistributedRunner distributedRunner = new DistributedRunner();
-                distributedRunner.setStdout(System.out); // NOSONAR
-                distributedRunner.setStdErr(System.err); // NOSONAR
-                distributedRunner.init(hosts, jmxTree);
-                engines.addAll(distributedRunner.getEngines());
-                distributedRunner.start();
+                LocalDistributedRunner localDistributedRunner = new LocalDistributedRunner();
+                localDistributedRunner.setStdout(System.out); // NOSONAR
+                localDistributedRunner.setStdErr(System.err); // NOSONAR
+                localDistributedRunner.init(hosts, jmxTree, getSlaveAddrWeight());
+                engines.addAll(localDistributedRunner.getEngines());
+                localDistributedRunner.start();
 
                 // 如果配置了，则将本机节点也增加进去
                 // 当前只有本地运行的方式支持本机master节点的添加
@@ -932,7 +932,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             if (stringBuilder.length() != 0) {
                 stringBuilder.append(",");
             }
-            stringBuilder.append(slave.getIp()).append(":").append(slave.getJmeterPort());
+            stringBuilder.append(slave.getIp().trim()).append(":").append(slave.getJmeterPort().trim());
         }
         return stringBuilder.toString();
     }
@@ -952,5 +952,27 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             }
         }
         return false;
+    }
+
+    /**
+     * 拼装分布式节点，当前还没有遇到分布式节点非常多的情况。
+     *
+     * @return 分布式节点的IP地址拼装，不包含本地127.0.0.1的IP
+     */
+    public Map<String, Integer> getSlaveAddrWeight() {
+        Map query = new HashMap<>();
+        query.put("status", StressTestUtils.ENABLE);
+        List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(query);
+
+        Map<String, Integer> resultMap = new HashMap<String, Integer>();
+        for (StressTestSlaveEntity slave : stressTestSlaveList) {
+            // 本机不包含在内
+            if ("127.0.0.1".equals(slave.getIp().trim())) {
+                continue;
+            }
+
+            resultMap.put(slave.getIp().trim() + ":" + slave.getJmeterPort().trim(), Integer.parseInt(slave.getWeight()));
+        }
+        return resultMap;
     }
 }

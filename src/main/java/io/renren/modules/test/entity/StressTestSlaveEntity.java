@@ -61,6 +61,12 @@ public class StressTestSlaveEntity implements Serializable {
     private Integer status;
 
     /**
+     * 分布式节点机权重
+     */
+    @Min(value = 1)
+    private String weight;
+
+    /**
      * 提交的用户
      */
     private String addBy;
@@ -182,5 +188,14 @@ public class StressTestSlaveEntity implements Serializable {
 
     public void setPasswd(String passwd) {
         this.passwd = passwd;
+    }
+
+    // 权重为0,100,为空，跳过去不做处理。
+    public String getWeight() {
+        return weight == null ? "100" : weight;
+    }
+
+    public void setWeight(String weight) {
+        this.weight = weight;
     }
 }

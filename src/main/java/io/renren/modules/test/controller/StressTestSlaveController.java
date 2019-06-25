@@ -106,4 +106,19 @@ public class StressTestSlaveController {
         stressTestSlaveService.updateBatchStatus(slaveIds, status);
         return R.ok();
     }
+
+    /**
+     * 强制切换性能测试分布式节点状态
+     */
+    @SysLog("强制切换性能测试分布式节点状态")
+    @RequestMapping("/batchUpdateStatusForce")
+    @RequiresPermissions("test:stress:slaveStatusUpdateForce")
+    public R batchUpdateStatusForce(@RequestParam(value = "slaveIds[]") List<Long> slaveIds,
+                                    @RequestParam(value = "status") Integer status) {
+        stressTestSlaveService.updateBatchStatusForce(slaveIds, status);
+        return R.ok();
+    }
+
+
+
 }

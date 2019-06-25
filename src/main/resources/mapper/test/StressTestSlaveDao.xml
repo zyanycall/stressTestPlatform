@@ -47,6 +47,7 @@
         `passwd`,
         `ssh_port`,
         `home_dir`,
+        `weight`,
         `add_by`
         )
         values
@@ -58,6 +59,7 @@
         #{passwd},
         #{sshPort},
         #{homeDir},
+        #{weight},
         #{addBy}
         )
     </insert>
@@ -73,6 +75,7 @@
             <if test="sshPort != null">`ssh_port` = #{sshPort}, </if>
             <if test="homeDir != null">`home_dir` = #{homeDir}, </if>
             <if test="status != null">`status` = #{status}, </if>
+            <if test="weight != null">`weight` = #{weight}, </if>
             <if test="updateBy != null">`update_by` = #{updateBy}, </if>
         </set>
         where slave_id = #{slaveId}

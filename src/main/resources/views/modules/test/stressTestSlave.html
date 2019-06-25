@@ -30,6 +30,7 @@
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="add"><i class="fa fa-plus"></i>&nbsp;新增</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="update"><i class="fa fa-pencil-square-o"></i>&nbsp;修改</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="batchUpdateStatus(1)"><i class="fa fa-pencil-square-o"></i>&nbsp;启用</a>
+            <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="batchUpdateStatusForce(1)"><i class="fa fa-pencil-square-o"></i>&nbsp;手工启用</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="batchUpdateStatus(0)"><i class="fa fa-pencil-square-o"></i>&nbsp;禁用</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="del"><i class="fa fa-trash-o"></i>&nbsp;删除</a>
         </div>
@@ -80,6 +81,12 @@
                 <div class="col-sm-2 control-label">SSH端口号</div>
                 <div class="col-sm-10">
                     <input type="text" class="form-control" v-model="stressTestSlave.sshPort" placeholder="SSH端口号"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">权重</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" v-model="stressTestSlave.weight" placeholder="权重百分比，1至99999的整数"/>
                 </div>
             </div>
             <!--<div class="form-group">-->

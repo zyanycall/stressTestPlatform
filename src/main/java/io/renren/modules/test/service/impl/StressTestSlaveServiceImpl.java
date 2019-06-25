@@ -60,6 +60,20 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
      * 批量切换节点的状态
      */
     @Override
+    public void updateBatchStatusForce(List<Long> slaveIds, Integer status) {
+        //使用for循环传统写法，直接更新数据库。
+        for (Long slaveId : slaveIds) {
+            StressTestSlaveEntity slave = queryObject(slaveId);
+            //更新数据库
+            slave.setStatus(status);
+            update(slave);
+        }
+    }
+
+    /**
+     * 批量切换节点的状态
+     */
+    @Override
     public void updateBatchStatus(List<Long> slaveIds, Integer status) {
         //当前是向所有的分布式节点推送这个，阻塞操作+轮询，并非多线程，因为本地同步网卡会是瓶颈。
         //使用for循环传统写法

@@ -6,7 +6,7 @@ $(function () {
             {label: '节点ID', name: 'slaveId', width: 30, key: true},
             {label: '名称', name: 'slaveName', width: 80, sortable: false},
             {label: 'IP地址', name: 'ip', width: 50, sortable: false},
-            {label: 'Jmeter端口', name: 'jmeterPort', width: 40, sortable: false},
+            {label: 'Jmeter端口', name: 'jmeterPort', width: 30, sortable: false},
             {label: '用户名', name: 'userName', width: 30, sortable: false},
             {label: '密码', name: 'passwd', width: 50, sortable: false},
             {label: 'ssh端口', name: 'sshPort', width: 30, sortable: false},
@@ -19,7 +19,8 @@ $(function () {
                 }
             }
             },
-            {label: '安装路径', name: 'homeDir', width: 120, sortable: false}
+            {label: '安装路径', name: 'homeDir', width: 100, sortable: false},
+            {label: '权重', name: 'weight', width: 30, sortable: false}
         ],
         viewrecords: true,
         height: 385,
@@ -72,7 +73,8 @@ var vm = new Vue({
                 ip: "127.0.0.1",
                 jmeterPort: 1099,
                 sshPort: 22,
-                homeDir: "/home/apache-jmeter-4.0"
+                homeDir: "/home/apache-jmeter-4.0",
+                weight: "100"
             };
         },
         update: function () {
@@ -156,6 +158,29 @@ var vm = new Vue({
                 }
             });
         },
+        batchUpdateStatusForce: function (value) {
+            var slaveIds = getSelectedRows();
+            if (slaveIds == null) {
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: baseURL + "test/stressSlave/batchUpdateStatusForce",
+                // contentType: "application/json",
+                // data: JSON.stringify(postData),
+                data: {"slaveIds": slaveIds, "status": value},
+                success: function (r) {
+                    if (r.code == 0) {
+                        alert('操作成功', function () {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
         reload: function (event) {
             vm.showList = true;
             var page = $("#jqGrid").jqGrid('getGridParam', 'page');
@@ -176,7 +201,7 @@ var vm = new Vue({
             }
 
             if (isBlank(vm.stressTestSlave.jmeterPort)) {
-                alert("节点端口不能为空");
+                alert("节点Jmeter端口不能为空");
                 return true;
             }
 
@@ -191,17 +216,22 @@ var vm = new Vue({
             }
 
             if (!isDigits(vm.stressTestSlave.jmeterPort)) {
-                alert("端口号不合法!");
+                alert("节点Jmeter端口号不合法!");
                 return true;
             }
 
             if (isBlank(vm.stressTestSlave.sshPort)) {
-                alert("节点端口不能为空");
+                alert("节点ssh端口不能为空");
                 return true;
             }
 
             if (!isDigits(vm.stressTestSlave.sshPort)) {
-                alert("端口号不合法!");
+                alert("节点ssh端口号不合法!");
+                return true;
+            }
+
+            if (!isDigits(vm.stressTestSlave.weight)) {
+                alert("权重输入不合法，请输入1-99999的整数!");
                 return true;
             }
         }
