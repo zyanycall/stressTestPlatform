@@ -64,9 +64,10 @@ public class StressTestUtils {
     public static final Integer NO_NEED_DEBUG = 0;
     public static final Integer NEED_DEBUG = 1;
 
-    //0：禁用  1：启用
+    //0：禁用  1：启用  2：进行中
     public static final Integer DISABLE = 0;
     public static final Integer ENABLE = 1;
+    public static final Integer PROGRESSING = 2;
 
     /**
      * 针对每一个fileId，存储一份

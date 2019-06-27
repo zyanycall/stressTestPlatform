@@ -103,7 +103,10 @@ public class StressTestSlaveController {
     @RequiresPermissions("test:stress:slaveStatusUpdate")
     public R batchUpdateStatus(@RequestParam(value = "slaveIds[]") List<Long> slaveIds,
                                @RequestParam(value = "status") Integer status) {
-        stressTestSlaveService.updateBatchStatus(slaveIds, status);
+        for (Long slaveId : slaveIds) {
+            stressTestSlaveService.updateBatchStatus(slaveId, status);
+        }
+
         return R.ok();
     }
 

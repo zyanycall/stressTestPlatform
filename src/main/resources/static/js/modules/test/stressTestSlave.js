@@ -16,6 +16,8 @@ $(function () {
                     return '<span class="label label-danger">禁用</span>';
                 } else if (value === 1) {
                     return '<span class="label label-success">启用</span>';
+                } else if (value === 2) {
+                    return '<span class="label label-warning">正在执行</span>';
                 }
             }
             },
@@ -149,7 +151,7 @@ var vm = new Vue({
                 data: {"slaveIds": slaveIds, "status": value},
                 success: function (r) {
                     if (r.code == 0) {
-                        alert('操作成功', function () {
+                        alert('开始执行', function () {
                             vm.reload();
                         });
                     } else {
@@ -172,7 +174,7 @@ var vm = new Vue({
                 data: {"slaveIds": slaveIds, "status": value},
                 success: function (r) {
                     if (r.code == 0) {
-                        alert('操作成功', function () {
+                        alert('开始执行', function () {
                             vm.reload();
                         });
                     } else {
