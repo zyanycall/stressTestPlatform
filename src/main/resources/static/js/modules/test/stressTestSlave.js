@@ -8,7 +8,7 @@ $(function () {
             {label: 'IP地址', name: 'ip', width: 50, sortable: false},
             {label: 'Jmeter端口', name: 'jmeterPort', width: 30, sortable: false},
             {label: '用户名', name: 'userName', width: 30, sortable: false},
-            {label: '密码', name: 'passwd', width: 50, sortable: false},
+            {label: '密码', name: 'passwd', width: 50, sortable: false, hidden: true},
             {label: 'ssh端口', name: 'sshPort', width: 30, sortable: false},
             {
                 label: '状态', name: 'status', width: 30, formatter: function (value, options, row) {
