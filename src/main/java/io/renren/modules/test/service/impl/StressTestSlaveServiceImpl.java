@@ -87,7 +87,13 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
             slave.setStatus(StressTestUtils.PROGRESSING);
             update(slave);
 
-            runOrDownSlave(slave, status);
+            try {
+                runOrDownSlave(slave, status);
+            } catch (RRException e) {
+                slave.setStatus(StressTestUtils.RUN_ERROR);
+                update(slave);
+                throw e;
+            }
         }
 
         //更新数据库

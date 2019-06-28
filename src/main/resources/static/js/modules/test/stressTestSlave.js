@@ -18,6 +18,8 @@ $(function () {
                     return '<span class="label label-success">启用</span>';
                 } else if (value === 2) {
                     return '<span class="label label-warning">正在执行</span>';
+                } else if (value === 3) {
+                    return '<span class="label label-danger">出现异常</span>';
                 }
             }
             },
