@@ -391,7 +391,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         }
 
         if (StringUtils.isNotEmpty(slaveStr)) {
-            return "分布式压测开始！节点机为：" + slaveStr;
+            return "分布式压测开始！节点机为：" + slaveStr + " 共 " + slaveStr.split(",").length + " 个节点";
         }
         return "master主机压测开始！";
     }
