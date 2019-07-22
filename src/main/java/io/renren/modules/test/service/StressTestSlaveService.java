@@ -50,4 +50,9 @@ public interface StressTestSlaveService {
 	 * 强制批量更新状态
 	 */
 	void updateBatchStatusForce(List<Long> slaveIds, Integer status);
+
+	/**
+	 * 重启节点
+	 */
+	void restartSingle(Long slaveId);
 }

@@ -197,7 +197,20 @@ public class JmeterStatEntity {
 
     public Map<String, String> getThreadCountsMap() {
         if (jmeterRunEntity != null) {
-            threadCountsMap.put("Active", String.valueOf(jmeterRunEntity.getNumberOfActiveThreads()));
+            Map<String, Integer> threadsCountMap = jmeterRunEntity.getNumberOfActiveThreads();
+            int active = threadsCountMap.get(JmeterRunEntity.ACTIVE_THREADS);
+            int started = threadsCountMap.get(JmeterRunEntity.STARTED_THREADS);
+            int finished = threadsCountMap.get(JmeterRunEntity.FINISHED_THREADS);
+
+            threadCountsMap.put("Active", String.valueOf(active));
+
+            if (started > 0) {
+                threadCountsMap.put("Started", String.valueOf(started));
+            }
+            if (finished > 0) {
+                threadCountsMap.put("Finished", String.valueOf(finished));
+            }
+
         }
         return threadCountsMap;
     }

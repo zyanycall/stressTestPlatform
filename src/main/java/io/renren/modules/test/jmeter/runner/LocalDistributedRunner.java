@@ -24,6 +24,7 @@ package io.renren.modules.test.jmeter.runner;
 import org.apache.jmeter.engine.ClientJMeterEngine;
 import org.apache.jmeter.engine.JMeterEngine;
 import org.apache.jmeter.engine.JMeterEngineException;
+import org.apache.jmeter.engine.TreeCloner;
 import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
@@ -39,12 +40,11 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 /**
- *
  * 这个类来自Jmeter4.0，所以如果未来高版本要求需要修改此类。
  * 此类是为了增加一个需求：按照分布式的节点机的权重来配比压力负载。
  * 因为默认的Jmeter是每一个负载机都使用相同的脚本，相同的压力，这和实际情况并不相符。
  * 当前是压测平台需要使用这个功能，如果未来Jmeter已经提供类似方案，可以另行借鉴。
- *
+ * <p>
  * This class serves all responsibility of starting and stopping distributed tests.
  * It was refactored from JMeter and RemoteStart classes to unify retry behavior.
  *
@@ -105,27 +105,37 @@ public class LocalDistributedRunner {
                 // 在进程内存内把HashTree即脚本文件的内容修改，主要改两部分，线程数和加载虚拟用户数用时，都是按照比例增加或者缩减。
                 // 将脚本内所有的线程组都要修改。
                 Integer weight = addrWeight.get(address);
-                if (weight != null && weight > 0 && weight != 100){
-                    for (HashTree item : tree.values()) {
+                // 需要将原始的tree clone，因为可能会存在多个分布式节点权重不一样的情况。
+                HashTree treeClone = null;
+
+                if (weight != null && weight > 0 && weight != 100) {
+
+                    // 需要时再clone，clone的消耗会稍微多一些
+                    TreeCloner cloner = new TreeCloner(false);
+                    tree.traverse(cloner);
+                    treeClone =  cloner.getClonedTree();
+
+                    for (HashTree item : treeClone.values()) {
                         Set treeKeys = item.keySet();
                         for (Object key : treeKeys) {
                             if (key instanceof ThreadGroup) {
-                                int originThreadNum = Integer.parseInt(((ThreadGroup)key).getPropertyAsString(ThreadGroup.NUM_THREADS));
+                                int originThreadNum = Integer.parseInt(((ThreadGroup) key).getPropertyAsString(ThreadGroup.NUM_THREADS));
                                 // 假如脚本内原来虚拟用户数是100，权重是90，则脚本的虚拟用户数要修改为90，加载用时要修改为原来的90%。
                                 // 修改的数值向上取整（避免为0的情况）。
                                 int threadNumFix = (int) Math.ceil(originThreadNum * weight / 100d);
-                                ((ThreadGroup)key).setProperty(ThreadGroup.NUM_THREADS, ""+threadNumFix);
+                                ((ThreadGroup) key).setProperty(ThreadGroup.NUM_THREADS, "" + threadNumFix);
 
                                 // 修改加载用户数的用时
-                                int originRampTime = Integer.parseInt(((ThreadGroup)key).getPropertyAsString(ThreadGroup.RAMP_TIME));
+                                int originRampTime = Integer.parseInt(((ThreadGroup) key).getPropertyAsString(ThreadGroup.RAMP_TIME));
                                 int rampTimeFix = (int) Math.ceil(originRampTime * weight / 100d);
-                                ((ThreadGroup)key).setProperty(ThreadGroup.RAMP_TIME, ""+rampTimeFix);
+                                ((ThreadGroup) key).setProperty(ThreadGroup.RAMP_TIME, "" + rampTimeFix);
                             }
                         }
                     }
                 }
-                // zyanycall add end
-                JMeterEngine engine = getClientEngine(address.trim(), tree);
+                JMeterEngine engine = getClientEngine(address.trim(), treeClone == null ? tree : treeClone);
+                // zyanycall fix end
+
                 if (engine != null) {
                     engines.put(address, engine);
                     addrs.remove(address);
@@ -264,8 +274,8 @@ public class LocalDistributedRunner {
      *
      * @param address address for engine
      * @return engine instance
-     * @throws RemoteException if registry can't be contacted
-     * @throws NotBoundException when name for address can't be found
+     * @throws RemoteException       if registry can't be contacted
+     * @throws NotBoundException     when name for address can't be found
      * @throws MalformedURLException when address can't be converted to valid URL
      */
     protected JMeterEngine createEngine(String address) throws RemoteException, NotBoundException, MalformedURLException {

@@ -185,6 +185,29 @@ var vm = new Vue({
                 }
             });
         },
+        batchRestart: function () {
+            var slaveIds = getSelectedRows();
+            if (slaveIds == null) {
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: baseURL + "test/stressSlave/batchRestart",
+                // contentType: "application/json",
+                // data: JSON.stringify(postData),
+                data: {"slaveIds": slaveIds},
+                success: function (r) {
+                    if (r.code == 0) {
+                        alert('开始执行', function () {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
         reload: function (event) {
             vm.showList = true;
             var page = $("#jqGrid").jqGrid('getGridParam', 'page');

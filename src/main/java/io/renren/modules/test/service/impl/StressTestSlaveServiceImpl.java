@@ -58,6 +58,40 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
     }
 
     /**
+     * 重启节点
+     */
+    @Override
+    @Async("asyncServiceExecutor")
+    public void restartSingle(Long slaveId) {
+        StressTestSlaveEntity slave = queryObject(slaveId);
+
+        // 跳过本机节点 和 已经禁用的节点
+        if (!"127.0.0.1".equals(slave.getIp().trim())
+                && !StressTestUtils.DISABLE.equals(slave.getStatus())) {
+            //更新数据库为进行中
+            slave.setStatus(StressTestUtils.PROGRESSING);
+            update(slave);
+
+            try {
+                runOrDownSlave(slave, StressTestUtils.DISABLE);
+                //更新数据库为已经禁用
+                slave.setStatus(StressTestUtils.DISABLE);
+                update(slave);
+
+                runOrDownSlave(slave, StressTestUtils.ENABLE);
+                //更新数据库为已经启用
+                slave.setStatus(StressTestUtils.ENABLE);
+                update(slave);
+
+            } catch (RRException e) {
+                slave.setStatus(StressTestUtils.RUN_ERROR);
+                update(slave);
+                throw e;
+            }
+        }
+    }
+
+    /**
      * 批量强制切换节点的状态：仅更新数据库字段
      */
     @Override
@@ -140,6 +174,9 @@ public class StressTestSlaveServiceImpl implements StressTestSlaveService {
         if (StressTestUtils.DISABLE.equals(status)) {
             //禁用远程节点，当前是直接kill掉
             //kill掉就不用判断结果了，不抛异常即OK
+            //考虑到网络的操作容易失败，执行2次kill
+            ssh2Util.runCommand("ps -efww|grep -w 'jmeter-server'|grep -v grep|cut -c 9-18|xargs kill -9");
+            stressTestUtils.pause(2000);
             ssh2Util.runCommand("ps -efww|grep -w 'jmeter-server'|grep -v grep|cut -c 9-18|xargs kill -9");
         }
     }

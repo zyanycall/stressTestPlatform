@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import static io.renren.common.utils.ConfigConstant.OS_NAME_LC;
 
@@ -337,4 +338,13 @@ public class StressTestUtils {
             throw new RRException("删除测试报告上级文件夹异常失败", e);
         }
     }
+
+    public void pause(long ms){
+        try {
+            TimeUnit.MILLISECONDS.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
 }

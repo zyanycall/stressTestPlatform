@@ -122,6 +122,18 @@ public class StressTestSlaveController {
         return R.ok();
     }
 
+    /**
+     * 重启已经启动的性能测试分布式节点（停止状态的分布式节点不变）
+     */
+    @SysLog("重启已经启动的性能测试分布式节点")
+    @RequestMapping("/batchRestart")
+    @RequiresPermissions("test:stress:slaveRestart")
+    public R batchRestart(@RequestParam(value = "slaveIds[]") List<Long> slaveIds) {
 
+        for (Long slaveId : slaveIds) {
+            stressTestSlaveService.restartSingle(slaveId);
+        }
+        return R.ok();
+    }
 
 }
