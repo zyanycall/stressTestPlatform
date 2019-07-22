@@ -27,7 +27,7 @@ $(function () {
             {label: '权重', name: 'weight', width: 30, sortable: false}
         ],
         viewrecords: true,
-        height: 385,
+        height: $(window).height() - 150,
         rowNum: 50,
         rowList: [10, 30, 50, 100, 200],
         rownumbers: true,

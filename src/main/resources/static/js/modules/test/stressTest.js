@@ -13,7 +13,7 @@ $(function () {
             { label: '备注', name: 'remark', sortable: false, width: 110 }
         ],
         viewrecords: true,
-        height: 385,
+        height: $(window).height() - 150,
         rowNum: 50,
         rowList: [10, 30, 50, 100, 200],
         rownumbers: true,

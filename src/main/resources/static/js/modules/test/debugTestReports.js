@@ -46,7 +46,7 @@ $(function () {
             // { label: '更新时间', name: 'updateTime', width: 80 }
         ],
         viewrecords: true,
-        height: 385,
+        height: $(window).height() - 150,
         rowNum: 50,
         rowList: [10, 30, 50, 100, 200],
         rownumbers: true,
