@@ -358,6 +358,8 @@ var errorPercentageDataObj = {};
 var errorPercentageLegendData = [];
 var threadCountsDataObj = {};
 var threadCountsLegendData = [];
+var totalCountsDataObj = {};
+var totalCountsLegendData = [];
 var xAxisData = [];
 var fileIdData;
 
@@ -375,8 +377,8 @@ function startInterval(fileId) {
             //     return;
             // }
 
-            // 如果已经执行结束，则不再刷新前端
-            if (r.statInfo.runStatus === 2) {
+            // 如果不是正在执行，则不再刷新前端
+            if (r.statInfo.runStatus !== 1) {
                 return;
             }
 
@@ -386,15 +388,17 @@ function startInterval(fileId) {
             var successPercentageMap = r.statInfo.successPercentageMap;
             var errorPercentageMap = r.statInfo.errorPercentageMap;
             var threadCountsMap = r.statInfo.threadCountsMap;
+            var totalCountsMap = r.statInfo.totalCountsMap;
             xAxisData.push(new Date().toLocaleTimeString());
 
-            var responseTimesEChartOption = getOption(responseTimeMap, responseTimeLegendData, responseTimeDataObj, null);
-            var getThroughputMapOption = getOption(throughputMap, throughputLegendData, throughputDataObj, null);
-            var networkSentMapOption = getOption(networkSentMap, networkSentLegendData, networkSentDataObj, 'sent');
-            var networkReceiveMapOption = getOption(networkReceiveMap, networkReceiveLegendData, networkReceiveDataObj, 'received');
-            var successPercentageMapOption = getOption(successPercentageMap, successPercentageLegendData, successPercentageDataObj, 'successPercentage');
-            var errorPercentageMapOption = getOption(errorPercentageMap, errorPercentageLegendData, errorPercentageDataObj, null);
-            var threadCountsMapOption = getOption(threadCountsMap, threadCountsLegendData, threadCountsDataObj, null);
+            var responseTimesEChartOption = getOptionLine(responseTimeMap, responseTimeLegendData, responseTimeDataObj, null);
+            var getThroughputMapOption = getOptionLine(throughputMap, throughputLegendData, throughputDataObj, null);
+            var networkSentMapOption = getOptionLine(networkSentMap, networkSentLegendData, networkSentDataObj, 'sent');
+            var networkReceiveMapOption = getOptionLine(networkReceiveMap, networkReceiveLegendData, networkReceiveDataObj, 'received');
+            var successPercentageMapOption = getOptionLine(successPercentageMap, successPercentageLegendData, successPercentageDataObj, 'successPercentage');
+            var errorPercentageMapOption = getOptionLine(errorPercentageMap, errorPercentageLegendData, errorPercentageDataObj, null);
+            var threadCountsMapOption = getOptionLine(threadCountsMap, threadCountsLegendData, threadCountsDataObj, null);
+            var totalCountsMapOption = getOptionPie(totalCountsMap, totalCountsLegendData, totalCountsDataObj, null);
 
             responseTimesEChart.setOption(responseTimesEChartOption);
             throughputEChart.setOption(getThroughputMapOption);
@@ -403,6 +407,7 @@ function startInterval(fileId) {
             successPercentageEChart.setOption(successPercentageMapOption);
             errorPercentageEChart.setOption(errorPercentageMapOption);
             threadCountsEChart.setOption(threadCountsMapOption);
+            totalCountsEChart.setOption(totalCountsMapOption);
         });
     }, 2000);
 }
@@ -429,19 +434,22 @@ function clearEcharts() {
     errorPercentageLegendData = [];
     threadCountsDataObj = {};
     threadCountsLegendData = [];
+    totalCountsDataObj = {};
+    totalCountsLegendData = [];
     xAxisData = [];
 
     // 清空数据
-    responseTimesEChart.setOption(option, true);
-    throughputEChart.setOption(option, true);
-    networkSentEChart.setOption(option, true);
-    networkReceivedEChart.setOption(option, true);
-    successPercentageEChart.setOption(option, true);
-    errorPercentageEChart.setOption(option, true);
-    threadCountsEChart.setOption(option, true);
+    responseTimesEChart.setOption(optionLine, true);
+    throughputEChart.setOption(optionLine, true);
+    networkSentEChart.setOption(optionLine, true);
+    networkReceivedEChart.setOption(optionLine, true);
+    successPercentageEChart.setOption(optionLine, true);
+    errorPercentageEChart.setOption(optionLine, true);
+    threadCountsEChart.setOption(optionLine, true);
+    totalCountsEChart.setOption(optionPie, true);
 }
 
-function getOption(map, legendData, dataObj, areaStyle) {
+function getOptionLine(map, legendData, dataObj, areaStyle) {
     for (var runLabel in map) {
         var runValue = map[runLabel];
         if (legendData.indexOf(runLabel) == -1) {
@@ -485,6 +493,56 @@ function getOption(map, legendData, dataObj, areaStyle) {
     return returnOption;
 }
 
+
+function getOptionPie(map, legendData, dataObj, areaStyle) {
+    // runLabel是图形的题标内容，如[某某成功总数，某某失败总数]
+    // dataObj是实际的内容值，在折线图是 内容标题：内容值，在饼图是 value：内容值，name：内容标题
+    // areaStyle 是用来区别areaChart  和 普通的chart，值非空即说明是areaChart
+    for (var runLabel in map) {
+        var runValue = map[runLabel];
+        if (legendData.indexOf(runLabel) == -1) {
+            legendData.push(runLabel);
+        }
+        dataObj[runLabel] = runValue;
+    }
+
+    var returnOption = {
+        legend: {
+            orient: 'vertical',
+            left: 'left',
+            data: legendData
+        },
+        series: [
+            {
+                name: '请求数',
+                type: 'pie',
+                radius: '55%',
+                center: ['50%', '60%'],
+                data: (function () {
+                    var data = [];
+                    for (var runLabel in map) {
+                        var item = {
+                            name: runLabel,
+                            value: dataObj[runLabel]
+                        }
+                        data.push(item);
+                    }
+                    return data;
+                })(),
+                itemStyle: {
+                    emphasis: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }
+        ]
+    };
+    return returnOption;
+}
+
+
 setEChartSize();
 var responseTimesEChart = echarts.init(document.getElementById('responseTimesChart'), 'shine');
 var throughputEChart = echarts.init(document.getElementById('throughputChart'), 'shine');
@@ -493,6 +551,7 @@ var networkReceivedEChart = echarts.init(document.getElementById('networkReceive
 var successPercentageEChart = echarts.init(document.getElementById('successPercentageChart'), 'shine');
 var errorPercentageEChart = echarts.init(document.getElementById('errorPercentageChart'), 'shine');
 var threadCountsEChart = echarts.init(document.getElementById('threadCountsChart'), 'shine');
+var totalCountsEChart = echarts.init(document.getElementById('totalCountsChart'), 'shine');
 
 //用于使chart自适应高度和宽度
 window.onresize = function () {
@@ -504,6 +563,7 @@ window.onresize = function () {
     successPercentageEChart.resize();
     errorPercentageEChart.resize();
     threadCountsEChart.resize();
+    totalCountsEChart.resize();
 };
 
 function setEChartSize() {
@@ -515,10 +575,11 @@ function setEChartSize() {
     $("#successPercentageChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
     $("#errorPercentageChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
     $("#threadCountsChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
+    $("#totalCountsChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
 }
 
-// 指定图表的配置项和数据
-var option = {
+// 指定折线图表的配置项和数据
+var optionLine = {
     tooltip: {
         trigger: 'axis'
     },
@@ -580,11 +641,39 @@ var option = {
     ]
 };
 
+
+// 指定饼图的配置项和数据
+var optionPie = {
+    tooltip: {
+        trigger: 'item',
+        formatter: "{a} <br/>{b} : {c} ({d}%)"
+    },
+    legend: {},
+    series : [
+        {
+            name: '请求总数',
+            type: 'pie',
+            radius : '55%',
+            center: ['50%', '60%'],
+            data:[],
+            itemStyle: {
+                emphasis: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }
+    ]
+};
+
+
 // 使用刚指定的配置项和数据显示图表。
-responseTimesEChart.setOption(option);
-throughputEChart.setOption(option);
-networkSentEChart.setOption(option);
-networkReceivedEChart.setOption(option);
-successPercentageEChart.setOption(option);
-errorPercentageEChart.setOption(option);
-threadCountsEChart.setOption(option);
+responseTimesEChart.setOption(optionLine);
+throughputEChart.setOption(optionLine);
+networkSentEChart.setOption(optionLine);
+networkReceivedEChart.setOption(optionLine);
+successPercentageEChart.setOption(optionLine);
+errorPercentageEChart.setOption(optionLine);
+threadCountsEChart.setOption(optionLine);
+totalCountsEChart.setOption(optionPie);
