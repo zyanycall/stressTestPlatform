@@ -61,6 +61,11 @@ public class JmeterStatEntity {
     private Map<String, String> threadCountsMap = new HashMap<>();
 
     /**
+     * 统计请求总数的监控数据，返回每一个请求的总数量。
+     */
+    private Map<String, String> totalCountsMap = new HashMap<>();
+
+    /**
      * 当前是否正在运行
      */
     private Integer runStatus = StressTestUtils.RUNNING;
@@ -83,6 +88,9 @@ public class JmeterStatEntity {
         jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);
         if (jmeterRunEntity != null) {
             runStatus = jmeterRunEntity.getRunStatus();
+        } else {
+            // jmeterRunEntity 为null 说明是初始化状态，没有执行过。
+            runStatus = StressTestUtils.INITIAL;
         }
     }
 
@@ -217,6 +225,21 @@ public class JmeterStatEntity {
 
     public void setThreadCountsMap(Map<String, String> threadCountsMap) {
         this.threadCountsMap = threadCountsMap;
+    }
+
+    public Map<String, String> getTotalCountsMap() {
+        if (statMap != null) {
+            for (String key : statMap.keySet()) {
+                SamplingStatCalculator calculator = statMap.get(key);
+                long totalCount = calculator.getCount();
+                totalCountsMap.put(key + "_总请求数", String.valueOf(totalCount));
+            }
+        }
+        return totalCountsMap;
+    }
+
+    public void setTotalCountsMap(Map<String, String> totalCountsMap) {
+        this.totalCountsMap = totalCountsMap;
     }
 
     public Integer getRunStatus() {

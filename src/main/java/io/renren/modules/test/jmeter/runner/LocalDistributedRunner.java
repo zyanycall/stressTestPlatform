@@ -111,9 +111,10 @@ public class LocalDistributedRunner {
                 if (weight != null && weight > 0 && weight != 100) {
 
                     // 需要时再clone，clone的消耗会稍微多一些
+                    // false 是如果 test Element 的类型node ，也会clone。
                     TreeCloner cloner = new TreeCloner(false);
                     tree.traverse(cloner);
-                    treeClone =  cloner.getClonedTree();
+                    treeClone = cloner.getClonedTree();
 
                     for (HashTree item : treeClone.values()) {
                         Set treeKeys = item.keySet();

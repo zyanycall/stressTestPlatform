@@ -516,8 +516,8 @@ function getOptionPie(map, legendData, dataObj, areaStyle) {
             {
                 name: '请求数',
                 type: 'pie',
-                radius: '55%',
-                center: ['50%', '60%'],
+                radius: '65%',
+                center: ['50%', '50%'],
                 data: (function () {
                     var data = [];
                     for (var runLabel in map) {
@@ -653,8 +653,8 @@ var optionPie = {
         {
             name: '请求总数',
             type: 'pie',
-            radius : '55%',
-            center: ['50%', '60%'],
+            radius : '65%',
+            center: ['50%', '50%'],
             data:[],
             itemStyle: {
                 emphasis: {
