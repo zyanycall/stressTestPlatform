@@ -1,10 +1,13 @@
 **项目说明** 
 - 本项目基于renren-fast Java开发平台开发，内核基于Jmeter-Api和Jmeter脚本实现在线性能压测。
-<br> 
- 
+
+**插播广告：**
+
+如果有需要，请帮忙支持一下：https://www.jianshu.com/p/cd6388627f64
+互帮互助，感谢。
 
 
-**具有如下特点** 
+**平台特点** 
 - 友好的代码结构及注释，便于阅读及二次开发
 - 实现前后端分离，通过token进行数据交互，前端再也不用关注后端技术
 - 灵活的权限控制，可控制到页面或按钮，满足绝大部分的权限需求
@@ -81,15 +84,10 @@ renren-fast
  **tomcat部署**
 - 修改application.yml，修改profiles，指定执行环境如线下环境pro
 - 修改application-pro.yml，更新线下环境的MySQL账号和密码
+- 修改MySQL中sys_config表中Jmeter专属配置项，更新为本地地址
 - 通过maven命令打包war包：mvn clean package -f pom-war.xml
 - 将target目录下，打包好的war包保存到tomcat的webapps目录下
 - 通过tomcat的bin目录下的startup命令，启动tomcat
 - 访问tomcat路径，如：http://线下环境ip:8080/renren-fast
 - 账号密码：admin/admin
 
-<br> 
-
-如果有需要，请帮忙支持一下：https://www.jianshu.com/p/cd6388627f64
-互帮互助，感谢。
-
-<br> 
