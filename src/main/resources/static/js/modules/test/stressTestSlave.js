@@ -24,7 +24,7 @@ $(function () {
             }
             },
             {label: '安装路径', name: 'homeDir', width: 100, sortable: false},
-            {label: '权重', name: 'weight', width: 30, sortable: false}
+            {label: '权重(%)', name: 'weight', width: 30, sortable: false}
         ],
         viewrecords: true,
         height: $(window).height() - 150,
