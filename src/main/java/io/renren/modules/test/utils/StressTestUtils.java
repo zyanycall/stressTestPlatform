@@ -130,6 +130,13 @@ public class StressTestUtils {
      */
     public final static String MASTER_JMETER_REPLACE_FILE_KEY = "MASTER_JMETER_REPLACE_FILE_KEY";
 
+    /**
+     * 脚本的默认最长定时执行时间，是否开启，默认是为true，开启。
+     * 具体的执行时间，由脚本文件字段来配置。单位是秒，对应的是Jmeter脚本的duration字段。
+     * 该功能添加的原因是应对脚本执行，但是忘记了关闭的情况，这样会导致浪费系统资源，尤其是线上操作尤其危险。
+     */
+    public final static String SCRIPT_SCHEDULER_DURATION_KEY = "SCRIPT_SCHEDULER_DURATION_KEY";
+
     public static String getJmeterHome() {
         return sysConfigService.getValue(MASTER_JMETER_HOME_KEY);
     }
@@ -139,15 +146,19 @@ public class StressTestUtils {
     }
 
     public boolean isUseJmeterScript() {
-        return Boolean.valueOf(sysConfigService.getValue(MASTER_JMETER_USE_SCRIPT_KEY));
+        return Boolean.parseBoolean(sysConfigService.getValue(MASTER_JMETER_USE_SCRIPT_KEY));
     }
 
     public boolean isReplaceFile() {
-        return Boolean.valueOf(sysConfigService.getValue(MASTER_JMETER_REPLACE_FILE_KEY));
+        return Boolean.parseBoolean(sysConfigService.getValue(MASTER_JMETER_REPLACE_FILE_KEY));
     }
 
     public boolean isMasterGenerateReport() {
-        return Boolean.valueOf(sysConfigService.getValue(MASTER_JMETER_GENERATE_REPORT_KEY));
+        return Boolean.parseBoolean(sysConfigService.getValue(MASTER_JMETER_GENERATE_REPORT_KEY));
+    }
+
+    public boolean isScriptSchedulerDurationEffect() {
+        return Boolean.parseBoolean(sysConfigService.getValue(SCRIPT_SCHEDULER_DURATION_KEY));
     }
 
     public static String getSuffix4() {

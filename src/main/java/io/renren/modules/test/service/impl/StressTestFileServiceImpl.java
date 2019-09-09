@@ -11,7 +11,6 @@ import io.renren.modules.test.jmeter.JmeterResultCollector;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
 import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.jmeter.engine.LocalStandardJMeterEngine;
-import io.renren.modules.test.jmeter.fix.JavassistEngine;
 import io.renren.modules.test.jmeter.runner.LocalDistributedRunner;
 import io.renren.modules.test.service.StressTestFileService;
 import io.renren.modules.test.utils.SSH2Utils;
@@ -43,8 +42,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -54,31 +51,10 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Autowired
-    private StressTestFileDao stressTestFileDao;
-
-    @Autowired
-    private StressTestReportsDao stressTestReportsDao;
-
-    @Autowired
-    private DebugTestReportsDao debugTestReportsDao;
-
-    @Autowired
-    private StressTestSlaveDao stressTestSlaveDao;
-
-    @Autowired
-    private StressTestDao stressTestDao;
-
-    @Autowired
-    private StressTestUtils stressTestUtils;
-
     private static final String JAVA_CLASS_PATH = "java.class.path";
     private static final String CLASSPATH_SEPARATOR = File.pathSeparator;
-
     private static final String OS_NAME = System.getProperty("os.name");// $NON-NLS-1$
-
     private static final String OS_NAME_LC = OS_NAME.toLowerCase(java.util.Locale.ENGLISH);
-
     private static final String JMETER_INSTALLATION_DIRECTORY;
 
     /**
@@ -157,6 +133,23 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 //        new JavassistEngine().fixJmeterStandrdEngine();
     }
 
+    @Autowired
+    private StressTestFileDao stressTestFileDao;
+
+    @Autowired
+    private StressTestReportsDao stressTestReportsDao;
+
+    @Autowired
+    private DebugTestReportsDao debugTestReportsDao;
+
+    @Autowired
+    private StressTestSlaveDao stressTestSlaveDao;
+
+    @Autowired
+    private StressTestDao stressTestDao;
+
+    @Autowired
+    private StressTestUtils stressTestUtils;
 
     @Override
     public StressTestFileEntity queryObject(Long fileId) {
@@ -256,6 +249,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         map.put("reportStatus", stressTestFile.getReportStatus());
         map.put("webchartStatus", stressTestFile.getWebchartStatus());
         map.put("debugStatus", stressTestFile.getDebugStatus());
+        map.put("duration", stressTestFile.getDuration());
         stressTestFileDao.updateStatusBatch(map);
     }
 
@@ -542,6 +536,8 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             }
             jmeterRunEntity.setFileAliaList(fileAliaList);
 
+            jmxTree = fixHashTreeDuration(jmxTree, stressTestFile);
+
             StressTestUtils.jMeterEntity4file.put(stressTestFile.getFileId(), jmeterRunEntity);
             if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
                 java.util.StringTokenizer st = new java.util.StringTokenizer(slaveStr, ",");//$NON-NLS-1$
@@ -574,7 +570,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 engine.runTest();
                 engines.add((JMeterEngine) engine);
             }
-
         } catch (IOException | JMeterEngineException e) {
             throw new RRException("本地执行启动脚本文件异常！", e);
         } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -600,29 +595,22 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     }
 
     /**
-     * 采用字节码修改的技术将Jmeter的源码StandardJMeterEngine修改了。
-     * 目的是让engine在停止的时候可以按需关闭文件流，而不是整体全部关闭。
-     * 由于新增的方法，所以采用反射的方式执行engine的runTest
-     * 此方法还没有通过全面测试，故还不会全面使用。
+     * 增加脚本默认执行时间的添加。
+     * 目的是避免脚本忘了停止，执行时间过长，造成灾难性后果。
      */
-    public Object engineRun(StressTestFileEntity stressTestFile, HashTree jmxTree) {
-        // 反射得到修改后的类，并将其值插入并修改
-        Class<?> clazz = JavassistEngine.engineClazz;
-        Object engine;
-        try {
-            engine = clazz.newInstance();
-            Method setFileM = engine.getClass().getMethod("setStressTestFile", new Class[]{StressTestFileEntity.class});
-            setFileM.invoke(engine, new Object[]{stressTestFile});
-
-            Method configureM = engine.getClass().getMethod("configure", new Class[]{HashTree.class});
-            configureM.invoke(engine, new Object[]{jmxTree});
-
-            Method runTestM = engine.getClass().getMethod("runTest", new Class[]{});
-            runTestM.invoke(engine, new Object[]{});
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            throw new RRException("本地执行启动脚本反射功能时异常！", e);
+    public HashTree fixHashTreeDuration(HashTree jmxTree, StressTestFileEntity stressTestFile) {
+        if (stressTestUtils.isScriptSchedulerDurationEffect() && stressTestFile.getDuration() > 0) {
+            for (HashTree item : jmxTree.values()) {
+                Set treeKeys = item.keySet();
+                for (Object key : treeKeys) {
+                    if (key instanceof ThreadGroup) {
+                        ((ThreadGroup) key).setProperty(ThreadGroup.SCHEDULER, true);
+                        ((ThreadGroup) key).setProperty(ThreadGroup.DURATION, stressTestFile.getDuration());
+                    }
+                }
+            }
         }
-        return engine;
+        return jmxTree;
     }
 
     /**

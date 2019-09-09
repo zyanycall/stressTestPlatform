@@ -57,7 +57,7 @@ $(function () {
             {
                 label: '调试',
                 name: 'debugStatus',
-                width: 40,
+                width: 30,
                 sortable: false,
                 formatter: function (value, options, row) {
                     if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
@@ -69,6 +69,12 @@ $(function () {
                         return '<span class="label label-danger">禁止</span>';
                     }
                 }
+            },
+            {
+                label: '持续时间',
+                name: 'duration',
+                width: 45,
+                sortable: false
             },
             {
                 label: '状态', name: 'status', width: 45, formatter: function (value, options, row) {
@@ -87,7 +93,7 @@ $(function () {
                 }
             },
             {
-                label: '执行操作', name: '', width: 95, sortable: false, formatter: function (value, options, row) {
+                label: '执行操作', name: '', width: 70, sortable: false, formatter: function (value, options, row) {
                     var btn = '';
                     if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                         btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
@@ -165,7 +171,7 @@ var vm = new Vue({
                 vm.stressTestFile.reportStatus = 0;
                 vm.stressTestFile.webchartStatus = 0;
                 vm.stressTestFile.debugStatus = 0;
-                // vm.stressTestFile.originName = null;
+                vm.stressTestFile.duration = 10800;
                 vm.stressTestFile.fileIdList = fileIds;
             } else {
                 var fileId = fileIds[0];

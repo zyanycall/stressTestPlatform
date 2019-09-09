@@ -399,6 +399,7 @@ CREATE TABLE `test_stress_case_file` (
   `report_status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：保存测试报告原始文件  1：不需要测试报告',
   `webchart_status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：需要前端监控  1：不需要前端监控',
   `debug_status` tinyint NOT NULL DEFAULT 0 COMMENT '状态  0：关闭debug  1：开始debug调试模式',
+  `duration` int NOT NULL DEFAULT 10800 COMMENT '期间，执行时间，单位秒，脚本执行多久停止，0代表永远执行',
   `add_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `add_by` bigint(20) COMMENT '提交用户id',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
@@ -470,6 +471,7 @@ INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('3',
 INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('4', 'MASTER_JMETER_USE_SCRIPT_KEY', 'false', '1', 'false:在服务器进程内启动Jmeter压测。true:启动Jmeter_home中的命令压测');
 INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('5', 'MASTER_JMETER_REPLACE_FILE_KEY', 'true', '1', '上传文件时，遇到同名文件是替换还是报错，默认是替换为true');
 INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('6', 'MASTER_JMETER_GENERATE_REPORT_KEY', 'true', '1', 'true:本地web程序进程生成测试报告，可以多线程并发生成。false:使用Jmeter_home中的命令生成测试报告。');
+INSERT INTO `sys_config` (`id`, `key`, `value`, `status`, `remark`) VALUES ('7', 'SCRIPT_SCHEDULER_DURATION_KEY', 'true', '1', 'true:脚本限时执行生效，具体时间由脚本单独配置，是默认值 false:取消脚本限时执行');
 
 
 -- 还没有完全实现的测试场景组装功能

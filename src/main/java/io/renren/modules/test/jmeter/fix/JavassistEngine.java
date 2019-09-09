@@ -1,7 +1,12 @@
 package io.renren.modules.test.jmeter.fix;
 
 import io.renren.common.exception.RRException;
+import io.renren.modules.test.entity.StressTestFileEntity;
 import org.apache.ibatis.javassist.*;
+import org.apache.jorphan.collections.HashTree;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * 字节码修改的技术，改变StandardJMeterEngine的字节码，相当于修改源码。
@@ -83,4 +88,31 @@ public class JavassistEngine {
             throw new RRException(e.getMessage(), e);
         }
     }
+
+    /**
+     * 采用字节码修改的技术将Jmeter的源码StandardJMeterEngine修改了。
+     * 目的是让engine在停止的时候可以按需关闭文件流，而不是整体全部关闭。
+     * 由于新增的方法，所以采用反射的方式执行engine的runTest
+     * 此方法还没有通过全面测试，故还不会全面使用。
+     */
+    public Object engineRun(StressTestFileEntity stressTestFile, HashTree jmxTree) {
+        // 反射得到修改后的类，并将其值插入并修改
+        Class<?> clazz = JavassistEngine.engineClazz;
+        Object engine;
+        try {
+            engine = clazz.newInstance();
+            Method setFileM = engine.getClass().getMethod("setStressTestFile", new Class[]{StressTestFileEntity.class});
+            setFileM.invoke(engine, new Object[]{stressTestFile});
+
+            Method configureM = engine.getClass().getMethod("configure", new Class[]{HashTree.class});
+            configureM.invoke(engine, new Object[]{jmxTree});
+
+            Method runTestM = engine.getClass().getMethod("runTest", new Class[]{});
+            runTestM.invoke(engine, new Object[]{});
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new RRException("本地执行启动脚本反射功能时异常！", e);
+        }
+        return engine;
+    }
+
 }

@@ -96,6 +96,7 @@
             <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
             <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
             <if test="debugStatus != null">`debug_status` = #{debugStatus},</if>
+            <if test="duration != null">`duration` = #{duration},</if>
             <if test="updateBy != null">`update_by` = #{updateBy}</if>
             <if test="addTime != null">`add_time` = #{addTime}</if>
         </set>
@@ -108,6 +109,7 @@
             <if test="reportStatus != null">`report_status` = #{reportStatus},</if>
             <if test="webchartStatus != null">`webchart_status` = #{webchartStatus},</if>
             <if test="debugStatus != null">`debug_status` = #{debugStatus},</if>
+            <if test="duration != null">`duration` = #{duration},</if>
             <if test="updateBy != null">`update_by` = #{updateBy}</if>
         </set>
         where file_id in
