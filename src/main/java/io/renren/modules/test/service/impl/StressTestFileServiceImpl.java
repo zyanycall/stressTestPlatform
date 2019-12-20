@@ -39,7 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
@@ -264,26 +263,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         Arrays.asList(fileIds).stream().forEach(fileId -> {
             StressTestFileEntity stressTestFile = queryObject((Long) fileId);
             String casePath = stressTestUtils.getCasePath();
-            String FilePath = casePath + File.separator + stressTestFile.getFileName();
+            String filePath = casePath + File.separator + stressTestFile.getFileName();
 
-            String jmxDir = FilePath.substring(0, FilePath.lastIndexOf("."));
-            File jmxDirFile = new File(jmxDir);
-            try {
-                FileUtils.forceDelete(new File(FilePath));
-            } catch (FileNotFoundException e) {
-                logger.error("要删除的文件找不到(删除成功)  " + e.getMessage());
-            } catch (IOException e) {
-                throw new RRException("删除文件异常失败", e);
-            }
-            try {
-                if (FileUtils.sizeOf(jmxDirFile) == 0L) {
-                    FileUtils.forceDelete(jmxDirFile);
-                }
-            } catch (FileNotFoundException | IllegalArgumentException e) {
-                logger.error("要删除的jmx文件夹找不到(删除成功)  " + e.getMessage());
-            } catch (IOException e) {
-                throw new RRException("删除jmx文件夹异常失败", e);
-            }
+            String jmxDir = filePath.substring(0, filePath.lastIndexOf("."));
+            FileUtils.deleteQuietly(new File(jmxDir));
+            FileUtils.deleteQuietly(new File(filePath));
 
             //删除缓存
             StressTestUtils.samplingStatCalculator4File.remove(fileId);

@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +26,7 @@ import static io.renren.common.utils.ConfigConstant.OS_NAME_LC;
 
 /**
  * 性能测试的工具类，同时用于读取配置文件。
- * 也可以将性能测试参数配置到系统参数配置中去。
+ * 配置文件在数据库中配置
  */
 //@ConfigurationProperties(prefix = "test.stress")
 @Component
@@ -43,6 +42,7 @@ public class StressTestUtils {
     public static final Integer RUNNING = 1;
     public static final Integer RUN_SUCCESS = 2;
     public static final Integer RUN_ERROR = 3;
+    public static final Integer NO_FILE = 4;
 
     /**
      * 是否需要测试报告的状态标识
@@ -337,20 +337,11 @@ public class StressTestUtils {
      * 如果删除的测试报告是测试脚本唯一的测试报告，则将目录也一并删除。
      */
     public void deleteJmxDir(String reportPath) {
-        try {
-            String jmxDir = reportPath.substring(0, reportPath.lastIndexOf(File.separator));
-            File jmxDirFile = new File(jmxDir);
-            if (FileUtils.sizeOf(jmxDirFile) == 0L) {
-                FileUtils.forceDelete(jmxDirFile);
-            }
-        } catch (FileNotFoundException | IllegalArgumentException e) {
-            logger.error("要删除的测试报告上级文件夹找不到(删除成功)  " + e.getMessage());
-        } catch (IOException e) {
-            throw new RRException("删除测试报告上级文件夹异常失败", e);
-        }
+        String jmxDir = reportPath.substring(0, reportPath.lastIndexOf(File.separator));
+        FileUtils.deleteQuietly(new File(jmxDir));
     }
 
-    public void pause(long ms){
+    public void pause(long ms) {
         try {
             TimeUnit.MILLISECONDS.sleep(ms);
         } catch (InterruptedException e) {

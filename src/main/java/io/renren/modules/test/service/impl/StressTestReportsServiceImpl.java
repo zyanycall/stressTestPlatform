@@ -11,11 +11,8 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
-import org.apache.jmeter.JMeter;
 import org.apache.jmeter.report.config.ConfigurationException;
 import org.apache.jmeter.report.dashboard.GenerationException;
-import org.apache.jmeter.report.dashboard.ReportGenerator;
-import org.apache.jmeter.util.JMeterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,13 +77,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             String csvPath = casePath + File.separator + reportName;
             //测试报告文件目录
             String reportPath = csvPath.substring(0, csvPath.lastIndexOf("."));
-            try {
-                FileUtils.forceDelete(new File(reportPath));
-            } catch (FileNotFoundException e) {
-                logger.error("要删除的测试报告文件夹找不到(删除成功)  " + e.getMessage());
-            } catch (IOException e) {
-                throw new RRException("删除测试报告文件夹异常失败", e);
-            }
+            FileUtils.deleteQuietly(new File(reportPath));
             deleteReportCSV(stressTestReport);
             deleteReportZip(stressTestReport);
             stressTestUtils.deleteJmxDir(reportPath);
@@ -115,13 +106,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         String csvPath = casePath + File.separator + reportName;
 
         // 为了FileNotFoundException，找不到说明已经删除
-        try {
-            FileUtils.forceDelete(new File(csvPath));
-        } catch (FileNotFoundException e) {
-            logger.error("要删除的测试报告来源文件找不到(删除成功)  " + e.getMessage());
-        } catch (IOException e) {
-            throw new RRException("删除测试报告来源文件异常失败", e);
-        }
+        FileUtils.deleteQuietly(new File(csvPath));
     }
 
     public void deleteReportZip(StressTestReportsEntity stressCaseReports) {
@@ -135,13 +120,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         String reportZipPath = reportPathDir + ".zip";
 
         // 为了FileNotFoundException，找不到说明已经删除
-        try {
-            FileUtils.forceDelete(new File(reportZipPath));
-        } catch (FileNotFoundException e) {
-            logger.error("要删除的测试报告zip文件找不到(删除成功)  " + e.getMessage());
-        } catch (IOException e) {
-            throw new RRException("删除测试报告zip文件异常失败", e);
-        }
+        FileUtils.deleteQuietly(new File(reportZipPath));
     }
 
     /**
@@ -216,8 +195,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
     @Async("asyncServiceExecutor")
     public void createReport(Long[] reportIds) {
         for (Long reportId : reportIds) {
-            StressTestReportsEntity stressTestReport = queryObject(reportId);
-            createReport(stressTestReport);
+            createReport(queryObject(reportId));
         }
     }
 
@@ -236,7 +214,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         String reportPathDir = csvPath.substring(0, csvPath.lastIndexOf("."));
 
         //修复csv文件
-        fixReportFile(csvPath);
+        fixReportFile(csvPath, stressTestReport);
 
         //设置开始执行命令生成报告
         stressTestReport.setStatus(StressTestUtils.RUNNING);
@@ -320,12 +298,14 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      *
      * @param fileName csv 文件
      */
-    public void fixReportFile(String fileName) {
+    public void fixReportFile(String fileName, StressTestReportsEntity stressTestReport) {
         // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
         // 如果是完整的，则直接跳出不执行删除操作。
         try {
             RandomAccessFile raf = new RandomAccessFile(fileName, "rw");
             if (raf.length() == 0L) {
+                stressTestReport.setStatus(StressTestUtils.NO_FILE);
+                update(stressTestReport);
                 logger.error("测试报告原始csv文件为空，可以删除！");
                 throw new RRException("测试报告原始文件找不到，请删除！");
             }
@@ -355,9 +335,13 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             //关闭回收
             raf.close();
         } catch (FileNotFoundException e) {
+            stressTestReport.setStatus(StressTestUtils.NO_FILE);
+            update(stressTestReport);
             logger.error("测试报告原始csv文件找不到！", e);
             throw new RRException("测试报告原始文件找不到！");
         } catch (IOException e) {
+            stressTestReport.setStatus(StressTestUtils.RUN_ERROR);
+            update(stressTestReport);
             logger.error("测试报告原始文件修复时，IO错误！", e);
             throw new RRException("测试报告原始文件修复时出错！");
         }

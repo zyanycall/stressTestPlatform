@@ -105,8 +105,8 @@ public class SSH2Utils {
 //            logger.error("ExitCode: " + sess.getExitStatus());
 
             //关闭session和connection
-            sess.close();
-            conn.close();
+//            sess.close();
+//            conn.close();
         } catch (Exception e) {
             logger.error("文件scp到数据服务器时发生异常", e);
         } finally {

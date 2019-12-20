@@ -77,14 +77,8 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
             String jtlPath = casePath + File.separator + reportName;
             //调试报告文件
             String reportPath = jtlPath.substring(0, jtlPath.lastIndexOf(".")) + ".html";
-            try {
-                //删除测试报告
-                FileUtils.forceDelete(new File(reportPath));
-            } catch (FileNotFoundException e) {
-                logger.error("要删除的测试报告文件找不到(删除成功)  " + e.getMessage());
-            } catch (IOException e) {
-                throw new RRException("删除测试报告文件异常失败", e);
-            }
+            //删除测试报告
+            FileUtils.deleteQuietly(new File(reportPath));
             deleteReportJTL(debugTestReport);
             stressTestUtils.deleteJmxDir(reportPath);
         });
@@ -115,13 +109,7 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
         String jtlPath = casePath + File.separator + reportName;
 
         // 为了FileNotFoundException，找不到说明已经删除
-        try {
-            FileUtils.forceDelete(new File(jtlPath));
-        } catch (FileNotFoundException e) {
-            logger.error("要删除的测试报告来源文件找不到(删除成功)  " + e.getMessage());
-        } catch (IOException e) {
-            throw new RRException("删除测试报告来源文件异常失败", e);
-        }
+        FileUtils.deleteQuietly(new File(jtlPath));
     }
 
     @Override
