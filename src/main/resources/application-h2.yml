@@ -1,0 +1,45 @@
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driverClassName: org.h2.Driver
+        druid:
+            first:  #数据源1
+                url: jdbc:h2:file:~/.h2/jmeterdb  #配置h2数据库连接地址
+                username: sa
+                password: sa
+            second:  #数据源2
+                url: jdbc:h2:file:~/.h2/jmeterdb  #配置h2数据库连接地址
+                username: sa
+                password: sa
+            initial-size: 10
+            max-active: 100
+            min-idle: 10
+            max-wait: 60000
+            pool-prepared-statements: true
+            max-pool-prepared-statement-per-connection-size: 20
+            time-between-eviction-runs-millis: 60000
+            min-evictable-idle-time-millis: 300000
+            validation-query: SELECT 1 FROM DUAL
+            test-while-idle: true
+            test-on-borrow: true
+            test-on-return: false
+            #            removeAbandoned: false
+            stat-view-servlet:
+                enabled: true
+                url-pattern: /druid/*
+                #login-username: admin
+                #login-password: admin
+            filter:
+                stat:
+                    log-slow-sql: true
+                    slow-sql-millis: 1000
+                    merge-sql: true
+                wall:
+                    config:
+                        multi-statement-allow: true
+    h2:
+        console:
+            settings:
+                web-allow-others: true #进行该配置后，h2 web consloe就可以在远程访问了。否则只能在本机访问。
+            path: /h2-console #进行该配置，你就可以通过YOUR_URL/h2-console访问h2 web consloe。YOUR_URL是你程序的访问URl。
+            enabled: true #进行该配置，程序开启时就会启动h2 web consloe。当然这是默认的，如果你不想在启动程序时启动h2 web consloe，那么就设置为false。
