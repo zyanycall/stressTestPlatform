@@ -33,7 +33,7 @@
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="del"><i class="fa fa-trash-o"></i>&nbsp;删除</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="stopAll"><i
                     class="fa fa-stop-circle"></i>&nbsp;全部停止</a>
-            <!--<a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="stopAllNow"><i class="fa fa-stop-circle"></i>&nbsp;全部立即停止</a>-->
+            <a v-if="hasPermission('test:stress')" class="btn btn-danger" @click="stopAllNow"><i class="fa fa-stop-circle"></i>&nbsp;强制停止</a>
             <!--&nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" value="返回"/>-->
             &nbsp;&nbsp;<input type="button" class="btn btn-success" @click="reload" value="刷新"/>
             <!--<a v-if="hasPermission('test:stress')" class="btn btn-danger" style="float:right;" href="stressTestReports.html">测试报告</a>-->

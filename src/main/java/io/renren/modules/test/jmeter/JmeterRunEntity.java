@@ -1,17 +1,13 @@
 package io.renren.modules.test.jmeter;
 
-import io.renren.common.exception.RRException;
 import io.renren.modules.test.entity.StressTestFileEntity;
 import io.renren.modules.test.entity.StressTestReportsEntity;
 import io.renren.modules.test.jmeter.engine.LocalStandardJMeterEngine;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.jmeter.engine.JMeterEngine;
-import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.threads.AbstractThreadGroup;
 import org.apache.jmeter.threads.JMeterContextService;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -63,25 +59,28 @@ public class JmeterRunEntity {
     /**
      * 停止当前脚本的压力引擎
      */
-    public void stop() {
-        // 缓存中变更状态为成功执行
-        runStatus = StressTestUtils.RUN_SUCCESS;
+    public void stop(boolean now) {
         engines.forEach(engine -> {
             if (engine != null) {
-                if (engine instanceof StandardJMeterEngine) {
-                    // 本身不是gui方式运行的，没有进程强制结束风险。
-                    // 如果使用字节码修改技术，则必须使用反射的方法调用。
-                    try {
-                        Method stopTestM = engine.getClass().getMethod("stopTest", new Class[]{});
-                        stopTestM.invoke(engine, new Object[]{});
-                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                        throw new RRException(e.getMessage(), e);
-                    }
-                } else {
-                    engine.stopTest();
-                }
+//                if (engine instanceof StandardJMeterEngine) {
+//                    // 本身不是gui方式运行的，没有进程强制结束风险。
+//                    // 如果使用字节码修改技术，则必须使用反射的方法调用。
+//                    try {
+//                        Method stopTestM = engine.getClass().getMethod("stopTest", new Class[]{Boolean.class});
+//                        stopTestM.invoke(engine, new Object[]{now});
+//                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+//                        throw new RRException(e.getMessage(), e);
+//                    }
+//                } else {
+//                    // 不强制停止
+//                    engine.stopTest(now);
+//                }
+                // 不强制停止
+                engine.stopTest(now);
             }
         });
+        // 缓存中变更状态为成功执行
+        runStatus = StressTestUtils.RUN_SUCCESS;
     }
 
     public StressTestFileEntity getStressTestFile() {

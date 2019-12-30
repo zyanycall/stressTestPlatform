@@ -108,8 +108,8 @@ public class StressTestReportsController {
 //                throw new RRException("找不到测试结果文件，无法生成测试报告！");
 //            }
             //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
-            if (StressTestUtils.RUN_SUCCESS.equals(stressTestReport.getStatus())) {
-                throw new RRException("已经存在测试报告不要重复创建！");
+            if (StressTestUtils.RUNNING.equals(stressTestReport.getStatus())) {
+                throw new RRException("请等待测试报告生成结束！");
             }
             stressTestReportsService.createReport(stressTestReport);
         }

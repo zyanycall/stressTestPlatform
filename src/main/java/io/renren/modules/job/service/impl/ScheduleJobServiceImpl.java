@@ -1,23 +1,20 @@
 package io.renren.modules.job.service.impl;
 
+import io.renren.common.utils.Constant.ScheduleStatus;
 import io.renren.modules.job.dao.ScheduleJobDao;
 import io.renren.modules.job.entity.ScheduleJobEntity;
 import io.renren.modules.job.service.ScheduleJobService;
-import io.renren.common.utils.Constant.ScheduleStatus;
 import io.renren.modules.job.utils.ScheduleUtils;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.PostConstruct;
-
-import org.quartz.CronTrigger;
 import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.PostConstruct;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service("scheduleJobService")
 public class ScheduleJobServiceImpl implements ScheduleJobService {
@@ -31,16 +28,16 @@ public class ScheduleJobServiceImpl implements ScheduleJobService {
 	 */
 	@PostConstruct
 	public void init(){
-		List<ScheduleJobEntity> scheduleJobList = schedulerJobDao.queryList(new HashMap<>());
-		for(ScheduleJobEntity scheduleJob : scheduleJobList){
-			CronTrigger cronTrigger = ScheduleUtils.getCronTrigger(scheduler, scheduleJob.getJobId());
-            //如果不存在，则创建
-            if(cronTrigger == null) {
-                ScheduleUtils.createScheduleJob(scheduler, scheduleJob);
-            }else {
-                ScheduleUtils.updateScheduleJob(scheduler, scheduleJob);
-            }
-		}
+//		List<ScheduleJobEntity> scheduleJobList = schedulerJobDao.queryList(new HashMap<>());
+//		for(ScheduleJobEntity scheduleJob : scheduleJobList){
+//			CronTrigger cronTrigger = ScheduleUtils.getCronTrigger(scheduler, scheduleJob.getJobId());
+//            //如果不存在，则创建
+//            if(cronTrigger == null) {
+//                ScheduleUtils.createScheduleJob(scheduler, scheduleJob);
+//            }else {
+//                ScheduleUtils.updateScheduleJob(scheduler, scheduleJob);
+//            }
+//		}
 	}
 	
 	@Override

@@ -602,9 +602,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     @Override
     @Transactional
-    public void stop(Long[] fileIds) {
+    public void stop(Long[] fileIds, boolean now) {
         Arrays.asList(fileIds).stream().forEach(fileId -> {
-            stopSingle(fileId);
+            stopSingle(fileId, now);
         });
     }
 
@@ -612,7 +612,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 脚本的启动都是新的线程，其中的SQL是不和启动是同一个事务的。
      * 同理，也不会回滚这一事务。
      */
-    public void stopSingle(Long fileId) {
+    public void stopSingle(Long fileId, boolean now) {
         if (stressTestUtils.isUseJmeterScript()) {
             throw new RRException("Jmeter脚本启动不支持单独停止，请使用全部停止！");
         } else {
@@ -620,7 +620,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             if (!jMeterEntity4file.isEmpty()) {
                 jMeterEntity4file.forEach((fileIdRunning, jmeterRunEntity) -> {
                     if (fileId.equals(fileIdRunning)) {  //找到要停止的脚本文件
-                        stopLocal(fileId, jmeterRunEntity);
+                        stopLocal(fileId, jmeterRunEntity, now);
                     }
                 });
             }
@@ -633,7 +633,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 停止内核Jmeter-core方式执行的脚本
      */
     @Override
-    public void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity) {
+    public void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity, boolean now) {
         StressTestFileEntity stressTestFile = jmeterRunEntity.getStressTestFile();
         StressTestReportsEntity stressTestReports = jmeterRunEntity.getStressTestReports();
         JmeterResultCollector jmeterResultCollector = jmeterRunEntity.getJmeterResultCollector();
@@ -651,7 +651,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         }
         update(stressTestFile, stressTestReports);
 
-        jmeterRunEntity.stop();
+        jmeterRunEntity.stop(now);
 
         // 需要将结果收集的部分干掉
         StressTestUtils.samplingStatCalculator4File.remove(fileId);
@@ -663,7 +663,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     @Override
     @Transactional
-    public void stopAll() {
+    public void stopAll(boolean now) {
         String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
         String jmeterStopExc = stressTestUtils.getJmeterStopExc();
 
@@ -694,7 +694,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             Map<Long, JmeterRunEntity> jMeterEntity4file = StressTestUtils.jMeterEntity4file;
             if (!jMeterEntity4file.isEmpty()) {
                 jMeterEntity4file.forEach((fileId, jmeterRunEntity) -> {
-                    stopLocal(fileId, jmeterRunEntity);
+                    stopLocal(fileId, jmeterRunEntity, now);
                 });
             }
 
@@ -728,8 +728,24 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         }
     }
 
+    /**
+     * 将选中的脚本立即停止
+     * @param fileIds 选中的脚本Id
+     */
     @Override
-    public void stopAllNow() {
+    @Transactional
+    public void stopAllNow(Long[] fileIds) {
+        if (stressTestUtils.isUseJmeterScript()) {
+            throw new RRException("Jmeter脚本启动不支持单独停止，请使用全部停止！");
+        } else {
+            Map<Long, JmeterRunEntity> jMeterEntity4file = StressTestUtils.jMeterEntity4file;
+            for (Long fileId : fileIds) {
+                JmeterRunEntity entity = jMeterEntity4file.get(fileId);
+                stopLocal(fileId, entity, true);
+            }
+            resetRunningStatus(jMeterEntity4file);
+        }
+
     }
 
     @Override

@@ -244,12 +244,16 @@ var vm = new Vue({
             });
         },
         stopAllNow: function () {
-            confirm('确定要立即停止所有脚本？', function () {
+            var fileIds = getSelectedRows();
+            if (fileIds == null) {
+                return;
+            }
+            confirm('确定要立即停止所有选中脚本？', function () {
                 $.ajax({
                     type: "POST",
                     url: baseURL + "test/stressFile/stopAllNow",
                     contentType: "application/json",
-                    data: "",
+                    data: JSON.stringify(fileIds),
                     success: function (r) {
                         if (r.code == 0) {
                             alert('操作成功', function () {

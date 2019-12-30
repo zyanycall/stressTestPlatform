@@ -105,7 +105,7 @@ public class StressTestFileController {
     @RequiresPermissions("test:stress:stopOnce")
     public R stop(@RequestBody Long[] fileIds) {
 
-        stressTestFileService.stop(fileIds);
+        stressTestFileService.stop(fileIds, false);
         return R.ok();
     }
 
@@ -116,7 +116,7 @@ public class StressTestFileController {
     @RequestMapping("/stopAll")
     @RequiresPermissions("test:stress:stopAll")
     public R stopAll() {
-        stressTestFileService.stopAll();
+        stressTestFileService.stopAll(false);
 
         return R.ok();
     }
@@ -127,8 +127,8 @@ public class StressTestFileController {
     @SysLog("立即停止性能测试用例脚本")
     @RequestMapping("/stopAllNow")
     @RequiresPermissions("test:stress:stopAllNow")
-    public R stopAllNow() {
-        stressTestFileService.stopAllNow();
+    public R stopAllNow(@RequestBody Long[] fileIds) {
+        stressTestFileService.stopAllNow(fileIds);
 
         return R.ok();
     }

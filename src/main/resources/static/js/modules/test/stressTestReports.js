@@ -5,44 +5,48 @@ $(function () {
         colModel: [
             {label: '报告ID', name: 'reportId', width: 30, key: true},
             {
-                label: '报告名称', name: 'originName', width: 70, sortable: false, formatter: function (value, options, row) {
-                if (row.status === 2) {
-                    var reportDir = row.reportName.substring(0, row.reportName.lastIndexOf("."));
-                    return "<a href='" + baseURL + "testReport/" + reportDir + "/index.html'>" + value + "</a>";
-                } else {
-                    return value;
+                label: '报告名称',
+                name: 'originName',
+                width: 70,
+                sortable: false,
+                formatter: function (value, options, row) {
+                    if (row.status === 2) {
+                        var reportDir = row.reportName.substring(0, row.reportName.lastIndexOf("."));
+                        return "<a href='" + baseURL + "testReport/" + reportDir + "/index.html'>" + value + "</a>";
+                    } else {
+                        return value;
+                    }
                 }
-            }
             },
             {label: '描述', name: 'remark', width: 65, sortable: false},
             {label: '脚本ID', name: 'fileId', width: 30},
             {
                 label: '结果文件大小', name: 'fileSize', width: 45, formatter: function (value, options, row) {
-                return conver(value);
-            }
+                    return conver(value);
+                }
             },
             {label: '添加时间', name: 'addTime', width: 60},
             {
                 label: '状态', name: 'status', width: 35, formatter: function (value, options, row) {
-                if (value === 0) {
-                    return '<span class="label label-info">创建成功</span>';
-                } else if (value === 1) {
-                    return '<span class="label label-warning">正在执行</span>';
-                } else if (value === 2) {
-                    return '<span class="label label-success">执行成功</span>';
-                } else if (value === 3) {
-                    return '<span class="label label-danger">出现异常</span>';
-                } else if (value === 4) {
-                    return '<span class="label label-danger">原始文件消失</span>';
+                    if (value === 0) {
+                        return '<span class="label label-info">创建成功</span>';
+                    } else if (value === 1) {
+                        return '<span class="label label-warning">正在执行</span>';
+                    } else if (value === 2) {
+                        return '<span class="label label-success">执行成功</span>';
+                    } else if (value === 3) {
+                        return '<span class="label label-danger">出现异常</span>';
+                    } else if (value === 4) {
+                        return '<span class="label label-danger">原始文件消失</span>';
+                    }
                 }
-            }
             },
             {
                 label: '执行操作', name: '', width: 80, sortable: false, formatter: function (value, options, row) {
-                var createReportBtn = "<a href='#' class='btn btn-primary' onclick='createReport(" + row.reportId + ")' ><i class='fa fa-plus'></i>&nbsp;生成报告</a>";
-                var downloadReportBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressReports/downloadReport/" + row.reportId + "' class='btn btn-primary' onclick='return checkStatus(" + row.status + ")'><i class='fa fa-download'></i>&nbsp;下载</a>";
-                return createReportBtn + downloadReportBtn;
-            }
+                    var createReportBtn = "<a href='#' class='btn btn-primary' onclick='createReport(" + row.reportId + ")' ><i class='fa fa-plus'></i>&nbsp;生成报告</a>";
+                    var downloadReportBtn = "&nbsp;&nbsp;<a href='" + baseURL + "test/stressReports/downloadReport/" + row.reportId + "' class='btn btn-primary' onclick='return checkStatus(" + row.status + ")'><i class='fa fa-download'></i>&nbsp;下载</a>";
+                    return createReportBtn + downloadReportBtn;
+                }
             }
             // 当前不做更新，页面复杂性价比不高。
             // { label: '更新时间', name: 'updateTime', width: 80 }
@@ -207,23 +211,23 @@ function createReport(reportIds) {
     if (!reportIds) {
         return;
     }
-    confirm('文件越大生成报告时间越长,请耐心等待!', function () {
-        $.ajax({
-            type: "POST",
-            url: baseURL + "test/stressReports/createReport",
-            contentType: "application/json",
-            data: JSON.stringify(numberToArray(reportIds)),
-            success: function (r) {
-                if (r.code == 0) {
-                    vm.reload();
-                    alert('后台正在异步生成!', function () {
-                    });
-                } else {
-                    alert(r.msg);
-                }
+    // confirm('文件越大生成报告时间越长,请耐心等待!', function () {
+    $.ajax({
+        type: "POST",
+        url: baseURL + "test/stressReports/createReport",
+        contentType: "application/json",
+        data: JSON.stringify(numberToArray(reportIds)),
+        success: function (r) {
+            if (r.code == 0) {
+                vm.reload();
+                alert('后台正在异步生成!文件越大生成报告时间越长,请耐心等待!', function () {
+                });
+            } else {
+                alert(r.msg);
             }
-        });
+        }
     });
+    // });
 }
 
 function checkStatus(status) {

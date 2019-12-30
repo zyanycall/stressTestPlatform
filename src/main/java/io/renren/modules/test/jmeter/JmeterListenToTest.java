@@ -194,6 +194,7 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
 
         JmeterRunEntity jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);
 
-        stressTestFileService.stopLocal(fileId, jmeterRunEntity);
+        //实际上已经完全停止，则使用立即停止的方式，会打断Jmeter执行的线程
+        stressTestFileService.stopLocal(fileId, jmeterRunEntity, true);
     }
 }

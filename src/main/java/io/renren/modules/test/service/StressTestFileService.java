@@ -78,17 +78,17 @@ public interface StressTestFileService {
     /**
      * 立即停止
      */
-    void stop(Long[] fileIds);
+    void stop(Long[] fileIds, boolean now);
 
     /**
      * 停止运行
      */
-    void stopAll();
+    void stopAll(boolean now);
 
     /**
      * 立即停止运行
      */
-    void stopAllNow();
+    void stopAllNow(Long[] fileIds);
 
     /**
      * 获取轮询监控结果
@@ -108,6 +108,6 @@ public interface StressTestFileService {
     /**
      * 相同进程内执行的脚本，可以使用这个方法停止
      */
-    void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity);
+    void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity, boolean now);
 
 }
