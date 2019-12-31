@@ -25,7 +25,7 @@ $(function () {
                     return conver(value);
                 }
             },
-            {label: '添加时间', name: 'addTime', width: 60},
+            {label: '修改时间', name: 'updateTime', width: 60},
             {
                 label: '状态', name: 'status', width: 35, formatter: function (value, options, row) {
                     if (value === 0) {

@@ -11,8 +11,6 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
-import org.apache.jmeter.report.config.ConfigurationException;
-import org.apache.jmeter.report.dashboard.GenerationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +75,9 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             String csvPath = casePath + File.separator + reportName;
             //测试报告文件目录
             String reportPath = csvPath.substring(0, csvPath.lastIndexOf("."));
-            FileUtils.deleteQuietly(new File(reportPath));
+            File reportPathFile = new File(reportPath);
+            FileUtils.deleteQuietly(reportPathFile);
+
             deleteReportCSV(stressTestReport);
             deleteReportZip(stressTestReport);
             stressTestUtils.deleteJmxDir(reportPath);
@@ -241,7 +241,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             generator.generate(reportPathDir);
             stressTestReport.setStatus(StressTestUtils.RUN_SUCCESS);
             update(stressTestReport);
-        } catch (GenerationException | ConfigurationException e) {
+        } catch (Throwable e) {
             //保存状态，执行出现异常
             stressTestReport.setStatus(StressTestUtils.RUN_ERROR);
             update(stressTestReport);

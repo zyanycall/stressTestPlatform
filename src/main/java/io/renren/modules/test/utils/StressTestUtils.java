@@ -338,7 +338,10 @@ public class StressTestUtils {
      */
     public void deleteJmxDir(String reportPath) {
         String jmxDir = reportPath.substring(0, reportPath.lastIndexOf(File.separator));
-        FileUtils.deleteQuietly(new File(jmxDir));
+        File jmxDirFile = new File(jmxDir);
+        if (jmxDirFile.exists() && FileUtils.sizeOf(jmxDirFile) == 0L) {
+            FileUtils.deleteQuietly(jmxDirFile);
+        }
     }
 
     public void pause(long ms) {

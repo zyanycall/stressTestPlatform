@@ -78,7 +78,9 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
             //调试报告文件
             String reportPath = jtlPath.substring(0, jtlPath.lastIndexOf(".")) + ".html";
             //删除测试报告
-            FileUtils.deleteQuietly(new File(reportPath));
+            File reportPathFile = new File(reportPath);
+            FileUtils.deleteQuietly(reportPathFile);
+
             deleteReportJTL(debugTestReport);
             stressTestUtils.deleteJmxDir(reportPath);
         });
