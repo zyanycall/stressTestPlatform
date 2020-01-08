@@ -28,7 +28,7 @@ public class JmeterStatEntity {
     private Map<String, String> responseTimesMap = new HashMap<>();
 
     /**
-     * 每秒通过数（RPS）相关的监控数据。
+     * 每秒通过数（TPS）相关的监控数据。
      */
     private Map<String, String> throughputMap = new HashMap<>();
 
