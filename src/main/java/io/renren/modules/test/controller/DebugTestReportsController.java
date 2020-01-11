@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -120,8 +121,9 @@ public class DebugTestReportsController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache,no-store,must-revalidate");
+        String fileNameUTF8 = new String(reportsEntity.getOriginName().getBytes(), StandardCharsets.ISO_8859_1);
         headers.add("Content-Disposition",
-                "attachment;filename=" + reportsEntity.getOriginName() + ".html");
+                "attachment;filename=" + fileNameUTF8 + ".html");
         headers.add("Pragma", "no-cache");
         headers.add("Expires", "0");
         headers.setContentType(MediaType.parseMediaType("application/octet-stream"));
