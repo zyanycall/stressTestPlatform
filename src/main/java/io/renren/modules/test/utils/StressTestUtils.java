@@ -1,14 +1,16 @@
 package io.renren.modules.test.utils;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.renren.common.exception.RRException;
 import io.renren.common.utils.SpringContextUtils;
 import io.renren.modules.sys.service.SysConfigService;
 import io.renren.modules.test.jmeter.JmeterRunEntity;
+import io.renren.modules.test.jmeter.calculator.LocalSamplingStatCalculator;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.jmeter.util.JMeterUtils;
-import org.apache.jmeter.visualizers.SamplingStatCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -73,28 +75,33 @@ public class StressTestUtils {
     /**
      * 针对每一个fileId，存储一份
      * 用于存储每一个用例的计算结果集合。
+     * 使用google的缓存技术，让这部分全局数据多一份时间控制保障。
      */
-    public static Map<Long, Map<String, SamplingStatCalculator>> samplingStatCalculator4File = new HashMap<>();
+    public static Cache<Long, Map<String, LocalSamplingStatCalculator>> samplingStatCalculator4File =
+//            new HashMap<>();
+     CacheBuilder.newBuilder()
+            .maximumSize(5000) // 设置缓存的最大容量
+            .expireAfterAccess(30, TimeUnit.MINUTES) // 设置缓存在写入一分钟后失效
+            .concurrencyLevel(20) // 设置并发级别为10
+//            .recordStats() // 开启缓存统计
+            .build();
 
     /**
      * 针对每一个fileId，存储一份Jmeter的Engines，用于指定的用例启动和停止。
      * 如果不使用分布式节点，则Engines仅包含master主节点。
      * 默认是使用分布式的，则Engines会包含所有有效的分布式节点的Engine。
      */
-    public static Map<Long, JmeterRunEntity> jMeterEntity4file = new HashMap<>();
+    public static Map<Long, JmeterRunEntity> jMeterEntity4file = new HashMap();
 
     /**
      * 主进程Master内保存的一些状态，主要用于分布式的压测操作服务。
      */
-    public static Map<String, String> jMeterStatuses = new HashMap<>();
-
-//    private static String jmeterHome;
-
-//    private String casePath;
-
-//    private boolean useJmeterScript;
-
-//    private boolean replaceFile = true;
+    public static Cache<String, String> jMeterStatuses = CacheBuilder.newBuilder()
+            .maximumSize(5000) // 设置缓存的最大容量
+            .expireAfterAccess(30, TimeUnit.MINUTES) // 设置缓存在写入一分钟后失效
+            .concurrencyLevel(20) // 设置并发级别为10
+//            .recordStats() // 开启缓存统计
+            .build();
 
     /**
      * Jmeter在Master节点的绝对路径
@@ -351,5 +358,4 @@ public class StressTestUtils {
             Thread.currentThread().interrupt();
         }
     }
-
 }

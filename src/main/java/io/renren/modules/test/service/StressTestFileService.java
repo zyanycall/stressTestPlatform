@@ -107,6 +107,7 @@ public interface StressTestFileService {
 
     /**
      * 相同进程内执行的脚本，可以使用这个方法停止
+     * @param now true:打断线程的方式立即停止
      */
     void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity, boolean now);
 

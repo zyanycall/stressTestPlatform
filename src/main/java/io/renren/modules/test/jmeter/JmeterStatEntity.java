@@ -1,7 +1,7 @@
 package io.renren.modules.test.jmeter;
 
+import io.renren.modules.test.jmeter.calculator.LocalSamplingStatCalculator;
 import io.renren.modules.test.utils.StressTestUtils;
-import org.apache.jmeter.visualizers.SamplingStatCalculator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class JmeterStatEntity {
      * value值是计算值的对象，里面包含每个label所对应的监控计算数据。
      * statMap是在回调时，填充数据
      */
-    private Map<String, SamplingStatCalculator> statMap;
+    private Map<String, LocalSamplingStatCalculator> statMap;
 
     /**
      * 响应时间相关的监控数据。
@@ -78,10 +78,10 @@ public class JmeterStatEntity {
     public JmeterStatEntity(Long fileId, Long fileIdZero) {
         if (fileIdZero != null) {// 分布式情况下
             this.fileId = fileIdZero;
-            statMap = StressTestUtils.samplingStatCalculator4File.get(fileIdZero);
+            statMap = StressTestUtils.samplingStatCalculator4File.getIfPresent(fileIdZero);
         } else {// 单机模式下
             this.fileId = fileId;
-            statMap = StressTestUtils.samplingStatCalculator4File.get(fileId);
+            statMap = StressTestUtils.samplingStatCalculator4File.getIfPresent(fileId);
         }
 
         // StressTestUtils.jMeterEntity4file 中保存的都是真实的脚本文件信息
@@ -116,14 +116,16 @@ public class JmeterStatEntity {
     public Map<String, String> getThroughputMap() {
         if (statMap != null) {
             statMap.forEach((k, v) -> {
-                throughputMap.put(k + "_Rps(OK)", String.format("%.2f", v.getRate()));
+//                throughputMap.put(k + "_Tps(OK)", String.format("%.2f", v.getRate()));
+                throughputMap.put(k + "_Tps(OK)", String.valueOf(v.getCountPerSecond()));
 
-                double howLongRunning = 0.0;
-                if (v.getRate() > -1e-6) {//double大于0
-                    howLongRunning = (1000.0 * v.getCount()) / v.getRate();
-                }
-                double errorRps = ((double) v.getErrorCount() / howLongRunning) * 1000.0;
-                throughputMap.put(k + "_Rps(KO)", String.format("%.2f", errorRps));
+//                double howLongRunning = 0.0D;
+//                if (v.getRate() > -1e-6) {//double大于0
+//                    howLongRunning = (1000.0 * v.getCount()) / v.getRate();
+//                }
+//                double errorTps = ((double) v.getErrorCount() / howLongRunning) * 1000.0;
+//                throughputMap.put(k + "_Tps(KO)", String.format("%.2f", errorTps));
+                throughputMap.put(k + "_Tps(KO)", String.valueOf(v.getErrorCountPerSecond()));
             });
         }
         return throughputMap;
@@ -136,7 +138,7 @@ public class JmeterStatEntity {
     public Map<String, String> getNetworkSentMap() {
         if (statMap != null) {
             for (String key : statMap.keySet()) {
-                SamplingStatCalculator calculator = statMap.get(key);
+                LocalSamplingStatCalculator calculator = statMap.get(key);
                 networkSentMap.put(key + "(Sent)", String.format("%.2f", calculator.getSentKBPerSecond()));
             }
         }
@@ -150,7 +152,7 @@ public class JmeterStatEntity {
     public Map<String, String> getNetworkReceiveMap() {
         if (statMap != null) {
             for (String key : statMap.keySet()) {
-                SamplingStatCalculator calculator = statMap.get(key);
+                LocalSamplingStatCalculator calculator = statMap.get(key);
                 networkReceiveMap.put(key + "(Received)", String.format("%.2f", calculator.getKBPerSecond()));
             }
         }
@@ -170,11 +172,11 @@ public class JmeterStatEntity {
         double successPercent = 1.0;
         if (statMap != null) {
             for (String key : statMap.keySet()) {
-                SamplingStatCalculator calculator = statMap.get(key);
+                LocalSamplingStatCalculator calculator = statMap.get(key);
                 totalCount += calculator.getCount();
             }
             for (String key : statMap.keySet()) {
-                SamplingStatCalculator calculator = statMap.get(key);
+                LocalSamplingStatCalculator calculator = statMap.get(key);
                 long errorCount = calculator.getErrorCount();
                 double errorPercent = Double.parseDouble(String.format("%.2f", ((double) errorCount / (double) totalCount)));
                 successPercentageMap.put(key + "_ErrorPercent", String.valueOf(errorPercent));
@@ -192,7 +194,7 @@ public class JmeterStatEntity {
     public Map<String, String> getErrorPercentageMap() {
         if (statMap != null) {
             for (String key : statMap.keySet()) {
-                SamplingStatCalculator calculator = statMap.get(key);
+                LocalSamplingStatCalculator calculator = statMap.get(key);
                 errorPercentageMap.put(key + "_ErrorPercent", String.format("%.2f", calculator.getErrorPercentage()));
             }
         }
@@ -230,7 +232,7 @@ public class JmeterStatEntity {
     public Map<String, String> getTotalCountsMap() {
         if (statMap != null) {
             for (String key : statMap.keySet()) {
-                SamplingStatCalculator calculator = statMap.get(key);
+                LocalSamplingStatCalculator calculator = statMap.get(key);
                 long totalCount = calculator.getCount();
                 totalCountsMap.put(key + "_总请求数", String.valueOf(totalCount));
             }

@@ -1,12 +1,12 @@
 package io.renren.modules.test.jmeter;
 
 import io.renren.modules.test.entity.StressTestFileEntity;
+import io.renren.modules.test.jmeter.calculator.LocalSamplingStatCalculator;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.samplers.SampleEvent;
 import org.apache.jmeter.samplers.SampleResult;
-import org.apache.jmeter.visualizers.SamplingStatCalculator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class JmeterResultCollector extends ResultCollector {
 
     private StressTestFileEntity stressTestFile;
 
-    private Map<String, SamplingStatCalculator> samplingStatCalculatorMap;
+    private Map<String, LocalSamplingStatCalculator> samplingStatCalculatorMap;
 
     /**
      * 为分布式反射使用
@@ -52,7 +52,7 @@ public class JmeterResultCollector extends ResultCollector {
     }
 
     /**
-     * 每一次jmeter的请求都会走到这里，
+     * 每一次jmeter的请求结束之后都会走到这里，
      * 包括每个用例文件中每个请求。
      * 再乘以各个分布式节点的请求，所以请求量预计会比较大。
      *
@@ -74,13 +74,13 @@ public class JmeterResultCollector extends ResultCollector {
             }
         } else {//分布式压测
             if (StressTestUtils.NEED_REPORT.toString().
-                    equals(StressTestUtils.jMeterStatuses.get(SLAVE_NEED_REPORT))) {
+                    equals(StressTestUtils.jMeterStatuses.getIfPresent(SLAVE_NEED_REPORT))) {
                 super.sampleOccurred(sampleEvent);
             }
             if (StressTestUtils.NEED_WEB_CHART.toString().
-                    equals(StressTestUtils.jMeterStatuses.get(SLAVE_NEED_CHART))) {
+                    equals(StressTestUtils.jMeterStatuses.getIfPresent(SLAVE_NEED_CHART))) {
 
-                samplingStatCalculatorMap = StressTestUtils.samplingStatCalculator4File.get(0L);
+                samplingStatCalculatorMap = StressTestUtils.samplingStatCalculator4File.getIfPresent(0L);
                 // 全部停止脚本后，samplingStatCalculator4File整个会被清空。
                 addSample(sampleEvent);
             }
@@ -99,9 +99,9 @@ public class JmeterResultCollector extends ResultCollector {
         // 全部停止脚本后，samplingStatCalculator4File整个会被清空。
         if (samplingStatCalculatorMap != null) {
             if (samplingStatCalculatorMap.get(label) == null) {
-                samplingStatCalculatorMap.put(label, new SamplingStatCalculator(label));
+                samplingStatCalculatorMap.put(label, new LocalSamplingStatCalculator(label));
             }
-            SamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
+            LocalSamplingStatCalculator samplingStatCalculator = samplingStatCalculatorMap.get(label);
 
             // 这个计算的过程会消耗CPU，一切为了前端绘图。
             samplingStatCalculator.addSample(sampleResult);

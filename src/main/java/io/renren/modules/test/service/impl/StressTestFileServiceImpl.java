@@ -270,7 +270,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             FileUtils.deleteQuietly(new File(filePath));
 
             //删除缓存
-            StressTestUtils.samplingStatCalculator4File.remove(fileId);
+            StressTestUtils.samplingStatCalculator4File.invalidate(fileId);
             StressTestUtils.jMeterEntity4file.remove(fileId);
 
             //删除远程节点的同步文件，如果远程节点比较多，网络不好，执行时间会比较长。
@@ -634,7 +634,14 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     @Override
     public void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity, boolean now) {
-        StressTestFileEntity stressTestFile = jmeterRunEntity.getStressTestFile();
+        StressTestFileEntity stressTestFile;
+        if (Objects.isNull(jmeterRunEntity)) {
+            // 如果为空，希望前端的用户无感知。
+            stressTestFile = queryObject(fileId);
+        } else {
+            stressTestFile = jmeterRunEntity.getStressTestFile();
+        }
+
         StressTestReportsEntity stressTestReports = jmeterRunEntity.getStressTestReports();
         JmeterResultCollector jmeterResultCollector = jmeterRunEntity.getJmeterResultCollector();
 
@@ -651,11 +658,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         }
         update(stressTestFile, stressTestReports);
 
-        jmeterRunEntity.stop(now);
+        if (Objects.nonNull(jmeterRunEntity)) {
+            jmeterRunEntity.stop(now);
+        }
 
         // 需要将结果收集的部分干掉
-        StressTestUtils.samplingStatCalculator4File.remove(fileId);
-
+        StressTestUtils.samplingStatCalculator4File.invalidate(fileId);
     }
 
     /**
@@ -699,7 +707,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             }
 
             // 对于全部停止，再次全部移除统计数据
-            StressTestUtils.samplingStatCalculator4File.clear();
+            StressTestUtils.samplingStatCalculator4File.invalidateAll();
 
             resetRunningStatus(jMeterEntity4file);
 
@@ -730,6 +738,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     /**
      * 将选中的脚本立即停止
+     *
      * @param fileIds 选中的脚本Id
      */
     @Override
