@@ -62,6 +62,8 @@ public class LocalSamplingStatCalculator {
         countPerSecondTime = 0L;
         countMap.put("countPerSec", 0L);
         countMap.put("errorCountPerSec", 0L);
+        countMap.put("countPerGetTime", 0L);
+        countMap.put("errorCountPerGetTime", 0L);
 //        maxThroughput = Double.MIN_VALUE;
         currentSample = new Sample();
     }
@@ -87,6 +89,10 @@ public class LocalSamplingStatCalculator {
             return 0;// No samples collected ...
         }
         return getCurrentSample().getEndTime() - firstTime;
+    }
+
+    public long getFirstTime() {
+        return firstTime;
     }
 
     /**
@@ -202,8 +208,9 @@ public class LocalSamplingStatCalculator {
             eCount = getCurrentSample().getErrorCount();
             eCount += res.getErrorCount();
             endTime = getEndTime(res);
-            long howLongRunning = endTime - firstTime;
-            throughput = ((double) calculator.getCount() / (double) howLongRunning) * 1000.0;
+//            howLongRunning = endTime - firstTime;
+//            throughput = ((double) calculator.getCount() / (double) howLongRunning) * 1000.0;
+            throughput = 0D;
 
             // zyanycall add
             // 如果是报错的请求，时间都是0.这样可以单独处理报错的请求。
@@ -214,27 +221,33 @@ public class LocalSamplingStatCalculator {
             // 3. 每一秒，都有正确的TPS和错误的TPS。
             if (endTime > 0L) {
                 long endTimeSec = endTime / 1000;
-                String endTimeSecStr = endTimeSec + "";
                 if (endTimeSec > countPerSecondTime) {
                     countPerSecondTime = endTimeSec;
                     if (res.isSuccessful()) { // 断言成功
                         // 实际上，这里取到的数字，是上一秒的全量的一秒内的请求的次数。
                         // 但是并不是说TPS就是延迟一秒，平均下来，是延迟半秒。
                         // 计算完之后，这个值就会被刷新。如果不是下一秒，则不会刷新，这样计算的TPS才是准确的。
+                        if (countPerSecond == 0L) {// 初次计数，能够进入这里，不应该是0。
+                            countPerSecond = 1L;
+                        }
                         countMap.put("countPerSec", countPerSecond);
-                        countPerSecond = 1;
+                        countPerSecond = 1L;
 
-                        // 清理错误的TPS。
-                        if (!(errorCountPerSecond + "").startsWith(endTimeSecStr)) {
+                        // 获取错误的TPS的时间，若干秒后也没有变动，则可以清空掉。
+                        if (countMap.get("errorCountPerGetTime") > 0L &&
+                                ((countMap.get("errorCountPerGetTime") + 4) < endTimeSec)) {
                             errorCountPerSecond = 0L;
                             countMap.put("errorCountPerSec", 0L);
                         }
                     } else {// 断言失败
+                        if (errorCountPerSecond == 0L) {// 初次计数，能够进入这里，不应该是0。
+                            errorCountPerSecond = 1L;
+                        }
                         countMap.put("errorCountPerSec", errorCountPerSecond);
                         errorCountPerSecond = 1L;
 
                         // 清理正确的TPS。
-                        if (!(countPerSecond + "").startsWith(endTimeSecStr)) {
+                        if ((countMap.get("countPerGetTime") + 4) < endTimeSec) {
                             countPerSecond = 0L;
                             countMap.put("countPerSec", 0L);
                         }
@@ -277,10 +290,16 @@ public class LocalSamplingStatCalculator {
     }
 
     public long getCountPerSecond() {
+        if (countMap.get("countPerSec") > 0L) {
+            countMap.put("countPerGetTime", (System.currentTimeMillis() / 1000));
+        }
         return countMap.get("countPerSec");
     }
 
     public long getErrorCountPerSecond() {
+        if (countMap.get("errorCountPerSec") > 0L) {
+            countMap.put("errorCountPerGetTime", (System.currentTimeMillis() / 1000));
+        }
         return countMap.get("errorCountPerSec");
     }
 
