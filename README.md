@@ -3,9 +3,8 @@
 
 **插播广告：**
 
-如果有需要，请帮忙支持一下：https://www.jianshu.com/p/cd6388627f64
+如果有需要，请帮忙支持一下：https://juejin.im/post/5e2159215188254e1c43a585
 互帮互助，感谢。
-
 
 **平台特点** 
 - 友好的代码结构及注释，便于阅读及二次开发
@@ -21,12 +20,15 @@
 - 引入路由机制，刷新页面会停留在当前页
 - 引入最新版本Jmeter-Api，支持分布式压测，测试报告生成及在线查看下载。
 - 引入Echarts，支持在线观测性能压测结果。
+
 <br> 
 
 **项目结构** 
 ```
 renren-fast
 ├─doc  项目SQL语句
+│
+│─lib  项目引用jar包
 │
 ├─common 公共模块
 │  ├─aspect 系统日志
@@ -67,6 +69,7 @@ renren-fast
 - 脚本调用内核：Apache Commons Exec 1.3
 - 远程执行命令：Ganymed build210
 - 批量上传组件：bootstrap-fileinput v4.5.2
+- JVM内部缓存：Guava 18.0
 <br> 
 
 
