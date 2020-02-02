@@ -790,6 +790,9 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             for (Long fileId : fileIds) {
                 StressTestFileEntity stressTestFile = queryObject(fileId);
                 putFileToSlave(slave, ssh2Util, stressTestFile);
+                stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
+                //由于事务性，这个地方不好批量更新。
+                update(stressTestFile);
             }
         }
 
@@ -826,9 +829,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         //上传文件
         ssh2Util.scpPutFile(filePath, caseFileHome);
 
-        stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
-        //由于事务性，这个地方不好批量更新。
-        update(stressTestFile);
         Map fileQuery = new HashMap<>();
         fileQuery.put("originName", stressTestFile.getOriginName() + "_slaveId" + slave.getSlaveId());
         fileQuery.put("slaveId", slave.getSlaveId().toString());
@@ -871,7 +871,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             if (slaveIds.isEmpty()) {
                 slaveIds = stressTestFile4Slave.getSlaveId().toString();
             } else {
-                slaveIds += " , " + stressTestFile4Slave.getSlaveId().toString();
+                slaveIds += "," + stressTestFile4Slave.getSlaveId().toString();
             }
             fileDeleteIds.add(stressTestFile4Slave.getFileId());
         }
