@@ -6,6 +6,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Random;
 
 /**
  * Created by zyanycall@gmail.com on 15:24.
@@ -22,27 +23,27 @@ public class StressTestSlaveEntity implements Serializable {
     /**
      * 节点名称
      */
-    @NotBlank(message="节点名称不能为空")
+    @NotBlank(message = "节点名称不能为空")
     private String slaveName;
 
     /**
      * IP地址
      */
-    @NotBlank(message="IP地址不能为空")
+    @NotBlank(message = "IP地址不能为空")
     @Pattern(regexp = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
     private String ip;
 
     /**
      * 端口号
      */
-    @NotBlank(message="Jmeter端口号不能为空")
+    @NotBlank(message = "Jmeter端口号不能为空")
     @Min(value = 0)
     private String JmeterPort;
 
     /**
      * 端口号
      */
-    @NotBlank(message="ssh端口号不能为空")
+    @NotBlank(message = "ssh端口号不能为空")
     @Min(value = 0)
     private String sshPort;
 
@@ -197,5 +198,23 @@ public class StressTestSlaveEntity implements Serializable {
 
     public void setWeight(String weight) {
         this.weight = weight;
+    }
+
+    /**
+     * ip不相同，不为空
+     */
+    public StressTestSlaveEntity copySlaveEntity() {
+        StressTestSlaveEntity clone = new StressTestSlaveEntity();
+        clone.setSlaveName(this.getSlaveName());
+        clone.setIp(this.getIp() + new Random().nextInt(100));
+        clone.setJmeterPort(this.getJmeterPort());
+        clone.setUserName(this.getUserName());
+        clone.setPasswd(this.getPasswd());
+        clone.setSshPort(this.getSshPort());
+        clone.setHomeDir(this.getHomeDir());
+        clone.setStatus(this.getStatus());
+        clone.setWeight(this.getWeight());
+        clone.setSlaveId(this.getSlaveId());
+        return clone;
     }
 }

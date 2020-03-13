@@ -1,7 +1,6 @@
 package io.renren.modules.test.controller;
 
 import io.renren.common.annotation.SysLog;
-import io.renren.common.exception.RRException;
 import io.renren.common.utils.PageUtils;
 import io.renren.common.utils.Query;
 import io.renren.common.utils.R;
@@ -109,9 +108,9 @@ public class StressTestReportsController {
 //                throw new RRException("找不到测试结果文件，无法生成测试报告！");
 //            }
             //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
-            if (StressTestUtils.RUNNING.equals(stressTestReport.getStatus())) {
-                throw new RRException("请等待测试报告生成结束！");
-            }
+//            if (StressTestUtils.RUNNING.equals(stressTestReport.getStatus())) {
+//                throw new RRException("请等待测试报告生成结束！");
+//            }
             stressTestReportsService.createReport(stressTestReport);
         }
         return R.ok();

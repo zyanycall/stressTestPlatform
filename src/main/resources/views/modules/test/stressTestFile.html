@@ -90,22 +90,24 @@
         &nbsp;&nbsp;<a class="btn btn-primary" @click="suspendEcharts">监控暂停</a>
         &nbsp;&nbsp;<a class="btn btn-danger" @click="clearEcharts">清空数据</a>
         &nbsp;&nbsp;<a class="btn btn-warning" @click="reload">返回</a>
+        <div class="panel-heading">持续时间</div>
+        <div id="howLongRunningFormat" style="text-align:center;"></div>
         <div class="panel-heading">平均响应时间(ms)</div>
         <div id="responseTimesChart"></div>
         <div class="panel-heading">每秒请求数(TPS)</div>
         <div id="throughputChart"></div>
-        <div class="panel-heading">吞吐量Sent(KB/s)</div>
-        <div id="networkSentChart"></div>
-        <div class="panel-heading">吞吐量Received(KB/s)</div>
-        <div id="networkReceivedChart"></div>
-        <div class="panel-heading">成功和失败率</div>
-        <div id="successPercentageChart"></div>
         <div class="panel-heading">单个请求失败率</div>
         <div id="errorPercentageChart"></div>
         <div class="panel-heading">并发数信息</div>
         <div id="threadCountsChart"></div>
+        <div class="panel-heading">成功和失败率</div>
+        <div id="successPercentageChart"></div>
         <div class="panel-heading">访问总数</div>
         <div id="totalCountsChart"></div>
+        <div class="panel-heading">吞吐量Sent(KB/s)</div>
+        <div id="networkSentChart"></div>
+        <div class="panel-heading">吞吐量Received(KB/s)</div>
+        <div id="networkReceivedChart"></div>
     </div>
 </div>
 

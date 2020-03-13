@@ -136,4 +136,18 @@ public class StressTestSlaveController {
         return R.ok();
     }
 
+    /**
+     * 复制分布式节点信息
+     */
+    @SysLog("复制分布式节点")
+    @RequestMapping("/copySlave")
+    @RequiresPermissions("test:stress:copySlave")
+    public R copySlave(@RequestBody Long[] slaveIds) {
+        for (Long slaveId : slaveIds) {
+            StressTestSlaveEntity stressTestSlave = stressTestSlaveService.queryObject(slaveId);
+            StressTestSlaveEntity copyEntity = stressTestSlave.copySlaveEntity();
+            stressTestSlaveService.save(copyEntity);
+        }
+        return R.ok();
+    }
 }

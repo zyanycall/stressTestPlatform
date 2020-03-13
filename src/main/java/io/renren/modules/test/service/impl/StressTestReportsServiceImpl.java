@@ -213,15 +213,18 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         //测试报告文件目录
         String reportPathDir = csvPath.substring(0, csvPath.lastIndexOf("."));
 
-        //修复csv文件
-        fixReportFile(csvPath, stressTestReport);
-
         //设置开始执行命令生成报告
         stressTestReport.setStatus(StressTestUtils.RUNNING);
         update(stressTestReport);
 
+        //修复csv文件
+        fixReportFile(csvPath, stressTestReport);
         //如果存在则清空
-        FileUtils.deleteQuietly(new File(reportPathDir));
+        try {
+            FileUtils.cleanDirectory(new File(reportPathDir));
+        } catch (Exception e) {
+            logger.error("请空测试报告原有文件夹失败！意在清楚该文件夹内容，无内容是正常的", e);
+        }
 
         if (stressTestUtils.isMasterGenerateReport()) {
             generateReportLocal(stressTestReport, csvPath, reportPathDir);
@@ -297,11 +300,60 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
 
     /**
      * 测试报告文件如果最后一行不完整，会报生成报告的错误。
-     * 所以每次生成报告之前，如果不完整则删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
+     * 目前发现，测试报告会包含<0x00>即十六进制0的特殊字符，会导致测试报告生成失败。
+     * 其实遇到这种，测试报告生成直接跳出循环即可，但是目前Jmeter4版本没有做到，所以先删除不符合条件的行
      *
      * @param fileName csv 文件
      */
     public void fixReportFile(String fileName, StressTestReportsEntity stressTestReport) {
+        int lineLength = fixReportLastLine(fileName, stressTestReport);
+        fixReportUnknownLine(fileName, lineLength);
+    }
+
+    /**
+     * 测试报告文件如果最后一行不完整，会报生成报告的错误。
+     * 所以每次生成报告之前，如果不完整则删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
+     *
+     * @param fileName csv 文件
+     */
+    private void fixReportUnknownLine(String fileName, int lineLength) {
+        // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
+        // 如果是完整的，则直接跳出不执行删除操作。
+        File file = new File(fileName);
+        File fileBack = new File(fileName + "_back");
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            PrintWriter writer = new PrintWriter(fileBack);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // 判断条件，根据自己的情况书写，会删除所有符合条件的行
+                String[] lines = line.split(",");
+                if (lines.length != lineLength) {
+                    // 读取后面的几行,废弃
+                    continue;
+                }
+                writer.println(line);
+                writer.flush();
+            }
+            reader.close();
+            writer.close();
+
+            // 删除老文件
+            FileUtils.deleteQuietly(file);
+            fileBack.renameTo(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 测试报告文件如果最后一行不完整，会报生成报告的错误。
+     * 所以每次生成报告之前，如果不完整则删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
+     *
+     * @param fileName csv 文件
+     */
+    private int fixReportLastLine(String fileName, StressTestReportsEntity stressTestReport) {
         // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
         // 如果是完整的，则直接跳出不执行删除操作。
         try {
@@ -337,6 +389,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
 
             //关闭回收
             raf.close();
+            return theLastSec.length;
         } catch (FileNotFoundException e) {
             stressTestReport.setStatus(StressTestUtils.NO_FILE);
             update(stressTestReport);

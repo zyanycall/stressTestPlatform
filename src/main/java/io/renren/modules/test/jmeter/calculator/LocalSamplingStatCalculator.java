@@ -192,15 +192,15 @@ public class LocalSamplingStatCalculator {
      * @return newly created sample with current statistics
      */
     public Sample addSample(SampleResult res) {
-//        long rtime;
+        long rtime;
         long cmean;
-//        long cstdv;
-//        long cmedian;
-//        long cpercent;
+        long cstdv;
+        long cmedian;
+        long cpercent;
         long eCount;
         long endTime;
         double throughput;
-//        boolean rbool;
+        boolean rbool;
         synchronized (calculator) {
             calculator.addValue(res.getTime(), res.getSampleCount());
             calculator.addBytes(res.getBytesAsLong());
@@ -209,58 +209,30 @@ public class LocalSamplingStatCalculator {
             eCount = getCurrentSample().getErrorCount();
             eCount += res.getErrorCount();
             endTime = getEndTime(res);
-//            howLongRunning = endTime - firstTime;
-//            throughput = ((double) calculator.getCount() / (double) howLongRunning) * 1000.0;
-            throughput = 0D;
-
-            // zyanycall add
-            if (endTime > 0L) {
-                long endTimeSec = endTime / 1000;
-                Long successCountThisSec = successCountMap.getIfPresent(endTimeSec);
-                if (Objects.isNull(successCountThisSec)) {
-                    successCountThisSec = 0L;
-                }
-                if (res.isSuccessful()) {
-                    successCountThisSec = successCountThisSec + 1L;
-                }
-
-                Long errorCountThisSec = errorCountMap.getIfPresent(endTimeSec);
-                if (Objects.isNull(errorCountThisSec)) {
-                    errorCountThisSec = 0L;
-                }
-                if (!res.isSuccessful()) {
-                    errorCountThisSec = errorCountThisSec + 1L;
-                }
-                successCountMap.put(endTimeSec, successCountThisSec);
-                errorCountMap.put(endTimeSec, errorCountThisSec);
-            }
-            if (endTime == 0L) {//异常情况，label会直接打出异常内容，这里就不再计算统计。
-            }
-            // zyanycall add end
-
+            long howLongRunning = endTime - firstTime;
+            throughput = ((double) calculator.getCount() / (double) howLongRunning) * 1000.0;
 //            if (throughput > maxThroughput) {
 //                maxThroughput = throughput;
 //            }
 
-//            rtime = res.getTime();
-            cmean = (long) calculator.getMean();
-//            cstdv = (long)calculator.getStandardDeviation();
-            // 注释掉没有用到的，浪费计算力的方法
-//            cmedian = calculator.getMedian().longValue();
-//            cpercent = calculator.getPercentPoint( 0.500 ).longValue();
-//            rbool = res.isSuccessful();
+            rtime = res.getTime();
+            cmean = (long)calculator.getMean();
+            cstdv = (long)calculator.getStandardDeviation();
+            cmedian = calculator.getMedian().longValue();
+            cpercent = calculator.getPercentPoint( 0.500 ).longValue();
+// TODO cpercent is the same as cmedian here - why? and why pass it to "distributionLine"?
+            rbool = res.isSuccessful();
         }
 
         long count = calculator.getCount();
         Sample s =
-                new Sample(null, 0L, cmean, 0L, 0L,
-                        0L, throughput, eCount, true, count, endTime);
+                new Sample( null, rtime, cmean, cstdv, cmedian, cpercent, throughput, eCount, rbool, count, endTime );
         currentSample = s;
         return s;
     }
 
     public long getCountPerSecond() {
-        // 平均下来TPS的取值并非就延迟一秒，这里保证的是取的值是TPS。
+        // 不是说平均下来TPS的取值就延迟一秒，这里保证的是取的值是TPS。
         long timeSec = (System.currentTimeMillis() / 1000) - 1;
         Long successCountPerSec = successCountMap.getIfPresent(timeSec);
         if (Objects.isNull(successCountPerSec)) {

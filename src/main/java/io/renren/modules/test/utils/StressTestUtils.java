@@ -10,15 +10,14 @@ import io.renren.modules.test.jmeter.calculator.LocalSamplingStatCalculator;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jmeter.util.JMeterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -79,12 +78,12 @@ public class StressTestUtils {
      */
     public static Cache<Long, Map<String, LocalSamplingStatCalculator>> samplingStatCalculator4File =
 //            new HashMap<>();
-     CacheBuilder.newBuilder()
-            .maximumSize(5000) // 设置缓存的最大容量
-            .expireAfterAccess(30, TimeUnit.MINUTES) // 设置缓存在写入一分钟后失效
-            .concurrencyLevel(20) // 设置并发级别为10
+            CacheBuilder.newBuilder()
+                    .maximumSize(5000) // 设置缓存的最大容量
+                    .expireAfterAccess(30, TimeUnit.MINUTES) // 设置缓存在写入一分钟后失效
+                    .concurrencyLevel(20) // 设置并发级别为10
 //            .recordStats() // 开启缓存统计
-            .build();
+                    .build();
 
     /**
      * 针对每一个fileId，存储一份Jmeter的Engines，用于指定的用例启动和停止。
@@ -165,7 +164,26 @@ public class StressTestUtils {
     }
 
     public boolean isScriptSchedulerDurationEffect() {
-        return Boolean.parseBoolean(sysConfigService.getValue(SCRIPT_SCHEDULER_DURATION_KEY));
+        int duration = getScriptSchedulerDuration();
+        if (duration > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    public static Integer getScriptSchedulerDuration() {
+        try {
+            if (StringUtils.isBlank(sysConfigService.getValue(SCRIPT_SCHEDULER_DURATION_KEY))) {
+                return 0;
+            }
+            // 对遗留的false也做一下处理
+            if ("false".equalsIgnoreCase(sysConfigService.getValue(SCRIPT_SCHEDULER_DURATION_KEY))) {
+                return 0;
+            }
+            return Integer.parseInt(sysConfigService.getValue(SCRIPT_SCHEDULER_DURATION_KEY));
+        } catch (Exception e) {
+            return 3600;
+        }
     }
 
     public static String getSuffix4() {
@@ -357,5 +375,39 @@ public class StressTestUtils {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * 毫秒转化时分秒毫秒
+     */
+    public static String formatTime(Long ms) {
+        Integer ss = 1000;
+        Integer mi = ss * 60;
+        Integer hh = mi * 60;
+        Integer dd = hh * 24;
+
+        Long day = ms / dd;
+        Long hour = (ms - day * dd) / hh;
+        Long minute = (ms - day * dd - hour * hh) / mi;
+        Long second = (ms - day * dd - hour * hh - minute * mi) / ss;
+        Long milliSecond = ms - day * dd - hour * hh - minute * mi - second * ss;
+
+        StringBuffer sb = new StringBuffer();
+        if (day > 0) {
+            sb.append(day + "天");
+        }
+        if (hour > 0) {
+            sb.append(hour + "小时");
+        }
+        if (minute > 0) {
+            sb.append(minute + "分钟");
+        }
+        if (second > 0) {
+            sb.append(second + "秒");
+        }
+        if (milliSecond > 0) {
+            sb.append(milliSecond + "毫秒");
+        }
+        return sb.toString();
     }
 }

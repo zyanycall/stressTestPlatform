@@ -151,7 +151,7 @@ CREATE TABLE test_stress_case_file (
   report_status tinyint NOT NULL DEFAULT 0 ,
   webchart_status tinyint NOT NULL DEFAULT 0 ,
   debug_status tinyint NOT NULL DEFAULT 0 ,
-  duration int NOT NULL DEFAULT 10800 ,
+  duration int NOT NULL DEFAULT 3600 ,
   add_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   add_by bigint(20) ,
   update_time timestamp NOT NULL  AS CURRENT_TIMESTAMP ,
@@ -223,9 +223,4 @@ INSERT INTO sys_config (id, key, value, status, remark) VALUES ('3', 'MASTER_JME
 INSERT INTO sys_config (id, key, value, status, remark) VALUES ('4', 'MASTER_JMETER_USE_SCRIPT_KEY', 'false', '1', 'false:在服务器进程内启动Jmeter压测。true:启动Jmeter_home中的命令压测');
 INSERT INTO sys_config (id, key, value, status, remark) VALUES ('5', 'MASTER_JMETER_REPLACE_FILE_KEY', 'true', '1', '上传文件时，遇到同名文件是替换还是报错，默认是替换为true');
 INSERT INTO sys_config (id, key, value, status, remark) VALUES ('6', 'MASTER_JMETER_GENERATE_REPORT_KEY', 'true', '1', 'true:本地web程序进程生成测试报告，可以多线程并发生成。false:使用Jmeter_home中的命令生成测试报告。');
-INSERT INTO sys_config (id, key, value, status, remark) VALUES ('7', 'SCRIPT_SCHEDULER_DURATION_KEY', 'true', '1', 'true:脚本限时执行生效，具体时间由脚本单独配置，是默认值 false:取消脚本限时执行');
-
-
--- 还没有完全实现的测试场景组装功能
--- INSERT INTO sys_menu (menu_id, parent_id, name, url, perms, type, icon, order_num) VALUES ('37', '31', '测试场景组装', 'modules/test/stressTestAssembly.html', 'test:stress', '1', 'fa fa-clipboard', '6');
-
+INSERT INTO sys_config (id, key, value, status, remark) VALUES ('7', 'SCRIPT_SCHEDULER_DURATION_KEY', '3600', '1', '配置大于0:脚本限时执行生效，这里设置的是默认时间1小时；0或者不填:取消强制加入的脚本限时执行');

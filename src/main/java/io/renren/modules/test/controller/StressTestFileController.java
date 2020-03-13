@@ -1,6 +1,7 @@
 package io.renren.modules.test.controller;
 
 import io.renren.common.annotation.SysLog;
+import io.renren.common.exception.RRException;
 import io.renren.common.utils.PageUtils;
 import io.renren.common.utils.Query;
 import io.renren.common.utils.R;
@@ -25,7 +26,6 @@ import java.util.Map;
 
 /**
  * 压力测试用例文件
- *
  */
 @RestController
 @RequestMapping("/test/stressFile")
@@ -38,7 +38,7 @@ public class StressTestFileController {
      */
     @RequestMapping("/list")
     @RequiresPermissions("test:stress:fileList")
-    public R list(@RequestParam Map<String, Object> params){
+    public R list(@RequestParam Map<String, Object> params) {
         //查询列表数据
         Query query = new Query(StressTestUtils.filterParms(params));
         List<StressTestFileEntity> jobList = stressTestFileService.queryList(query);
@@ -53,7 +53,7 @@ public class StressTestFileController {
      * 查询具体文件信息
      */
     @RequestMapping("/info/{fileId}")
-    public R info(@PathVariable("fileId") Long fileId){
+    public R info(@PathVariable("fileId") Long fileId) {
         StressTestFileEntity stressTestFile = stressTestFileService.queryObject(fileId);
         return R.ok().put("stressTestFile", stressTestFile);
     }
@@ -140,7 +140,7 @@ public class StressTestFileController {
      * 不要求权限校验了，频繁操作不用每次都调用数据库。
      */
     @RequestMapping("/statInfo/{fileId}")
-    public R statInfo(@PathVariable("fileId") Long fileId){
+    public R statInfo(@PathVariable("fileId") Long fileId) {
         // 频率不是特别高，可以是new一个对象。
         JmeterStatEntity jmeterStatEntity = stressTestFileService.getJmeterStatEntity(fileId);
         return R.ok().put("statInfo", jmeterStatEntity);
@@ -162,7 +162,7 @@ public class StressTestFileController {
      */
     @RequestMapping("/downloadFile/{fileId}")
     @RequiresPermissions("test:stress:fileDownLoad")
-    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable("fileId") Long fileId) throws IOException {
+    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable("fileId") Long fileId) {
         StressTestFileEntity stressTestFile = stressTestFileService.queryObject(fileId);
         FileSystemResource fileResource = new FileSystemResource(stressTestFileService.getFilePath(stressTestFile));
 
@@ -174,11 +174,14 @@ public class StressTestFileController {
         headers.add("Pragma", "no-cache");
         headers.add("Expires", "0");
         headers.setContentType(MediaType.parseMediaType("application/octet-stream"));
-
-        return ResponseEntity
-                .ok()
-                .headers(headers)
-                .contentLength(fileResource.contentLength())
-                .body(new InputStreamResource(fileResource.getInputStream()));
+        try {
+            return ResponseEntity
+                    .ok()
+                    .headers(headers)
+                    .contentLength(fileResource.contentLength())
+                    .body(new InputStreamResource(fileResource.getInputStream()));
+        } catch (IOException e) {
+            throw new RRException("找不到到文件！文件或许被删除！");
+        }
     }
 }

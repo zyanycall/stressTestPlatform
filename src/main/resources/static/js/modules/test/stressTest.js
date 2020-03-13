@@ -5,7 +5,7 @@ $(function () {
         colModel: [
             {label: '用例ID', name: 'caseId', width: 50, key: true},
             {label: '名称', name: 'caseName', sortable: false, width: 150},
-            {label: '添加时间', name: 'addTime', width: 90},
+            {label: '修改时间', name: 'updateTime', width: 90},
             {label: '项目', name: 'project', sortable: false, width: 80},
             {label: '模块', name: 'module', sortable: false, width: 80},
             {label: '操作人', name: 'operator', sortable: false, width: 60},

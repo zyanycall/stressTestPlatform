@@ -171,7 +171,7 @@ var vm = new Vue({
                 vm.stressTestFile.reportStatus = 0;
                 vm.stressTestFile.webchartStatus = 0;
                 vm.stressTestFile.debugStatus = 0;
-                vm.stressTestFile.duration = 10800;
+                vm.stressTestFile.duration = 3600;
                 vm.stressTestFile.fileIdList = fileIds;
             } else {
                 var fileId = fileIds[0];
@@ -386,6 +386,8 @@ function startInterval(fileId) {
             // if (Object.keys(responseTimeMap).length  === 0) {
             //     return;
             // }
+
+            $("#howLongRunningFormat").html(r.statInfo.howLongRunningFormat);
 
             // 如果不是正在执行，则不再刷新前端
             if (r.statInfo.runStatus !== 1) {

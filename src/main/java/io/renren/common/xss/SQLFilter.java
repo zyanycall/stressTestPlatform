@@ -29,7 +29,8 @@ public class SQLFilter {
         str = str.toLowerCase();
 
         //非法字符
-        String[] keywords = {"master", "truncate", "insert", "select", "delete", "update", "declare", "alert", "drop"};
+        //内部工具，条件不太苛刻。同时未来对修改的时间字段，要定义为gmt_modify，跟随阿里的脚步
+        String[] keywords = {"master", "truncate", "insert", "select", "delete", "declare", "alert", "drop"};
 
         //判断是否包含非法字符
         for(String keyword : keywords){

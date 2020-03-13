@@ -4,7 +4,7 @@
 <mapper namespace="io.renren.modules.test.dao.StressTestReportsDao">
 
     <select id="queryObject" resultType="io.renren.modules.test.entity.StressTestReportsEntity" >
-        select * from test_stress_case_reports where report_id = #{value}
+        select * from test_stress_case_reports where report_id=#{value}
     </select>
 
     <select id="queryList" resultType="io.renren.modules.test.entity.StressTestReportsEntity" >
@@ -13,13 +13,16 @@
             <if test="caseId != null and caseId.trim() != ''">
                 case_id = #{caseId}
             </if>
+            <if test="fileId != null and fileId.trim() != ''">
+                file_id = #{fileId}
+            </if>
         </where>
         <choose>
             <when test="sidx != null and sidx.trim() != ''">
                 order by ${sidx} ${order}
             </when>
             <otherwise>
-                order by add_time desc
+                order by update_time desc
             </otherwise>
         </choose>
         <if test="offset != null and limit != null ">

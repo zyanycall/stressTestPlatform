@@ -97,7 +97,7 @@ public class JmeterResultCollector extends ResultCollector {
         String label = sampleResult.getSampleLabel();
 
         // 全部停止脚本后，samplingStatCalculator4File整个会被清空。
-        if (samplingStatCalculatorMap != null) {
+        if (samplingStatCalculatorMap != null && StringUtils.isNotBlank(label)) {
             if (samplingStatCalculatorMap.get(label) == null) {
                 samplingStatCalculatorMap.put(label, new LocalSamplingStatCalculator(label));
             }

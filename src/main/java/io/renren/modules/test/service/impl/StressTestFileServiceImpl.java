@@ -248,7 +248,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         map.put("reportStatus", stressTestFile.getReportStatus());
         map.put("webchartStatus", stressTestFile.getWebchartStatus());
         map.put("debugStatus", stressTestFile.getDebugStatus());
-        map.put("duration", stressTestFile.getDuration());
+        map.put("duration", stressTestFile.getDuration(stressTestUtils.getScriptSchedulerDuration()));
         stressTestFileDao.updateStatusBatch(map);
     }
 
@@ -265,8 +265,21 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             String casePath = stressTestUtils.getCasePath();
             String filePath = casePath + File.separator + stressTestFile.getFileName();
 
-            String jmxDir = filePath.substring(0, filePath.lastIndexOf("."));
-            FileUtils.deleteQuietly(new File(jmxDir));
+//            String jmxDir = filePath.substring(0, filePath.lastIndexOf("."));
+            // jmxDir不在这里删除，删除报告那里会有一个兜底的代码。要不然会造成脚本删除，测试报告由于缺失源文件生成失败。
+//            FileUtils.deleteQuietly(new File(jmxDir));
+
+            //给已经删除脚本的测试报告一个提示
+            Map<String, Object> params = new HashMap<>();
+            params.put("fileId", fileId + "");
+            List<StressTestReportsEntity> stressTestReportsList = stressTestReportsDao.queryList(params);
+            for (StressTestReportsEntity report : stressTestReportsList) {
+                if (StringUtils.isBlank(report.getRemark())) {
+                    report.setRemark("源脚本被删除过");
+                    stressTestReportsDao.update(report);
+                }
+            }
+
             FileUtils.deleteQuietly(new File(filePath));
 
             //删除缓存
@@ -862,39 +875,53 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             return;
         }
         // 将同步过的分布式子节点的ID收集起来，用于查询子节点对象集合。
-        String slaveIds = "";
+//        String slaveIds = "";
         ArrayList fileDeleteIds = new ArrayList();
         for (StressTestFileEntity stressTestFile4Slave : fileDeleteList) {
             if (stressTestFile4Slave.getSlaveId() == null) {
                 continue;
             }
-            if (slaveIds.isEmpty()) {
-                slaveIds = stressTestFile4Slave.getSlaveId().toString();
-            } else {
-                slaveIds += "," + stressTestFile4Slave.getSlaveId().toString();
+//            long slaveId = stressTestFile4Slave.getSlaveId();
+            StressTestSlaveEntity slaveEntity = stressTestSlaveDao.queryObject(stressTestFile4Slave.getSlaveId());
+            if (Objects.isNull(slaveEntity)) {
+                // 系统中已经不维护该节点，则跳过
+                continue;
             }
+            // 跳过本地节点
+            if ("127.0.0.1".equals(slaveEntity.getIp().trim())) {
+                continue;
+            }
+            SSH2Utils ssh2Util = new SSH2Utils(slaveEntity.getIp(), slaveEntity.getUserName(),
+                    slaveEntity.getPasswd(), Integer.parseInt(slaveEntity.getSshPort()));
+            ssh2Util.runCommand("rm -f " + getSlaveFileName(stressTestFile, slaveEntity));
+
+//            if (slaveIds.isEmpty()) {
+//                slaveIds = stressTestFile4Slave.getSlaveId().toString();
+//            } else {
+//                slaveIds += "," + stressTestFile4Slave.getSlaveId().toString();
+//            }
             fileDeleteIds.add(stressTestFile4Slave.getFileId());
         }
 
-        if (slaveIds.isEmpty()) {
-            return;
-        }
+//        if (slaveIds.isEmpty()) {
+//            return;
+//        }
 
         // 每一个参数化文件，会对应多个同步子节点slave的记录。
-        Map slaveQuery = new HashMap<>();
-        slaveQuery.put("slaveIds", slaveIds);
-        // 每一个被同步过的记录，都要执行删除操作。
-        List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(slaveQuery);
-        for (StressTestSlaveEntity slave : stressTestSlaveList) {
-            // 跳过本地节点
-            if ("127.0.0.1".equals(slave.getIp().trim())) {
-                continue;
-            }
-
-            SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
-                    slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
-            ssh2Util.runCommand("rm -f " + getSlaveFileName(stressTestFile, slave));
-        }
+//        Map slaveQuery = new HashMap<>();
+//        slaveQuery.put("slaveIds", slaveIds);
+//        // 每一个被同步过的记录，都要执行删除操作。
+//        List<StressTestSlaveEntity> stressTestSlaveList = stressTestSlaveDao.queryList(slaveQuery);
+//        for (StressTestSlaveEntity slave : stressTestSlaveList) {
+//            // 跳过本地节点
+//            if ("127.0.0.1".equals(slave.getIp().trim())) {
+//                continue;
+//            }
+//
+//            SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
+//                    slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
+//            ssh2Util.runCommand("rm -f " + getSlaveFileName(stressTestFile, slave));
+//        }
 
         stressTestFileDao.deleteBatch(fileDeleteIds.toArray());
     }

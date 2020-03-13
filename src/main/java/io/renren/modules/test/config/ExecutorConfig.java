@@ -25,9 +25,9 @@ public class ExecutorConfig {
         logger.info("start asyncServiceExecutor");
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         //配置核心线程数：并发预计不多
-        executor.setCorePoolSize(4);
+        executor.setCorePoolSize(8);
         //配置最大线程数
-        executor.setMaxPoolSize(10);
+        executor.setMaxPoolSize(16);
         //配置队列大小
         executor.setQueueCapacity(999);
         //配置线程池中的线程的名称前缀

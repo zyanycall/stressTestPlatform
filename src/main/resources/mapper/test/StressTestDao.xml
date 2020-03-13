@@ -19,7 +19,7 @@
                 order by ${sidx} ${order}
             </when>
             <otherwise>
-                order by add_time desc
+                order by update_time desc
             </otherwise>
         </choose>
         <!--<if test="sidx != null and sidx.trim() != ''">-->

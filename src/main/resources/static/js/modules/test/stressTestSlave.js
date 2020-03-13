@@ -24,7 +24,12 @@ $(function () {
             }
             },
             {label: '安装路径', name: 'homeDir', width: 100, sortable: false},
-            {label: '权重(%)', name: 'weight', width: 30, sortable: false}
+            {label: '权重(%)', name: 'weight', width: 30, sortable: false},
+            {
+                label: '执行操作', name: '', width: 30, sortable: false, formatter: function (value, options, row) {
+                    return "<a href='#' class='btn btn-primary' onclick='copySlave(" + row.slaveId + ")' ><i class='fa fa-plus'></i>&nbsp;复制</a>";
+                }
+            }
         ],
         viewrecords: true,
         height: $(window).height() - 150,
@@ -264,3 +269,24 @@ var vm = new Vue({
         }
     }
 });
+
+function copySlave(slaveIds) {
+    if (!slaveIds) {
+        return;
+    }
+    // confirm('文件越大生成报告时间越长,请耐心等待!', function () {
+    $.ajax({
+        type: "POST",
+        url: baseURL + "test/stressSlave/copySlave",
+        contentType: "application/json",
+        data: JSON.stringify(numberToArray(slaveIds)),
+        success: function (r) {
+            if (r.code == 0) {
+                vm.reload();
+            } else {
+                alert(r.msg);
+            }
+        }
+    });
+    // });
+}

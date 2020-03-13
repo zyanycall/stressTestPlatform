@@ -70,6 +70,11 @@ public class JmeterStatEntity {
      */
     private Integer runStatus = StressTestUtils.RUNNING;
 
+    /**
+     * 当前持续了多少时间，格式化后的结果。
+     */
+    private String howLongRunningFormat = "";
+
     private JmeterRunEntity jmeterRunEntity;
 
     /**
@@ -116,16 +121,20 @@ public class JmeterStatEntity {
     public Map<String, String> getThroughputMap() {
         if (statMap != null) {
             statMap.forEach((k, v) -> {
-//                throughputMap.put(k + "_Tps(OK)", String.format("%.2f", v.getRate()));
-                throughputMap.put(k + "_Tps(OK)", String.valueOf(v.getCountPerSecond()));
+                throughputMap.put(k + "_Tps(OK)", String.format("%.2f", v.getRate()));
+//                throughputMap.put(k + "_Tps(OK)", String.valueOf(v.getCountPerSecond()));
 
-//                double howLongRunning = 0.0D;
-//                if (v.getRate() > -1e-6) {//double大于0
-//                    howLongRunning = (1000.0 * v.getCount()) / v.getRate();
-//                }
-//                double errorTps = ((double) v.getErrorCount() / howLongRunning) * 1000.0;
-//                throughputMap.put(k + "_Tps(KO)", String.format("%.2f", errorTps));
-                throughputMap.put(k + "_Tps(KO)", String.valueOf(v.getErrorCountPerSecond()));
+                double howLongRunning = 0.0D;
+                double errorTps = 0.0D;
+                if (Double.compare(v.getRate(), 0.0D) == 1) {//double 不等于0
+                    howLongRunning = (1000.0 * v.getCount()) / v.getRate();
+                    errorTps = ((double) v.getErrorCount() / howLongRunning) * 1000.0;
+                }
+                // 对错误的Tps做大于零的过滤
+                if (Double.compare(errorTps, 0.0D) == 1) {
+                    throughputMap.put(k + "_Tps(KO)", String.format("%.2f", errorTps));
+                }
+//                throughputMap.put(k + "_Tps(KO)", String.valueOf(v.getErrorCountPerSecond()));
             });
         }
         return throughputMap;
@@ -179,7 +188,9 @@ public class JmeterStatEntity {
                 LocalSamplingStatCalculator calculator = statMap.get(key);
                 long errorCount = calculator.getErrorCount();
                 double errorPercent = Double.parseDouble(String.format("%.2f", ((double) errorCount / (double) totalCount)));
-                successPercentageMap.put(key + "_ErrorPercent", String.valueOf(errorPercent));
+                if (Double.compare(errorPercent, 0.0D) == 1) {
+                    successPercentageMap.put(key + "_ErrorPercent", String.valueOf(errorPercent));
+                }
                 successPercent = successPercent - errorPercent;
             }
         }
@@ -195,7 +206,9 @@ public class JmeterStatEntity {
         if (statMap != null) {
             for (String key : statMap.keySet()) {
                 LocalSamplingStatCalculator calculator = statMap.get(key);
-                errorPercentageMap.put(key + "_ErrorPercent", String.format("%.2f", calculator.getErrorPercentage()));
+                if (Double.compare(calculator.getErrorPercentage(), 0.0D) == 1) {
+                    errorPercentageMap.put(key + "_ErrorPercent", String.format("%.2f", calculator.getErrorPercentage()));
+                }
             }
         }
         return errorPercentageMap;
@@ -250,5 +263,26 @@ public class JmeterStatEntity {
 
     public void setRunStatus(Integer runStatus) {
         this.runStatus = runStatus;
+    }
+
+    /**
+     * 当前脚本持续了多久
+     */
+    public String getHowLongRunningFormat() {
+        if (statMap != null) {
+            for (String key : statMap.keySet()) {
+                LocalSamplingStatCalculator calculator = statMap.get(key);
+                long firstTime = calculator.getFirstTime();
+                long howLongRunning = System.currentTimeMillis() - firstTime;
+                if (firstTime > 0L && howLongRunning > 0L) {
+                    return StressTestUtils.formatTime(howLongRunning);
+                }
+            }
+        }
+        return howLongRunningFormat;
+    }
+
+    public void setHowLongRunningFormat(String howLongRunningFormat) {
+        this.howLongRunningFormat = howLongRunningFormat;
     }
 }
