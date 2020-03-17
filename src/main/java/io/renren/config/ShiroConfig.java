@@ -91,7 +91,7 @@ public class ShiroConfig {
         filterMap.put("/test/debugReports/downloadReport/*?*", "anon");
         filterMap.put("/test/stressFile/downloadFile/*?*", "anon");
         filterMap.put("/test/stressFile/statInfo/*?*", "anon");
-        filterMap.put("/testReport/**", "anon");
+        filterMap.put("/testReport/*?*", "anon");
         filterMap.put("/webjars/**", "anon");
         filterMap.put("/druid/**", "anon");
         filterMap.put("/app/**", "anon");
