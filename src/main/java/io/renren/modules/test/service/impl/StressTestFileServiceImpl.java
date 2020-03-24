@@ -466,7 +466,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 }
                 stressTestUtils.setJmeterOutputFormat();
             }
-
             // 默认的FileServer.getFileServer().setBaseForScript(jmxFile); 方法无法支持单进程内
             // 的多脚本的同时进行，是Jmeter源生的对单进程内多执行脚本支持就不好。
             // 主要原因是参数化文件会混淆，设置脚本base目录时会判断当前进程内是否存在正在使用的文件。
@@ -527,7 +526,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             // 查找脚本文件所用到的所有的参数化文件的名称，当前只查找了CSVData参数化类型的。
             // 将其放入到内存中，为了脚本结束之后关闭这些参数化文件。
             // 后续可能还会有其他文件能得到引用（如文件下载的测试等等），可能还需要扩充此方法。
-            ArrayList<String> fileAliaList = new ArrayList<>();
+            HashSet<String> fileAliaList = new HashSet<>();
             for (HashTree lht : jmxTree.values()) {
                 fillFileAliaList(fileAliaList, lht);
             }
@@ -578,7 +577,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 将当前脚本所用到的文件保存起来。
      * 目前已知的最常用的有CSVDataSet类型的。
      */
-    public ArrayList fillFileAliaList(ArrayList<String> fileAliaList, HashTree hashTree) {
+    public HashSet fillFileAliaList(HashSet<String> fileAliaList, HashTree hashTree) {
         for (Object os : hashTree.keySet()) {
             if (os instanceof CSVDataSet) {
                 // filename通过查看源码，没有发现有变化的地方，所以让其成为关键字。
@@ -588,6 +587,17 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 fillFileAliaList(fileAliaList, hashTree.get(os));
             }
         }
+
+        for (Object os : hashTree.values()) {
+            if (os instanceof CSVDataSet) {
+                // filename通过查看源码，没有发现有变化的地方，所以让其成为关键字。
+                String filename = ((CSVDataSet) os).getPropertyAsString("filename");
+                fileAliaList.add(filename);
+            } else {
+                fillFileAliaList(fileAliaList, (HashTree) os);
+            }
+        }
+
         return fileAliaList;
     }
 

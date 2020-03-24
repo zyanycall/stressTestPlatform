@@ -33,7 +33,7 @@ public class JmeterRunEntity {
     /**
      * 脚本文件所使用的文件名的集合，例如"classinfo.txt"
      */
-    private ArrayList<String> fileAliaList;
+    private HashSet<String> fileAliaList;
 
     /**
      * 用来统计运行脚本的线程数量的数据
@@ -115,11 +115,11 @@ public class JmeterRunEntity {
         this.runStatus = runStatus;
     }
 
-    public ArrayList<String> getFileAliaList() {
+    public HashSet<String> getFileAliaList() {
         return fileAliaList;
     }
 
-    public void setFileAliaList(ArrayList<String> fileAliaList) {
+    public void setFileAliaList(HashSet<String> fileAliaList) {
         this.fileAliaList = fileAliaList;
     }
 

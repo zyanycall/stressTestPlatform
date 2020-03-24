@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 本身从Jmeter源码StandardJMeterEngine复制来的，为的是解决平台同时进行多脚本问题。
  * 增加了对JmeterTestPlan的引用和处理。
+ * 后面还增加了工作线程数监控的内容
  *
  * 父类StandardJMeterEngine中都是私有变量，无法仅仅复写configure()方法，所以都复制过来了。
  *
