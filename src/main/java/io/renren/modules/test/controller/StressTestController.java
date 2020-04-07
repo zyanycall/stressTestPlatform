@@ -109,7 +109,7 @@ public class StressTestController {
             } else {// 允许上传同名文件方式是覆盖。
                 for (StressTestFileEntity stressCaseFile : fileList) {
                     // 如果是不同用例，但是要上传同名文件，是不允许的，这是数据库的唯一索引要求的。
-                    if (Long.valueOf(caseId) != stressCaseFile.getCaseId()) {
+                    if (!Long.valueOf(caseId).equals(stressCaseFile.getCaseId())) {
                         return R.ok().put("error","其他用例已经包含此同名文件！");
 //                        throw new RRException("其他用例已经包含此同名文件！");
                     }
