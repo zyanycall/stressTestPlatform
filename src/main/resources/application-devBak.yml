@@ -7,6 +7,10 @@ spring:
                 url: jdbc:mysql://localhost:3306/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
                 username: root
                 password: 19960710
+            second:  #数据源2
+                url: jdbc:mysql://localhost:3306/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: 19960710
             initial-size: 10
             max-active: 100
             min-idle: 10
