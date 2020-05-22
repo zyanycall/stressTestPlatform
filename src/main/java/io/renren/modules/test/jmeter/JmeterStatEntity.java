@@ -190,6 +190,8 @@ public class JmeterStatEntity {
                 double errorPercent = Double.parseDouble(String.format("%.2f", ((double) errorCount / (double) totalCount)));
                 if (Double.compare(errorPercent, 0.0D) == 1) {
                     successPercentageMap.put(key + "_ErrorPercent", String.valueOf(errorPercent));
+                } else {
+                    successPercentageMap.put(key + "_ErrorPercent", "0");
                 }
                 successPercent = successPercent - errorPercent;
             }
@@ -208,6 +210,8 @@ public class JmeterStatEntity {
                 LocalSamplingStatCalculator calculator = statMap.get(key);
                 if (Double.compare(calculator.getErrorPercentage(), 0.0D) == 1) {
                     errorPercentageMap.put(key + "_ErrorPercent", String.format("%.2f", calculator.getErrorPercentage()));
+                } else {
+                    errorPercentageMap.put(key + "_ErrorPercent", "0");
                 }
             }
         }

@@ -160,6 +160,7 @@ public class StressTestFileController {
     /**
      * 下载文件
      */
+    @SysLog("下载脚本文件")
     @RequestMapping("/downloadFile/{fileId}")
     @RequiresPermissions("test:stress:fileDownLoad")
     public ResponseEntity<InputStreamResource> downloadFile(@PathVariable("fileId") Long fileId) {

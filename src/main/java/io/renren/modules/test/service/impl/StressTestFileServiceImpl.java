@@ -544,7 +544,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 LocalDistributedRunner localDistributedRunner = new LocalDistributedRunner();
                 localDistributedRunner.setStdout(System.out); // NOSONAR
                 localDistributedRunner.setStdErr(System.err); // NOSONAR
-                localDistributedRunner.init(hosts, jmxTree, getSlaveAddrWeight());
+                try {
+                    localDistributedRunner.init(hosts, jmxTree, getSlaveAddrWeight());
+                } catch (RuntimeException e) {
+                    throw new RRException("初始化分布式节点异常！请查看分布式节点的配置！");
+                }
                 engines.addAll(localDistributedRunner.getEngines());
                 localDistributedRunner.start();
 
