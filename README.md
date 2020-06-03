@@ -80,7 +80,7 @@ renren-fast
 - 修改application-dev.yml，更新MySQL账号和密码
 - 修改MySQL中sys_config表中Jmeter专属配置项，更新为本地地址
 - Eclipse、IDEA运行RenrenApplication.java，则可启动项目
-- 项目访问路径：http://localhost:8080/renren-fast
+- 项目访问路径：http://localhost:8080/renren-fast/index.html
 - 账号密码：admin/admin
 - Swagger路径：http://localhost:8080/renren-fast/swagger/index.html
 
@@ -91,6 +91,6 @@ renren-fast
 - 通过maven命令打包war包：mvn clean package -f pom-war.xml
 - 将target目录下，打包好的war包保存到tomcat的webapps目录下
 - 通过tomcat的bin目录下的startup命令，启动tomcat
-- 访问tomcat路径，如：http://线下环境ip:8080/renren-fast
+- 访问tomcat路径，如：http://线下环境ip:8080/renren-fast/index.html
 - 账号密码：admin/admin
 
