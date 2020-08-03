@@ -1,13 +1,8 @@
 package io.renren.modules.test.jmeter.calculator;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.visualizers.Sample;
 import org.apache.jorphan.math.StatCalculatorLong;
-
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by zyanycall@gmail.com on 2020/1/9 5:50 下午.
@@ -26,19 +21,19 @@ public class LocalSamplingStatCalculator {
 
     private String label;
 
-    private volatile Sample currentSample;
+    private Sample currentSample;
 
     /**
      * 针对每一秒，存储一个成功请求数的集合。
      * 使用google的缓存技术，把数据的清理交给缓存。
      */
-    private Cache<Long, Long> successCountMap;
+//    private Cache<Long, Long> successCountMap;
 
     /**
      * 针对每一秒，存储一个错误请求数的集合。
      * 使用google的缓存技术，把数据的清理交给缓存。
      */
-    private Cache<Long, Long> errorCountMap;
+//    private Cache<Long, Long> errorCountMap;
 
 
     public LocalSamplingStatCalculator() { // Only for use by test code
@@ -53,18 +48,18 @@ public class LocalSamplingStatCalculator {
     private void init() { // WARNING: called from ctor so must not be overridden (i.e. must be private or final)
         firstTime = Long.MAX_VALUE;
         calculator.clear();
-        successCountMap = CacheBuilder.newBuilder()
-                .maximumSize(50) // 设置缓存的最大容量
-                .expireAfterAccess(30, TimeUnit.SECONDS) // 设置缓存在写入一分钟后失效
-                .concurrencyLevel(10) // 设置并发级别为10
-//            .recordStats() // 开启缓存统计
-                .build();
-        errorCountMap = CacheBuilder.newBuilder()
-                .maximumSize(50) // 设置缓存的最大容量
-                .expireAfterAccess(30, TimeUnit.SECONDS) // 设置缓存在写入一分钟后失效
-                .concurrencyLevel(10) // 设置并发级别为10
-//            .recordStats() // 开启缓存统计
-                .build();
+//        successCountMap = CacheBuilder.newBuilder()
+//                .maximumSize(50) // 设置缓存的最大容量
+//                .expireAfterAccess(30, TimeUnit.SECONDS) // 设置缓存在写入一分钟后失效
+//                .concurrencyLevel(10) // 设置并发级别为10
+////            .recordStats() // 开启缓存统计
+//                .build();
+//        errorCountMap = CacheBuilder.newBuilder()
+//                .maximumSize(50) // 设置缓存的最大容量
+//                .expireAfterAccess(30, TimeUnit.SECONDS) // 设置缓存在写入一分钟后失效
+//                .concurrencyLevel(10) // 设置并发级别为10
+////            .recordStats() // 开启缓存统计
+//                .build();
 //        maxThroughput = Double.MIN_VALUE;
         currentSample = new Sample();
     }
@@ -231,24 +226,23 @@ public class LocalSamplingStatCalculator {
         return s;
     }
 
-    public long getCountPerSecond() {
-        // 不是说平均下来TPS的取值就延迟一秒，这里保证的是取的值是TPS。
-        long timeSec = (System.currentTimeMillis() / 1000) - 1;
-        Long successCountPerSec = successCountMap.getIfPresent(timeSec);
-        if (Objects.isNull(successCountPerSec)) {
-            return 0L;
-        }
-        return successCountPerSec;
-    }
-
-    public long getErrorCountPerSecond() {
-        long timeSec = (System.currentTimeMillis() / 1000) - 1;
-        Long errorCountPerSec = errorCountMap.getIfPresent(timeSec);
-        if (Objects.isNull(errorCountPerSec)) {
-            return 0L;
-        }
-        return errorCountPerSec;
-    }
+//    public long getCountPerSecond() {
+//        // 不是说平均下来TPS的取值就延迟一秒，这里保证的是取的值是TPS。
+//        long timeSec = (System.currentTimeMillis() / 1000) - 1;
+//        Long successCountPerSec = successCountMap.getIfPresent(timeSec);
+//        if (Objects.isNull(successCountPerSec)) {
+//            return 0L;
+//        }
+//        return successCountPerSec;
+//    }
+//    public long getErrorCountPerSecond() {
+//        long timeSec = (System.currentTimeMillis() / 1000) - 1;
+//        Long errorCountPerSec = errorCountMap.getIfPresent(timeSec);
+//        if (Objects.isNull(errorCountPerSec)) {
+//            return 0L;
+//        }
+//        return errorCountPerSec;
+//    }
 
     private long getEndTime(SampleResult res) {
         long endTime = res.getEndTime();

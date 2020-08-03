@@ -1,7 +1,5 @@
 package io.renren.modules.sys.service.impl;
 
-import io.renren.common.exception.RRException;
-import io.renren.common.utils.Constant;
 import io.renren.modules.sys.dao.SysUserDao;
 import io.renren.modules.sys.entity.SysUserEntity;
 import io.renren.modules.sys.service.SysRoleService;
@@ -9,7 +7,6 @@ import io.renren.modules.sys.service.SysUserRoleService;
 import io.renren.modules.sys.service.SysUserService;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
-
 import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -125,16 +122,16 @@ public class SysUserServiceImpl implements SysUserService {
 			return;
 		}
 		//如果不是超级管理员，则需要判断用户的角色是否自己创建
-		if(user.getCreateUserId() == Constant.SUPER_ADMIN){
-			return ;
-		}
+//		if(user.getCreateUserId() == Constant.SUPER_ADMIN){
+//			return ;
+//		}
 		
 		//查询用户创建的角色列表
-		List<Long> roleIdList = sysRoleService.queryRoleIdList(user.getCreateUserId());
+//		List<Long> roleIdList = sysRoleService.queryRoleIdList(user.getCreateUserId());
 
 		//判断是否越权
-		if(!roleIdList.containsAll(user.getRoleIdList())){
-			throw new RRException("新增用户所选角色，不是本人创建");
-		}
+//		if(!roleIdList.containsAll(user.getRoleIdList())){
+//			throw new RRException("新增用户所选角色，不是本人创建");
+//		}
 	}
 }

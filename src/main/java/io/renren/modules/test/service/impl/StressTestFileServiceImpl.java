@@ -500,7 +500,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 }
 
                 jmeterResultCollector.setFilename(csvFile.getPath());
-                jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
+                if (jmxTree.getArray().length == 0) {
+                    throw new RRException("找不到脚本中的测试计划，请确认脚本能否正常执行！");
+                } else {
+                    jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
+                }
             }
 
             // 增加程序执行结束的监控
@@ -662,25 +666,27 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     @Override
     public void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity, boolean now) {
         StressTestFileEntity stressTestFile;
+        StressTestReportsEntity stressTestReports = null;
+        JmeterResultCollector jmeterResultCollector = null;
         if (Objects.isNull(jmeterRunEntity)) {
             // 如果为空，希望前端的用户无感知。
             stressTestFile = queryObject(fileId);
         } else {
             stressTestFile = jmeterRunEntity.getStressTestFile();
+            stressTestReports = jmeterRunEntity.getStressTestReports();
+            jmeterResultCollector = jmeterRunEntity.getJmeterResultCollector();
         }
 
-        StressTestReportsEntity stressTestReports = jmeterRunEntity.getStressTestReports();
-        JmeterResultCollector jmeterResultCollector = jmeterRunEntity.getJmeterResultCollector();
 
         // 只处理了成功的情况，失败的情况当前捕获不到。
         stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
         // 全面停止之前将测试报告文件从缓存刷到磁盘上去。
         // 避免多脚本执行时停止其中一个脚本而测试报告文件不完整。
-        if (jmeterResultCollector != null) {
+        if (Objects.nonNull(jmeterResultCollector)) {
             // 如果关闭报告，则为null
             jmeterResultCollector.flushFile();
         }
-        if (stressTestReports != null && stressTestReports.getFile().exists()) {
+        if (Objects.nonNull(stressTestReports) && Objects.nonNull(stressTestReports.getFile()) && stressTestReports.getFile().exists()) {
             stressTestReports.setFileSize(FileUtils.sizeOf(stressTestReports.getFile()));
         }
         update(stressTestFile, stressTestReports);

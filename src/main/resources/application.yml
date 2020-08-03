@@ -4,14 +4,15 @@ server:
         uri-encoding: UTF-8
         max-threads: 1000
         min-spare-threads: 30
-    port: 8080
+    port: 8080 # 仅对jar包方式启动有效，或者本地调试
     connection-timeout: 5000
-    context-path: /renren-fast
+    # stressTestPlatform
+    context-path: /
 
 spring:
-    # 环境 dev|test|pro|系统默认使用dev
+    # 环境 dev|test|pro|h2|h2pro|h2line 系统默认使用h2
     profiles:
-        active: dev
+        active: h2pro
     # jackson时间格式化
     jackson:
         time-zone: GMT+8

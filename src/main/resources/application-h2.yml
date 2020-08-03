@@ -4,11 +4,11 @@ spring:
         driverClassName: org.h2.Driver
         druid:
             first:  #数据源1
-                url: jdbc:h2:file:~/.h2/jmeterdb  #配置h2数据库连接地址
+                url: jdbc:h2:file:/Users/zhaoyu/work/stressTestCases/h2/jmeterdb  #配置h2数据库连接地址
                 username: sa
                 password: sa
             second:  #数据源2
-                url: jdbc:h2:file:~/.h2/jmeterdb  #配置h2数据库连接地址
+                url: jdbc:h2:file:/Users/zhaoyu/work/stressTestCases/h2/jmeterdb  #配置h2数据库连接地址
                 username: sa
                 password: sa
             initial-size: 10

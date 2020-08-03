@@ -4,13 +4,13 @@ spring:
         driverClassName: com.mysql.jdbc.Driver
         druid:
             first:
-                url: jdbc:mysql://localhost:3306/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
-                username: renren
-                password: 123456
+                url: jdbc:mysql://172.18.48.45:3306/qa_stressplatform?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+                username: root
+                password: 12345
             second:
-                url: jdbc:mysql://localhost:3306/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
-                username: renren
-                password: 123456
+                url: jdbc:mysql://172.18.48.45:3306/qa_stressplatform?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+                username: root
+                password: 12345
             initial-size: 10
             max-active: 100
             min-idle: 10
@@ -21,8 +21,10 @@ spring:
             min-evictable-idle-time-millis: 300000
             validation-query: SELECT 1 FROM DUAL
             test-while-idle: true
-            test-on-borrow: false
+#            总遇到链接超时问题，故将on-borrow打开，如有需要请关闭。
+            test-on-borrow: true
             test-on-return: false
+#            removeAbandoned: false
             stat-view-servlet:
                 enabled: true
                 url-pattern: /druid/*

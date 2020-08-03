@@ -5,17 +5,19 @@
     <logger name="org.springboot.sample" level="TRACE" />
 
     <!-- 开发、测试环境 -->
-    <springProfile name="dev,test">
+    <springProfile name="dev">
         <logger name="org.springframework.web" level="INFO"/>
         <logger name="org.springboot.sample" level="INFO" />
         <logger name="io.renren" level="DEBUG" />
+        <logger name="org.apache.jmeter" level="INFO" />
     </springProfile>
 
     <!-- 生产环境 -->
-    <springProfile name="pro">
+    <springProfile name="pro,test,h2line,h2pro">
         <logger name="org.springframework.web" level="ERROR"/>
         <logger name="org.springboot.sample" level="ERROR" />
         <logger name="io.renren" level="ERROR" />
+        <logger name="org.apache.jmeter" level="ERROR" />
     </springProfile>
 
 </configuration>

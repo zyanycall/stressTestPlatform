@@ -187,7 +187,10 @@ public class JmeterStatEntity {
             for (String key : statMap.keySet()) {
                 LocalSamplingStatCalculator calculator = statMap.get(key);
                 long errorCount = calculator.getErrorCount();
-                double errorPercent = Double.parseDouble(String.format("%.2f", ((double) errorCount / (double) totalCount)));
+                double errorPercent = 0.0D;
+                if (totalCount != 0L) {
+                    errorPercent = Double.parseDouble(String.format("%.2f", ((double) errorCount / (double) totalCount)));
+                }
                 if (Double.compare(errorPercent, 0.0D) == 1) {
                     successPercentageMap.put(key + "_ErrorPercent", String.valueOf(errorPercent));
                 } else {

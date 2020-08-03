@@ -64,6 +64,7 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
             stopSoon.start();
         }
         updateEndStatus();
+        log.error("... end of run");
     }
 
     @Override
@@ -190,6 +191,7 @@ public class JmeterListenToTest implements TestStateListener, Runnable, Remoteab
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             log.error("Thread.sleep meet error!", e);
+            Thread.currentThread().interrupt();
         }
 
         JmeterRunEntity jmeterRunEntity = StressTestUtils.jMeterEntity4file.get(fileId);

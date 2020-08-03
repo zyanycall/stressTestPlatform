@@ -213,18 +213,19 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         //测试报告文件目录
         String reportPathDir = csvPath.substring(0, csvPath.lastIndexOf("."));
 
+        logger.error("报告名称:" + reportName + "  报告csv路径:" + csvPath);
+
         //设置开始执行命令生成报告
         stressTestReport.setStatus(StressTestUtils.RUNNING);
         update(stressTestReport);
 
-        //修复csv文件
-        fixReportFile(csvPath, stressTestReport);
-        //如果存在则清空
         try {
-            FileUtils.cleanDirectory(new File(reportPathDir));
+            fixReportFile(csvPath, stressTestReport);
         } catch (Exception e) {
-            logger.error("请空测试报告原有文件夹失败！意在清楚该文件夹内容，无内容是正常的", e);
+            logger.error("修复csv文件遇到了问题！", e);
         }
+        //如果存在则清空
+        FileUtils.deleteQuietly(new File(reportPathDir));
 
         if (stressTestUtils.isMasterGenerateReport()) {
             generateReportLocal(stressTestReport, csvPath, reportPathDir);
@@ -305,59 +306,84 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      *
      * @param fileName csv 文件
      */
-    public void fixReportFile(String fileName, StressTestReportsEntity stressTestReport) {
-        int lineLength = fixReportLastLine(fileName, stressTestReport);
-        fixReportUnknownLine(fileName, lineLength);
+    public void fixReportFile(String fileName, StressTestReportsEntity stressTestReport) throws Exception {
+        fixReportLastLine(fileName, stressTestReport);
+        fixReportUnknownLine4Linux(fileName);
     }
 
     /**
-     * 测试报告文件如果最后一行不完整，会报生成报告的错误。
-     * 所以每次生成报告之前，如果不完整则删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
+     * 目前发现，测试报告会包含<0x00>即十六进制0的特殊字符，会导致测试报告生成失败。
+     * 首先生成一个_back结尾的文件，里面会将包含<0x00>即十六进制0的特殊字符的行都跳过。
+     * 然后将_back结尾的文件替换成要生成测试报告的源文件，完成数据的修复。
      *
      * @param fileName csv 文件
      */
-    private void fixReportUnknownLine(String fileName, int lineLength) {
-        // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
-        // 如果是完整的，则直接跳出不执行删除操作。
+    private void fixReportUnknownLine(String fileName) throws IOException {
         File file = new File(fileName);
         File fileBack = new File(fileName + "_back");
         BufferedReader reader = null;
+        PrintWriter writer = null;
         try {
             reader = new BufferedReader(new FileReader(file));
-            PrintWriter writer = new PrintWriter(fileBack);
+            writer = new PrintWriter(fileBack);
             String line;
             while ((line = reader.readLine()) != null) {
                 // 判断条件，根据自己的情况书写，会删除所有符合条件的行
-                String[] lines = line.split(",");
-                if (lines.length != lineLength) {
-                    // 读取后面的几行,废弃
+//                String[] lines = line.split(",");
+//                if (lines.length != lineLength) {
+//                    continue;
+//                }
+                if (line.contains("\0")) {
                     continue;
                 }
                 writer.println(line);
                 writer.flush();
             }
-            reader.close();
-            writer.close();
+//            reader.close();
+//            writer.close();
 
-            // 删除老文件
+            // 删除老文件，使用_back文件替换旧的可能存在问题的文件。
             FileUtils.deleteQuietly(file);
             fileBack.renameTo(file);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("测试报告原始csv修复特殊字符<0x00>失败！", e);
+        } finally {
+            reader.close();
+            writer.close();
         }
     }
 
     /**
-     * 测试报告文件如果最后一行不完整，会报生成报告的错误。
-     * 所以每次生成报告之前，如果不完整则删除最后一行记录，让测试报告生成没有这类文件不完整的错误。
+     * 目前发现，测试报告会包含<0x00>即十六进制0的特殊字符，会导致测试报告生成失败。
+     * 针对Linux环境，使用Linux的本地命令来修复文件。
      *
      * @param fileName csv 文件
      */
-    private int fixReportLastLine(String fileName, StressTestReportsEntity stressTestReport) {
+    private void fixReportUnknownLine4Linux(String fileName) throws Exception {
+        if (StressTestUtils.OS_NAME_LC.startsWith("windows") || StressTestUtils.OS_NAME_LC.startsWith("mac")) {
+            fixReportUnknownLine(fileName);
+            return;
+        }
+        //使用临时的shell文件来执行sed命令，因为Linux环境下直接执行sed命令不成功。
+        String[] strs = {"sed -i '/\\x0/d' " + fileName};
+        File temp = stressTestUtils.createShell(strs);
+        String result = stressTestUtils.runShell(temp.getAbsolutePath());
+
+        logger.error(temp.getAbsolutePath() + result);
+    }
+
+    /**
+     * 测试报告文件如果最后一行不完整，会报生成报告的错误。
+     * 所以每次生成报告之前，如果不完整则删除最后一行记录，让测试报告生成没有这文件不完整的错误。
+     *
+     * @param fileName csv 文件
+     */
+    private int fixReportLastLine(String fileName, StressTestReportsEntity stressTestReport) throws IOException {
         // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
         // 如果是完整的，则直接跳出不执行删除操作。
+        RandomAccessFile raf = null;
         try {
-            RandomAccessFile raf = new RandomAccessFile(fileName, "rw");
+            raf = new RandomAccessFile(fileName, "rw");
             if (raf.length() == 0L) {
                 stressTestReport.setStatus(StressTestUtils.NO_FILE);
                 update(stressTestReport);
@@ -388,7 +414,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             }
 
             //关闭回收
-            raf.close();
+//            raf.close();
             return theLastSec.length;
         } catch (FileNotFoundException e) {
             stressTestReport.setStatus(StressTestUtils.NO_FILE);
@@ -400,6 +426,8 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             update(stressTestReport);
             logger.error("测试报告原始文件修复时，IO错误！", e);
             throw new RRException("测试报告原始文件修复时出错！");
+        } finally {
+            raf.close();
         }
     }
 

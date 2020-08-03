@@ -42,7 +42,7 @@ public class LocalStandardJMeterEngine extends StandardJMeterEngine {
     // e.g. from beanshell server
     // Assumes that there is only one instance of the engine
     // at any one time so it is not guaranteed to work ...
-    private static volatile LocalStandardJMeterEngine engine;
+    private static LocalStandardJMeterEngine engine;
 
     /*
      * Allow functions etc to register for testStopped notification.

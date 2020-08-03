@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 /**
  * Created by zyanycall@gmail.com on 2018/6/15.
@@ -80,7 +81,7 @@ public class SSH2Utils {
      */
     public String runCommand(String command) {
         StringBuilder returnLine = new StringBuilder();
-        //文件scp到数据服务器
+        //跟远程服务器建立连接
         Connection conn = new Connection(host, port);
         Session sess = null;
         try {
@@ -107,6 +108,7 @@ public class SSH2Utils {
             //关闭session和connection
 //            sess.close();
 //            conn.close();
+            br.close();
         } catch (Exception e) {
             logger.error("文件scp到数据服务器时发生异常", e);
         } finally {
@@ -117,5 +119,75 @@ public class SSH2Utils {
         }
         logger.error("执行命令结束 : " + command + "\n返回值：" + returnLine);
         return returnLine.toString();
+    }
+
+
+    public static void main(String[] args) {
+
+//        ArrayList<String> list = new ArrayList<>();
+//        list.add("39.105.197.108");
+//        list.add("47.94.167.252");
+//        list.add("182.92.169.95");
+//        list.add("123.57.48.191");
+//        list.add("139.224.231.58");
+//        list.add("106.14.63.173");
+//        list.add("106.14.61.57");
+//        list.add("139.224.247.6");
+//        list.add("47.113.91.64");
+//        list.add("47.113.113.31");
+//        list.add("47.113.104.40");
+//        list.add("47.113.113.197");
+//        list.add("122.152.251.252");
+//        list.add("106.52.112.250");
+//        list.add("139.199.74.80");
+//        list.add("118.89.40.13");
+//        list.add("111.230.150.99");
+//        list.add("203.195.224.170");
+//        list.add("134.175.151.166");
+//        list.add("111.231.233.52");
+//        list.add("193.112.87.116");
+//        list.add("123.207.251.174");
+//        list.add("134.175.81.96");
+//        list.add("129.204.221.126");
+//        list.add("134.175.63.22");
+//        list.add("134.175.153.202");
+//        list.add("111.230.139.98");
+//        list.add("129.28.147.204");
+//        list.add("94.191.117.202");
+//        list.add("94.191.125.12");
+//        list.add("118.24.246.32");
+//        for (String ip : list) {
+//            SSH2Utils ssh2Util = new SSH2Utils(ip, "root",
+//                    "yDY@28kss7AkasY", 22);
+//            ssh2Util.runCommand("sed -i '/order.koolearn.com/d' /etc/hosts");
+////            ssh2Util.runCommand("sed -i '$a\\172.18.142.17  s.kooup.com' /etc/hosts");
+//            ssh2Util.runCommand("sed -i '$a\\140.143.215.85  order.koolearn.com' /etc/hosts");
+//            System.out.println(ip + "结束！");
+//        }
+
+        ArrayList<String> list = new ArrayList<>();
+        list.add("10.155.10.94");
+        list.add("10.155.10.86");
+        list.add("10.155.10.178");
+        list.add("10.155.10.179");
+        list.add("10.155.10.180");
+        for (String ip : list) {
+            SSH2Utils ssh2Util;
+            if (ip.startsWith("10.155.10.1")) {
+                ssh2Util = new SSH2Utils(ip, "zhaoyu",
+                        "Dig@init5", 22);
+            } else {
+                ssh2Util = new SSH2Utils(ip, "zhaoyu01",
+                        "root-123", 22);
+            }
+            ssh2Util.runCommand("sudo su root");
+            ssh2Util.runCommand("sed -i '/icp.koolearn.com/d' /etc/hosts");
+            ssh2Util.runCommand("sed -i '/ccp.koolearn.com/d' /etc/hosts");
+//            ssh2Util.runCommand("sed -i '$a\\172.18.46.35  ccp.koolearn.com' /etc/hosts");
+            ssh2Util.runCommand("sed -i '$a\\140.143.178.159 icp.koolearn.com' /etc/hosts");
+            System.out.println(ip + "结束！");
+        }
+//        String sig = "e8f767d73873c64abbe6855919a26c80";
+//        System.out.println(sig.toUpperCase());
     }
 }

@@ -44,9 +44,10 @@ public class SysUserController extends AbstractController {
 	@RequiresPermissions("sys:user:list")
 	public R list(@RequestParam Map<String, Object> params){
 		//只有超级管理员，才能查看所有管理员列表
-		if(getUserId() != Constant.SUPER_ADMIN){
-			params.put("createUserId", getUserId());
-		}
+		//有管理权限的，能看到所有的管理员
+//		if(getUserId() != Constant.SUPER_ADMIN){
+//			params.put("createUserId", getUserId());
+//		}
 		
 		//查询列表数据
 		Query query = new Query(params);
@@ -126,6 +127,10 @@ public class SysUserController extends AbstractController {
 	@RequiresPermissions("sys:user:update")
 	public R update(@RequestBody SysUserEntity user){
 		ValidatorUtils.validateEntity(user, UpdateGroup.class);
+
+		if (user.getUserId().equals(1L) && getUserId() != Constant.SUPER_ADMIN) {
+			return R.error("不能修改系统管理员信息！");
+		}
 		
 		user.setCreateUserId(getUserId());
 		sysUserService.update(user);

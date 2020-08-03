@@ -23,8 +23,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import static io.renren.common.utils.ConfigConstant.OS_NAME_LC;
-
 /**
  * 性能测试的工具类，同时用于读取配置文件。
  * 配置文件在数据库中配置
@@ -37,6 +35,9 @@ public class StressTestUtils {
 
     private static SysConfigService sysConfigService = (SysConfigService) SpringContextUtils.getBean("sysConfigService");
     public static String xslFilePath = "classpath:config/jmeter.results.zyanycall.xsl";
+
+    private static final String OS_NAME = System.getProperty("os.name");
+    public static final String OS_NAME_LC = OS_NAME.toLowerCase(java.util.Locale.ENGLISH);
 
     //0：初始状态  1：正在运行  2：成功执行  3：运行出现异常
     public static final Integer INITIAL = 0;
@@ -81,7 +82,7 @@ public class StressTestUtils {
             CacheBuilder.newBuilder()
                     .maximumSize(5000) // 设置缓存的最大容量
                     .expireAfterAccess(30, TimeUnit.MINUTES) // 设置缓存在写入一分钟后失效
-                    .concurrencyLevel(20) // 设置并发级别为10
+                    .concurrencyLevel(10) // 设置并发级别
 //            .recordStats() // 开启缓存统计
                     .build();
 
@@ -98,7 +99,7 @@ public class StressTestUtils {
     public static Cache<String, String> jMeterStatuses = CacheBuilder.newBuilder()
             .maximumSize(5000) // 设置缓存的最大容量
             .expireAfterAccess(30, TimeUnit.MINUTES) // 设置缓存在写入一分钟后失效
-            .concurrencyLevel(20) // 设置并发级别为10
+            .concurrencyLevel(10) // 设置并发级别
 //            .recordStats() // 开启缓存统计
             .build();
 
@@ -409,5 +410,97 @@ public class StressTestUtils {
             sb.append(milliSecond + "毫秒");
         }
         return sb.toString();
+    }
+
+    /**
+     * 创建shell文件
+     * @param path
+     * @param strs
+     */
+    public void createShell(String path, String... strs) {
+
+        if (strs == null) {
+            logger.error("strs is null");
+            return;
+        }
+
+        File sh = new File(path);
+        if (sh.exists()) {
+            sh.delete();
+        }
+        BufferedWriter bf = null;
+        try {
+            sh.createNewFile();
+            sh.setExecutable(true);
+            FileWriter fw = new FileWriter(sh);
+            bf = new BufferedWriter(fw);
+
+            for (int i = 0; i < strs.length; i++) {
+                bf.write(strs[i]);
+
+                if (i < strs.length - 1) {
+                    bf.newLine();
+                }
+            }
+        } catch (IOException e) {
+            logger.error("createShell 遇到了问题！", e);
+        } finally {
+            try {
+                bf.flush();
+                bf.close();
+            } catch (IOException e) {
+                logger.error("createShell 遇到了流关闭问题！", e);
+            }
+        }
+
+    }
+
+    /**
+     * 创建shell文件
+     *
+     * @param strs
+     * @return
+     */
+    public File createShell(String... strs) {
+        if (strs == null) {
+            logger.error("strs is null");
+            return null;
+        }
+
+        File sh = null;
+        try {
+            sh = File.createTempFile("temp-sh", ".sh");
+            String path = sh.getAbsolutePath();
+            createShell(path, strs);
+        } catch (IOException e) {
+            logger.error("createShell 创建临时文件遇到了问题！", e);
+        }
+        return sh;
+    }
+
+    /**
+     * 执行shell
+     *
+     * @param shellPath
+     * @return
+     * @throws Exception
+     */
+    public String runShell(String shellPath) throws Exception {
+
+        if (shellPath == null || shellPath.equals("")) {
+            return "shell path is empty";
+        }
+        Process ps = Runtime.getRuntime().exec(shellPath);
+        ps.waitFor();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(ps.getInputStream()));
+        StringBuffer sb = new StringBuffer();
+        String line;
+        while ((line = br.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+        String result = sb.toString();
+        br.close();
+        return result;
     }
 }

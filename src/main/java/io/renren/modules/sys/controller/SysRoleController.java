@@ -1,14 +1,13 @@
 package io.renren.modules.sys.controller;
 
 import io.renren.common.annotation.SysLog;
-import io.renren.modules.sys.entity.SysRoleEntity;
-import io.renren.modules.sys.service.SysRoleMenuService;
-import io.renren.modules.sys.service.SysRoleService;
-import io.renren.common.utils.Constant;
 import io.renren.common.utils.PageUtils;
 import io.renren.common.utils.Query;
 import io.renren.common.utils.R;
 import io.renren.common.validator.ValidatorUtils;
+import io.renren.modules.sys.entity.SysRoleEntity;
+import io.renren.modules.sys.service.SysRoleMenuService;
+import io.renren.modules.sys.service.SysRoleService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -39,9 +38,10 @@ public class SysRoleController extends AbstractController {
 	@RequiresPermissions("sys:role:list")
 	public R list(@RequestParam Map<String, Object> params){
 		//如果不是超级管理员，则只查询自己创建的角色列表
-		if(getUserId() != Constant.SUPER_ADMIN){
-			params.put("createUserId", getUserId());
-		}
+		//有管理权限的，都能看到所有权限
+//		if(getUserId() != Constant.SUPER_ADMIN){
+//			params.put("createUserId", getUserId());
+//		}
 		
 		//查询列表数据
 		Query query = new Query(params);
@@ -62,9 +62,9 @@ public class SysRoleController extends AbstractController {
 		Map<String, Object> map = new HashMap<>();
 		
 		//如果不是超级管理员，则只查询自己所拥有的角色列表
-		if(getUserId() != Constant.SUPER_ADMIN){
-			map.put("createUserId", getUserId());
-		}
+//		if(getUserId() != Constant.SUPER_ADMIN){
+//			map.put("createUserId", getUserId());
+//		}
 		List<SysRoleEntity> list = sysRoleService.queryList(map);
 		
 		return R.ok().put("list", list);
