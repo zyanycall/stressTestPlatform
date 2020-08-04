@@ -7,7 +7,7 @@ server:
     port: 8080 # 仅对jar包方式启动有效，或者本地调试
     connection-timeout: 5000
     # stressTestPlatform
-    context-path: /
+    context-path: /renren-fast
 
 spring:
     # 环境 dev|test|pro|h2|h2pro|h2line 系统默认使用h2
