@@ -12,7 +12,7 @@ server:
 spring:
     # 环境 dev|test|pro|h2|h2pro|h2line 系统默认使用h2
     profiles:
-        active: h2pro
+        active: dev
     # jackson时间格式化
     jackson:
         time-zone: GMT+8
