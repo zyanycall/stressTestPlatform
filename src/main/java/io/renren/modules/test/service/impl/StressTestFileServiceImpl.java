@@ -70,7 +70,6 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      *
      * 带来的影响：
      * 让程序和Jmeter_home外部的联系更加耦合了，这样master必带Jmeter_home才可以。
-     * 不仅仅是测试报告的生成了。
      * 同时，需要在pom文件中引用ApacheJMeter_functions，这其中才包含了参数化所用的函数的实现类。
      *
      * 自己修改：
