@@ -21,7 +21,7 @@ public class LocalSamplingStatCalculator {
 
     private String label;
 
-    private Sample currentSample;
+    private volatile Sample currentSample;
 
     /**
      * 针对每一秒，存储一个成功请求数的集合。
