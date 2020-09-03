@@ -19,7 +19,7 @@ var url = function (name) {
 T.p = url;
 
 //请求前缀
-var baseURL = "/renren-fast/";
+var baseURL = "/";
 
 //登录token
 var token = localStorage.getItem("token");

@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * 角色管理
- * 
+ *
  * @author chenshun
  * @email sunlightcs@gmail.com
  * @date 2016年11月8日 下午2:18:33
@@ -30,7 +30,7 @@ public class SysRoleController extends AbstractController {
 	private SysRoleService sysRoleService;
 	@Autowired
 	private SysRoleMenuService sysRoleMenuService;
-	
+
 	/**
 	 * 角色列表
 	 */
@@ -42,17 +42,17 @@ public class SysRoleController extends AbstractController {
 //		if(getUserId() != Constant.SUPER_ADMIN){
 //			params.put("createUserId", getUserId());
 //		}
-		
+
 		//查询列表数据
 		Query query = new Query(params);
 		List<SysRoleEntity> list = sysRoleService.queryList(query);
 		int total = sysRoleService.queryTotal(query);
-		
+
 		PageUtils pageUtil = new PageUtils(list, total, query.getLimit(), query.getPage());
-		
+
 		return R.ok().put("page", pageUtil);
 	}
-	
+
 	/**
 	 * 角色列表
 	 */
@@ -60,16 +60,16 @@ public class SysRoleController extends AbstractController {
 	@RequiresPermissions("sys:role:select")
 	public R select(){
 		Map<String, Object> map = new HashMap<>();
-		
+
 		//如果不是超级管理员，则只查询自己所拥有的角色列表
 //		if(getUserId() != Constant.SUPER_ADMIN){
 //			map.put("createUserId", getUserId());
 //		}
 		List<SysRoleEntity> list = sysRoleService.queryList(map);
-		
+
 		return R.ok().put("list", list);
 	}
-	
+
 	/**
 	 * 角色信息
 	 */
@@ -77,14 +77,14 @@ public class SysRoleController extends AbstractController {
 	@RequiresPermissions("sys:role:info")
 	public R info(@PathVariable("roleId") Long roleId){
 		SysRoleEntity role = sysRoleService.queryObject(roleId);
-		
+
 		//查询角色对应的菜单
 		List<Long> menuIdList = sysRoleMenuService.queryMenuIdList(roleId);
 		role.setMenuIdList(menuIdList);
-		
+
 		return R.ok().put("role", role);
 	}
-	
+
 	/**
 	 * 保存角色
 	 */
@@ -93,13 +93,13 @@ public class SysRoleController extends AbstractController {
 	@RequiresPermissions("sys:role:save")
 	public R save(@RequestBody SysRoleEntity role){
 		ValidatorUtils.validateEntity(role);
-		
+
 		role.setCreateUserId(getUserId());
 		sysRoleService.save(role);
-		
+
 		return R.ok();
 	}
-	
+
 	/**
 	 * 修改角色
 	 */
@@ -108,13 +108,14 @@ public class SysRoleController extends AbstractController {
 	@RequiresPermissions("sys:role:update")
 	public R update(@RequestBody SysRoleEntity role){
 		ValidatorUtils.validateEntity(role);
-		
-		role.setCreateUserId(getUserId());
+
+//		无论谁创建的角色都可以修改，这个限制打开
+//		role.setCreateUserId(getUserId());
 		sysRoleService.update(role);
-		
+
 		return R.ok();
 	}
-	
+
 	/**
 	 * 删除角色
 	 */
@@ -123,7 +124,7 @@ public class SysRoleController extends AbstractController {
 	@RequiresPermissions("sys:role:delete")
 	public R delete(@RequestBody Long[] roleIds){
 		sysRoleService.deleteBatch(roleIds);
-		
+
 		return R.ok();
 	}
 }

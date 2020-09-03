@@ -151,6 +151,8 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
 
         //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
         if (debugTestReport.getFileSize() == 0L || debugTestReport.getFileSize() == null) {
+            debugTestReport.setStatus(StressTestUtils.NO_FILE);
+            update(debugTestReport);
             throw new RRException("找不到调试测试结果文件，无法生成测试报告！");
         }
 
@@ -162,11 +164,13 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
         //测试报告文件
         String reportPath = jtlPath.substring(0, jtlPath.lastIndexOf(".")) + ".html";
 
-        //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
         File reportDir = new File(reportPath);
-        if (reportDir.exists()) {
-            throw new RRException("已经存在测试报告不要重复创建！");
-        }
+        //如果测试报告文件目录已经存在，说明生成过测试报告，直接打断
+//        if (reportDir.exists()) {
+//            debugTestReport.setStatus(StressTestUtils.RUN_SUCCESS);
+//            update(debugTestReport);
+//            throw new RRException("已经存在调试报告不要重复创建！");
+//        }
 
         Source srcJtl = new StreamSource(new File(jtlPath));
         Result destResult = new StreamResult(reportDir);
@@ -185,7 +189,7 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
             //保存状态，执行出现异常
             debugTestReport.setStatus(StressTestUtils.RUN_ERROR);
             update(debugTestReport);
-            throw new RRException("执行生成测试报告脚本异常！", e);
+            throw new RRException("执行生成调试报告脚本异常！", e);
         }
 
         //设置开始执行命令生成报告

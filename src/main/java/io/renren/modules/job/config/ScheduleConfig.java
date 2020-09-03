@@ -28,7 +28,7 @@ public class ScheduleConfig {
         prop.put("org.quartz.scheduler.instanceId", "AUTO");
         //线程池配置
         prop.put("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool");
-        prop.put("org.quartz.threadPool.threadCount", "20");
+        prop.put("org.quartz.threadPool.threadCount", "1");
         prop.put("org.quartz.threadPool.threadPriority", "5");
         //JobStore配置
         prop.put("org.quartz.jobStore.class", "org.quartz.impl.jdbcjobstore.JobStoreTX");
