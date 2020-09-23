@@ -458,8 +458,7 @@ CREATE TABLE `test_stress_slave` (
   `add_by` bigint(20) COMMENT '提交用户id',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
   `update_by` bigint(20) COMMENT '修改用户id',
-  PRIMARY KEY (`slave_id`),
-  UNIQUE INDEX (`ip`)
+  PRIMARY KEY (`slave_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='性能测试分布式节点表';
 
 -- 让本机master配置后也可以参与性能测试，默认是禁用master主节点

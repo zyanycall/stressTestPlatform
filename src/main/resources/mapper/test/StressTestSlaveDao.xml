@@ -13,6 +13,9 @@
             <if test="slaveName != null and slaveName.trim() != ''">
                 slave_name like concat('%', #{slaveName}, '%')
             </if>
+            <if test="ip != null and ip.trim() != ''">
+                ip like concat('%', #{ip}, '%')
+            </if>
             <if test="status != null">
                 `status` = #{status}
             </if>
@@ -84,14 +87,14 @@
     <!-- 批量更新状态 -->
     <update id="updateBatch">
         update test_stress_slave set status = #{status} where slave_id in
-        <foreach item="slaveId" collection="list"  open="(" separator="," close=")">
+        <foreach item="slaveIds" collection="list"  open="(" separator="," close=")">
             #{slaveId}
         </foreach>
     </update>
 
     <delete id="deleteBatch">
         delete from test_stress_slave where slave_id in
-        <foreach item="slaveId" collection="array" open="(" separator="," close=")">
+        <foreach item="slaveIds" collection="array" open="(" separator="," close=")">
             #{slaveId}
         </foreach>
     </delete>

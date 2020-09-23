@@ -210,8 +210,7 @@ CREATE TABLE test_stress_slave (
   add_by bigint(20) ,
   update_time timestamp NOT NULL  AS CURRENT_TIMESTAMP ,
   update_by bigint(20) ,
-  PRIMARY KEY (slave_id),
-  UNIQUE INDEX (ip)
+  PRIMARY KEY (slave_id)
 );
 
 -- 让本机master配置后也可以参与性能测试，默认是禁用master主节点
